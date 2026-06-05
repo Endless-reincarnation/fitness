@@ -192,7 +192,3 @@ Page({
     }, 500);
   }
 });
-    if (!exercise) {
-      wx.showToast({ title: '动作库加载中', icon: 'none' });
-      return;
-    }
