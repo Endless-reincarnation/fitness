@@ -31,6 +31,14 @@
     <view class="action-arrow">›</view>
   </view>
 
+  <view class="card block action-card" bindtap="openCloudDiagnostics">
+    <view>
+      <view class="section-title">云数据诊断</view>
+      <view class="muted plan-text">检查集合数量、云端读写和待同步记录</view>
+    </view>
+    <view class="action-arrow">&gt;</view>
+  </view>
+
   <view class="card block">
     <view class="section-title">训练皮肤</view>
     <view class="theme-row">

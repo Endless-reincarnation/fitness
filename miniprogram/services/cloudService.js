@@ -27,8 +27,17 @@ function getCollection(name) {
   return db.collection(collectionName);
 }
 
+async function countCollection(name) {
+  const collection = getCollection(name);
+  if (!collection) return null;
+
+  const result = await collection.count();
+  return result.total;
+}
+
 module.exports = {
   cloudConfig,
+  countCollection,
   getCollection,
   getDb,
   initCloud,

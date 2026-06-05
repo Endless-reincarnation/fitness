@@ -1,0 +1,32 @@
+<view class="page theme-{{theme}}">
+  <view class="card header-card">
+    <view class="eyebrow">CLOUD CHECK</view>
+    <view class="title">云数据诊断</view>
+    <view class="muted">环境：{{envId || '未配置'}} · {{enabled ? '已启用' : '未启用'}}</view>
+  </view>
+
+  <view class="card sync-card">
+    <view>
+      <view class="section-title">待同步记录</view>
+      <view class="muted">训练或体重写云失败后会暂存在本地队列</view>
+    </view>
+    <view class="sync-count">{{pendingCount}}</view>
+  </view>
+
+  <button class="primary-button" bindtap="retrySync">重试同步</button>
+  <button class="ghost-button" bindtap="refresh">刷新检查</button>
+
+  <view class="card list-card">
+    <view class="section-title">集合状态</view>
+    <view wx:for="{{checks}}" wx:key="key" class="check-row">
+      <view>
+        <view class="check-name">{{item.label}}</view>
+        <view class="muted">{{item.key}}</view>
+      </view>
+      <view class="check-right">
+        <view class="check-count">{{item.count}}</view>
+        <view class="check-status {{item.status === '失败' ? 'error' : ''}}">{{item.status}}</view>
+      </view>
+    </view>
+  </view>
+</view>

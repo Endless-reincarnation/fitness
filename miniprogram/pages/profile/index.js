@@ -37,5 +37,9 @@ Page({
 
   openExercises() {
     wx.navigateTo({ url: '/pages/exercises/index' });
+  },
+
+  openCloudDiagnostics() {
+    wx.navigateTo({ url: '/pages/cloud-diagnostics/index' });
   }
 });

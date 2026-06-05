@@ -4,6 +4,7 @@
     "pages/plans/index",
     "pages/plan-detail/index",
     "pages/custom-plan/index",
+    "pages/cloud-diagnostics/index",
     "pages/exercises/index",
     "pages/exercise-detail/index",
     "pages/workout/index",

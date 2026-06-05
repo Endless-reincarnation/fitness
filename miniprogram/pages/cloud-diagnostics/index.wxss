@@ -1,0 +1,74 @@
+.header-card {
+  margin-bottom: 20rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.title {
+  margin-top: 10rpx;
+  font-size: 46rpx;
+  font-weight: 900;
+}
+
+.sync-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.sync-count {
+  font-size: 54rpx;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.primary-button,
+.ghost-button {
+  margin-bottom: 18rpx;
+}
+
+.list-card {
+  margin-top: 10rpx;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid var(--border);
+}
+
+.check-row:last-child {
+  border-bottom: 0;
+}
+
+.check-name {
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.check-right {
+  text-align: right;
+}
+
+.check-count {
+  font-size: 34rpx;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.check-status {
+  margin-top: 6rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+}
+
+.check-status.error {
+  color: var(--danger);
+}

@@ -92,6 +92,10 @@ function enqueueCloudWrite(job) {
   saveSyncQueue(nextQueue);
 }
 
+function getPendingCloudWriteCount() {
+  return getSyncQueue().length;
+}
+
 async function writeWorkoutSessionToCloud(session) {
   const sessionCollection = getCollection('workoutSessions');
   const setCollection = getCollection('workoutSets');
@@ -214,5 +218,6 @@ module.exports = {
   saveWorkoutSession,
   getBodyWeights,
   saveBodyWeight,
+  getPendingCloudWriteCount,
   syncPendingCloudWrites
 };
