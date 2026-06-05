@@ -1,4 +1,4 @@
-const { getActivePlan, getWorkoutHistory, getBodyWeights } = require('../../utils/workout');
+const { getActivePlan, getBodyWeights, getWorkoutHistory } = require('../../services/workoutService');
 const { applyTheme, syncTabBarTheme } = require('../../utils/theme');
 
 Page({

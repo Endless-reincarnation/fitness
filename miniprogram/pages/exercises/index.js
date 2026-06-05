@@ -1,13 +1,9 @@
-const { exercises } = require('../../data/mock');
+const { listExercises } = require('../../services/exerciseService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
   data: {
-    exercises: exercises.map((item) => ({
-      ...item,
-      primaryMusclesText: item.primaryMuscles.join(' / '),
-      equipmentText: item.equipment.join(' / ')
-    })),
+    exercises: listExercises(),
     theme: 'power-yellow'
   },
 

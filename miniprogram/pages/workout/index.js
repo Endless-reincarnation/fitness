@@ -1,13 +1,11 @@
-const { plans, getExercise } = require('../../data/mock');
+const { buildDayView, getActivePlanDetail } = require('../../services/planService');
 const {
   advanceActivePlan,
   clearWorkoutDraft,
-  getActivePlan,
-  getCustomPlans,
   getWorkoutDraft,
   saveWorkoutDraft,
   saveWorkoutSession
-} = require('../../utils/workout');
+} = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -44,27 +42,19 @@ Page({
   },
 
   loadWorkout(query) {
-    // 当前只从本地启用计划生成今日训练，后续替换为 user_plans 查询。
-    const activePlan = getActivePlan();
+    // 当前由计划服务生成今日训练，后续服务内部可替换为 user_plans 查询。
+    const { activePlan, plan } = getActivePlanDetail();
     if (!activePlan) {
       wx.showToast({ title: '请先启用计划', icon: 'none' });
       return;
     }
 
-    const sourcePlans = activePlan.planType === 'custom' ? getCustomPlans() : plans;
-    const plan = sourcePlans.find((item) => item.id === activePlan.planId);
     if (!plan) {
       wx.showToast({ title: '计划不存在，请重新启用', icon: 'none' });
       return;
     }
     const day = plan.days[activePlan.currentDayIndex] || plan.days[0];
-    const dayView = {
-      ...day,
-      exercises: day.exercises.map((item) => ({
-        ...item,
-        detail: getExercise(item.exerciseId)
-      }))
-    };
+    const dayView = buildDayView(day);
     const draft = getWorkoutDraft();
     const canRestoreDraft = draft &&
       query.resume === '1' &&

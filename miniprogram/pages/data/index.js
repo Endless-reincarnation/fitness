@@ -1,4 +1,4 @@
-const { getWorkoutHistory, getBodyWeights, saveBodyWeight } = require('../../utils/workout');
+const { getBodyWeights, getWorkoutHistory, saveBodyWeight } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({

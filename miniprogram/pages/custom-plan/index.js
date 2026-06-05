@@ -1,5 +1,5 @@
-const { exercises } = require('../../data/mock');
-const { saveCustomPlan } = require('../../utils/workout');
+const { listExercises } = require('../../services/exerciseService');
+const { saveUserPlan } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 const defaultRule = {
@@ -9,6 +9,8 @@ const defaultRule = {
   weightRule: '选择能稳定完成目标次数的重量，优先保证动作质量。',
   progressionRule: '全部组达到目标次数上限后，下次可小幅加重或增加次数。'
 };
+
+const exerciseList = listExercises();
 
 Page({
   data: {
@@ -23,8 +25,8 @@ Page({
       }
     ],
     currentDayExercises: [],
-    exerciseOptions: exercises.map((item) => item.name),
-    exerciseList: exercises,
+    exerciseOptions: exerciseList.map((item) => item.name),
+    exerciseList,
     selectedExerciseIndex: 0,
     sets: '3',
     reps: '8-12',
@@ -173,7 +175,7 @@ Page({
       days: this.buildPlanDays(this.data.days)
     };
 
-    saveCustomPlan(plan);
+    saveUserPlan(plan);
     wx.showToast({ title: '已保存计划', icon: 'success' });
     setTimeout(() => {
       wx.navigateBack();

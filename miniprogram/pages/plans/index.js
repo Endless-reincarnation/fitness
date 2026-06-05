@@ -1,17 +1,20 @@
-const { plans } = require('../../data/mock');
-const { getCustomPlans } = require('../../utils/workout');
+const { listAllPlans } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
   data: {
-    plans,
+    plans: [],
     customPlans: [],
     theme: 'power-yellow'
   },
 
   onShow() {
     applyTheme(this);
-    this.setData({ customPlans: getCustomPlans() });
+    const { officialPlans, customPlans } = listAllPlans();
+    this.setData({
+      plans: officialPlans,
+      customPlans
+    });
   },
 
   openPlan(event) {

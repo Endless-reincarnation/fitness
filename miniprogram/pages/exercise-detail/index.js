@@ -1,4 +1,4 @@
-const { getExercise } = require('../../data/mock');
+const { getExerciseById } = require('../../services/exerciseService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -11,7 +11,7 @@ Page({
   },
 
   onLoad(query) {
-    const exercise = getExercise(query.id);
+    const exercise = getExerciseById(query.id);
     if (!exercise) {
       wx.showToast({ title: '动作不存在', icon: 'none' });
       return;
@@ -19,9 +19,9 @@ Page({
 
     this.setData({
       exercise,
-      primaryText: exercise.primaryMuscles.join(' / '),
-      secondaryText: exercise.secondaryMuscles.length ? exercise.secondaryMuscles.join(' / ') : '无',
-      equipmentText: exercise.equipment.join(' / ')
+      primaryText: exercise.primaryMusclesText,
+      secondaryText: exercise.secondaryMusclesText,
+      equipmentText: exercise.equipmentText
     });
   },
 
