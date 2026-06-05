@@ -10,8 +10,8 @@ Page({
     theme: 'power-yellow'
   },
 
-  onLoad(query) {
-    const exercise = getExerciseById(query.id);
+  async onLoad(query) {
+    const exercise = await getExerciseById(query.id);
     if (!exercise) {
       wx.showToast({ title: '动作不存在', icon: 'none' });
       return;

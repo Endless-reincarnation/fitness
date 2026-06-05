@@ -8,9 +8,9 @@ Page({
     theme: 'power-yellow'
   },
 
-  onShow() {
+  async onShow() {
     applyTheme(this);
-    const { officialPlans, customPlans } = listAllPlans();
+    const { officialPlans, customPlans } = await listAllPlans();
     this.setData({
       plans: officialPlans,
       customPlans

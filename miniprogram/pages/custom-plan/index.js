@@ -10,8 +10,6 @@ const defaultRule = {
   progressionRule: '全部组达到目标次数上限后，下次可小幅加重或增加次数。'
 };
 
-const exerciseList = listExercises();
-
 Page({
   data: {
     theme: 'power-yellow',
@@ -25,16 +23,23 @@ Page({
       }
     ],
     currentDayExercises: [],
-    exerciseOptions: exerciseList.map((item) => item.name),
-    exerciseList,
+    exerciseOptions: [],
+    exerciseList: [],
     selectedExerciseIndex: 0,
     sets: '3',
     reps: '8-12',
     restSeconds: '120'
   },
 
-  onShow() {
+  async onShow() {
     applyTheme(this);
+    if (!this.data.exerciseList.length) {
+      const exerciseList = await listExercises();
+      this.setData({
+        exerciseOptions: exerciseList.map((item) => item.name),
+        exerciseList
+      });
+    }
   },
 
   onInput(event) {
@@ -81,6 +86,11 @@ Page({
     const exercise = this.data.exerciseList[this.data.selectedExerciseIndex];
     const sets = Number(this.data.sets);
     const restSeconds = Number(this.data.restSeconds);
+
+    if (!exercise) {
+      wx.showToast({ title: '动作库加载中', icon: 'none' });
+      return;
+    }
 
     if (!sets || sets <= 0) {
       wx.showToast({ title: '请填写有效组数', icon: 'none' });
@@ -182,3 +192,7 @@ Page({
     }, 500);
   }
 });
+    if (!exercise) {
+      wx.showToast({ title: '动作库加载中', icon: 'none' });
+      return;
+    }

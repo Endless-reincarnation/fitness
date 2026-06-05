@@ -41,9 +41,9 @@ Page({
     this.clearTimer();
   },
 
-  loadWorkout(query) {
+  async loadWorkout(query) {
     // 当前由计划服务生成今日训练，后续服务内部可替换为 user_plans 查询。
-    const { activePlan, plan } = getActivePlanDetail();
+    const { activePlan, plan } = await getActivePlanDetail();
     if (!activePlan) {
       wx.showToast({ title: '请先启用计划', icon: 'none' });
       return;
@@ -54,7 +54,7 @@ Page({
       return;
     }
     const day = plan.days[activePlan.currentDayIndex] || plan.days[0];
-    const dayView = buildDayView(day);
+    const dayView = await buildDayView(day);
     const draft = getWorkoutDraft();
     const canRestoreDraft = draft &&
       query.resume === '1' &&

@@ -3,12 +3,13 @@ const { applyTheme } = require('../../utils/theme');
 
 Page({
   data: {
-    exercises: listExercises(),
+    exercises: [],
     theme: 'power-yellow'
   },
 
-  onShow() {
+  async onShow() {
     applyTheme(this);
+    this.setData({ exercises: await listExercises() });
   },
 
   openExercise(event) {

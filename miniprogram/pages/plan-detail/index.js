@@ -7,9 +7,9 @@ Page({
     theme: 'power-yellow'
   },
 
-  onLoad(query) {
-    const plan = getPlanById(query.id, query.type) || listOfficialPlans()[0];
-    this.setData({ plan: buildPlanView(plan) });
+  async onLoad(query) {
+    const plan = await getPlanById(query.id, query.type) || (await listOfficialPlans())[0];
+    this.setData({ plan: await buildPlanView(plan) });
   },
 
   onShow() {
