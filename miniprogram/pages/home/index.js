@@ -32,9 +32,9 @@ Page({
     const dayOptions = plan ? plan.days.map((day, index) => `第 ${index + 1} 天 · ${day.name}`) : [];
     const nextDayIndex = plan && totalDays ? (Number(activePlan.currentDayIndex || 0) + 1) % totalDays : 0;
     const nextDayName = plan && totalDays ? plan.days[nextDayIndex].name : '';
-    const history = getWorkoutHistory();
+    const history = await getWorkoutHistory();
     const workoutDraft = getWorkoutDraft();
-    const weights = getBodyWeights();
+    const weights = await getBodyWeights();
 
     this.setData({
       activePlan,

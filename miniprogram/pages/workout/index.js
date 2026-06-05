@@ -237,7 +237,7 @@ Page({
     }
   },
 
-  finishWorkout(records) {
+  async finishWorkout(records) {
     const totalVolume = records.reduce((sum, item) => sum + item.weightKg * item.reps, 0);
     const suggestions = this.buildProgressionSuggestions(records);
     const session = {
@@ -252,7 +252,7 @@ Page({
       records
     };
 
-    saveWorkoutSession(session);
+    await saveWorkoutSession(session);
     clearWorkoutDraft();
     const nextPlan = advanceActivePlan(this.data.plan.days.length);
     const nextDayName = nextPlan ? this.data.plan.days[nextPlan.currentDayIndex].name : '';

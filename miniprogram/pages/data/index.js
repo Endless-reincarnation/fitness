@@ -19,13 +19,13 @@ Page({
     this.refreshData();
   },
 
-  refreshData() {
-    const history = getWorkoutHistory();
+  async refreshData() {
+    const history = await getWorkoutHistory();
     const latestSession = history[0] || null;
     const latestSuggestions = latestSession && latestSession.suggestions ? latestSession.suggestions : [];
     this.setData({
       history,
-      weights: getBodyWeights(),
+      weights: await getBodyWeights(),
       latestSession,
       latestSetCount: latestSession ? latestSession.setCount : 15,
       latestTotalVolume: latestSession ? latestSession.totalVolume : 5820,
@@ -45,9 +45,9 @@ Page({
       return;
     }
 
-    const doSave = () => {
+    const doSave = async () => {
       const today = new Date().toISOString().slice(0, 10);
-      saveBodyWeight({
+      await saveBodyWeight({
         id: `weight_${today}`,
         date: today,
         weightKg

@@ -13,12 +13,14 @@ Page({
     ]
   },
 
-  onShow() {
+  async onShow() {
     applyTheme(this);
+    const history = await getWorkoutHistory();
+    const weights = await getBodyWeights();
     this.setData({
       activePlan: getActivePlan(),
-      workoutCount: getWorkoutHistory().length,
-      weightCount: getBodyWeights().length
+      workoutCount: history.length,
+      weightCount: weights.length
     });
   },
 
