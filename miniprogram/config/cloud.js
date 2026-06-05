@@ -1,7 +1,7 @@
 const cloudConfig = {
-  // 第一版默认关闭云端，避免没有云环境时影响本地预览。
-  enabled: false,
-  envId: '',
+  // 已接入开发环境，数据服务仍会逐步从本地切到云端。
+  enabled: true,
+  envId: 'dev-d1getmtzq8dd4414c',
   collections: {
     users: 'users',
     exercises: 'exercises',

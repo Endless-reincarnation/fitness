@@ -2,7 +2,7 @@
   "description": "健身计划执行助手小程序",
   "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
-  "appid": "wx1e32fcb66fcdc9bc",
+  "appid": "wx57d64efa2223d77f",
   "projectname": "fitness-plan-assistant",
   "setting": {
     "urlCheck": false,
@@ -35,5 +35,6 @@
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "libVersion": "3.16.1"
 }
