@@ -1,9 +1,10 @@
 const workoutStore = require('../utils/workout');
 const { getCollection, isCloudEnabled } = require('./cloudService');
 
+const syncQueueKey = 'cloudSyncQueue';
+
 function toCloudSession(session) {
   return {
-    _id: session.id,
     plan_name: session.planName,
     day_name: session.dayName,
     plan_day_index: session.planDayIndex,
@@ -72,6 +73,41 @@ function fromCloudWeight(record) {
   };
 }
 
+function getSyncQueue() {
+  return wx.getStorageSync(syncQueueKey) || [];
+}
+
+function saveSyncQueue(queue) {
+  wx.setStorageSync(syncQueueKey, queue);
+}
+
+function enqueueCloudWrite(job) {
+  const queue = getSyncQueue();
+  const nextQueue = queue.filter((item) => item.id !== job.id);
+  nextQueue.push({
+    ...job,
+    retryCount: Number(job.retryCount || 0),
+    updatedAt: Date.now()
+  });
+  saveSyncQueue(nextQueue);
+}
+
+async function writeWorkoutSessionToCloud(session) {
+  const sessionCollection = getCollection('workoutSessions');
+  const setCollection = getCollection('workoutSets');
+  await sessionCollection.doc(session.id).set({ data: toCloudSession(session) });
+  await Promise.all((session.records || []).map((record, index) => (
+    setCollection.doc(`${session.id}_${index + 1}`).set({
+      data: toCloudSet(session, record)
+    })
+  )));
+}
+
+async function writeBodyWeightToCloud(record) {
+  const collection = getCollection('bodyWeights');
+  await collection.doc(record.id).set({ data: toCloudWeight(record) });
+}
+
 async function getWorkoutHistory() {
   if (!isCloudEnabled()) return workoutStore.getWorkoutHistory();
 
@@ -87,21 +123,20 @@ async function getWorkoutHistory() {
 }
 
 async function saveWorkoutSession(session) {
-  // 训练完成先落本地，避免网络异常导致用户刚练完的数据丢失。
   workoutStore.saveWorkoutSession(session);
 
   if (!isCloudEnabled()) return session;
 
   try {
-    const sessionCollection = getCollection('workoutSessions');
-    const setCollection = getCollection('workoutSets');
-    await sessionCollection.add({ data: toCloudSession(session) });
-    await Promise.all((session.records || []).map((record) => (
-      setCollection.add({ data: toCloudSet(session, record) })
-    )));
+    await writeWorkoutSessionToCloud(session);
     return session;
   } catch (error) {
     console.warn('写入云端训练记录失败，已保留本地记录', error);
+    enqueueCloudWrite({
+      id: `workout_${session.id}`,
+      type: 'workoutSession',
+      payload: session
+    });
     return session;
   }
 }
@@ -126,13 +161,51 @@ async function saveBodyWeight(record) {
   if (!isCloudEnabled()) return record;
 
   try {
-    const collection = getCollection('bodyWeights');
-    await collection.doc(record.id).set({ data: toCloudWeight(record) });
+    await writeBodyWeightToCloud(record);
     return record;
   } catch (error) {
     console.warn('写入云端体重记录失败，已保留本地记录', error);
+    enqueueCloudWrite({
+      id: `bodyWeight_${record.id}`,
+      type: 'bodyWeight',
+      payload: record
+    });
     return record;
   }
+}
+
+async function syncPendingCloudWrites() {
+  if (!isCloudEnabled()) return { total: 0, success: 0, failed: 0 };
+
+  const queue = getSyncQueue();
+  if (!queue.length) return { total: 0, success: 0, failed: 0 };
+
+  const failedJobs = [];
+  let success = 0;
+
+  for (const job of queue) {
+    try {
+      if (job.type === 'workoutSession') {
+        await writeWorkoutSessionToCloud(job.payload);
+      } else if (job.type === 'bodyWeight') {
+        await writeBodyWeightToCloud(job.payload);
+      }
+      success += 1;
+    } catch (error) {
+      failedJobs.push({
+        ...job,
+        retryCount: Number(job.retryCount || 0) + 1,
+        updatedAt: Date.now()
+      });
+    }
+  }
+
+  saveSyncQueue(failedJobs);
+  return {
+    total: queue.length,
+    success,
+    failed: failedJobs.length
+  };
 }
 
 module.exports = {
@@ -140,5 +213,6 @@ module.exports = {
   getWorkoutHistory,
   saveWorkoutSession,
   getBodyWeights,
-  saveBodyWeight
+  saveBodyWeight,
+  syncPendingCloudWrites
 };

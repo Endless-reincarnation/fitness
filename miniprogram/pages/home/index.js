@@ -1,5 +1,5 @@
 const { buildDayView, getActivePlanDetail, setActivePlanDay } = require('../../services/planService');
-const { getBodyWeights, getWorkoutDraft, getWorkoutHistory } = require('../../services/workoutService');
+const { getBodyWeights, getWorkoutDraft, getWorkoutHistory, syncPendingCloudWrites } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -22,6 +22,7 @@ Page({
   },
 
   async refreshHome() {
+    await syncPendingCloudWrites();
     // 首页只消费计划服务，不直接关心官方计划或自定义计划来自哪里。
     // 首页聚合当前计划、今日训练和最近数据。
     const planDetail = await getActivePlanDetail();

@@ -1,4 +1,4 @@
-const { getActivePlan, getBodyWeights, getWorkoutHistory } = require('../../services/workoutService');
+const { getActivePlan, getBodyWeights, getWorkoutHistory, syncPendingCloudWrites } = require('../../services/workoutService');
 const { applyTheme, syncTabBarTheme } = require('../../utils/theme');
 
 Page({
@@ -15,6 +15,7 @@ Page({
 
   async onShow() {
     applyTheme(this);
+    await syncPendingCloudWrites();
     const history = await getWorkoutHistory();
     const weights = await getBodyWeights();
     this.setData({

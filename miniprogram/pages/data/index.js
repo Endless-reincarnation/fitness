@@ -1,4 +1,4 @@
-const { getBodyWeights, getWorkoutHistory, saveBodyWeight } = require('../../services/workoutService');
+const { getBodyWeights, getWorkoutHistory, saveBodyWeight, syncPendingCloudWrites } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -20,6 +20,7 @@ Page({
   },
 
   async refreshData() {
+    await syncPendingCloudWrites();
     const history = await getWorkoutHistory();
     const latestSession = history[0] || null;
     const latestSuggestions = latestSession && latestSession.suggestions ? latestSession.suggestions : [];
