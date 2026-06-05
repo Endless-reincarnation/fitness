@@ -1,3 +1,5 @@
+const { initCloud } = require('./services/cloudService');
+
 App({
   globalData: {
     currentUser: null,
@@ -5,6 +7,8 @@ App({
   },
 
   onLaunch() {
+    initCloud();
+
     // 第一版先使用本地缓存模拟用户状态，后续替换为微信登录和云数据库。
     const currentUser = wx.getStorageSync('currentUser');
     const theme = wx.getStorageSync('theme') || 'power-yellow';
