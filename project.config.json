@@ -32,9 +32,43 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "admin"
+      },
+      {
+        "type": "folder",
+        "value": "docs"
+      },
+      {
+        "type": "folder",
+        "value": "seed"
+      },
+      {
+        "type": "folder",
+        "value": "tools"
+      },
+      {
+        "type": "file",
+        "value": "计划.txt"
+      },
+      {
+        "type": "file",
+        "value": "第一天胸肩三头.txt"
+      },
+      {
+        "type": "file",
+        "value": "untitled.pen"
+      },
+      {
+        "type": "file",
+        "value": "AGENTS.md"
+      }
+    ],
     "include": []
   },
   "editorSetting": {},
-  "libVersion": "3.16.1"
+  "libVersion": "3.16.1",
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
 }

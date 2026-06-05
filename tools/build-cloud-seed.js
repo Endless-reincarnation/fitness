@@ -131,9 +131,11 @@ function buildCloudSeed() {
   };
 
   Object.entries(collections).forEach(([collectionName, records]) => {
+    // 微信云数据库导入要求使用 JSON Lines 格式（每行一个独立的 JSON 对象，无外层数组和逗号）
+    const content = records.map(record => JSON.stringify(record)).join('\n');
     fs.writeFileSync(
       path.join(outputDir, `${collectionName}.json`),
-      `${JSON.stringify(records, null, 2)}\n`,
+      content ? `${content}\n` : '',
       'utf8'
     );
   });

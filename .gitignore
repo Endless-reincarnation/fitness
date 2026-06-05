@@ -1,0 +1,20 @@
+# 依赖与编译生成物
+node_modules/
+dist/
+dist-ssr/
+*.log
+npm-debug.log*
+
+# 微信开发者工具缓存与临时文件
+miniprogram/.wx/
+miniprogram/project.private.config.json
+
+# 系统与编辑器缓存
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

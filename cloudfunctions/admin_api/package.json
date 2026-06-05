@@ -1,0 +1,9 @@
+{
+  "name": "admin_api",
+  "version": "1.0.0",
+  "description": "健身计划后台管理 API",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

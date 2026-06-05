@@ -1,0 +1,1236 @@
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue';
+
+// ==================== 1. 基础状态变量 ====================
+const isAuthenticated = ref(false);
+const loginTokenInput = ref('');
+const loginError = ref('');
+const loading = ref(false);
+const isSaving = ref(false);
+const currentTab = ref('dashboard'); // dashboard, exercises, plans
+
+// 云数据库拉取的数据缓存
+const stats = ref({ users: 0, exercises: 0, plans: 0, workouts: 0 });
+const musclesList = ref([]);
+const exercisesList = ref([]);
+const plansList = ref([]);
+const planDaysList = ref([]);
+const planDayExercisesList = ref([]);
+
+// 预设选项字典
+const bodyRegions = {
+  chest: '胸部',
+  back: '背部',
+  legs: '腿部',
+  shoulders: '肩部',
+  arms: '手臂',
+  core: '核心'
+};
+
+const difficulties = {
+  beginner: '新手',
+  intermediate: '初中级',
+  advanced: '进阶'
+};
+
+const equipmentOptions = [
+  '自重', '徒手', '哑铃', '杠铃', '拉索', '器械', '史密斯机', '易弯杠'
+];
+
+const goalOptions = [
+  { value: 'muscle_gain', label: '增肌' },
+  { value: 'fat_loss', label: '减脂' },
+  { value: 'body_shape', label: '塑形' },
+  { value: 'strength', label: '力量' }
+];
+
+// ==================== 2. 云开发 SDK 联调 ====================
+let c1 = null;
+const initCloud = async () => {
+  if (c1) return c1;
+  c1 = new window.cloud.Cloud({
+    identityless: true,
+    resourceEnv: 'dev-d1getmtzq8dd4414c',
+    resourceAppid: 'wx57d64efa2223d77f'
+  });
+  await c1.init();
+  return c1;
+};
+
+const callCloudApi = async (action, payload = {}) => {
+  const token = localStorage.getItem('admin_token') || '';
+  const c = await initCloud();
+  const res = await c.callFunction({
+    name: 'admin_api',
+    data: { token, action, payload }
+  });
+  
+  if (res.result && res.result.code === 200) {
+    return res.result.data || res.result.message || {};
+  } else {
+    throw new Error((res.result && res.result.message) || '请求失败');
+  }
+};
+
+// ==================== 3. 业务初始化 ====================
+const checkLoginState = () => {
+  const token = localStorage.getItem('admin_token');
+  if (token) {
+    isAuthenticated.value = true;
+    fetchData();
+  }
+};
+
+const handleLogin = async () => {
+  if (!loginTokenInput.value) {
+    loginError.value = '请输入管理员访问口令！';
+    return;
+  }
+  loading.value = true;
+  loginError.value = '';
+  try {
+    localStorage.setItem('admin_token', loginTokenInput.value);
+    // 尝试调用 get_stats 校验 token 是否正确
+    await callCloudApi('get_stats');
+    isAuthenticated.value = true;
+    fetchData();
+  } catch (err) {
+    localStorage.removeItem('admin_token');
+    loginError.value = '口令验证失败，请重新输入！';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleLogout = () => {
+  localStorage.removeItem('admin_token');
+  isAuthenticated.value = false;
+  stats.value = { users: 0, exercises: 0, plans: 0, workouts: 0 };
+};
+
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    // 1. 获取统计数据
+    const statsData = await callCloudApi('get_stats');
+    stats.value = statsData;
+
+    // 2. 获取肌群列表
+    const musclesData = await callCloudApi('get_muscles');
+    musclesList.value = musclesData.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    // 3. 获取动作库列表
+    const exercisesData = await callCloudApi('get_exercises');
+    exercisesList.value = exercisesData;
+
+    // 4. 获取计划数据
+    const plansData = await callCloudApi('get_plans');
+    plansList.value = plansData.plans;
+    planDaysList.value = plansData.days;
+    planDayExercisesList.value = plansData.dayExercises;
+  } catch (err) {
+    console.error('拉取云端数据失败：', err);
+    alert('同步云端数据出错: ' + err.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// ==================== 4. 动作管理模块逻辑 ====================
+const searchExerciseQuery = ref('');
+const filterExerciseMuscle = ref('');
+const filterExerciseDifficulty = ref('');
+
+const filteredExercises = computed(() => {
+  return exercisesList.value.filter(ex => {
+    const matchesSearch = searchExerciseQuery.value
+      ? ex.name.toLowerCase().includes(searchExerciseQuery.value.toLowerCase()) || 
+        (ex.aliases && ex.aliases.some(a => a.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())))
+      : true;
+    const matchesMuscle = filterExerciseMuscle.value
+      ? ex.primary_muscles.includes(filterExerciseMuscle.value) || (ex.secondary_muscles && ex.secondary_muscles.includes(filterExerciseMuscle.value))
+      : true;
+    const matchesDifficulty = filterExerciseDifficulty.value
+      ? ex.difficulty === filterExerciseDifficulty.value
+      : true;
+    return matchesSearch && matchesMuscle && matchesDifficulty && ex.status !== 'disabled';
+  });
+});
+
+// 动作表单编辑弹窗
+const showExerciseModal = ref(false);
+const editingExercise = ref(null);
+const exerciseForm = reactive({
+  _id: '',
+  name: '',
+  aliasesString: '',
+  primary_muscles: [],
+  secondary_muscles: [],
+  equipment_tags: [],
+  difficulty: 'beginner',
+  movement_pattern: 'push',
+  steps: [''],
+  common_mistakes: [''],
+  safety_tips: [''],
+  status: 'published'
+});
+
+const openNewExerciseModal = () => {
+  editingExercise.value = null;
+  Object.assign(exerciseForm, {
+    _id: '',
+    name: '',
+    aliasesString: '',
+    primary_muscles: [],
+    secondary_muscles: [],
+    equipment_tags: [],
+    difficulty: 'beginner',
+    movement_pattern: 'push',
+    steps: [''],
+    common_mistakes: [''],
+    safety_tips: [''],
+    status: 'published'
+  });
+  showExerciseModal.value = true;
+};
+
+const openEditExerciseModal = (ex) => {
+  editingExercise.value = ex;
+  Object.assign(exerciseForm, {
+    _id: ex._id,
+    name: ex.name,
+    aliasesString: ex.aliases ? ex.aliases.join(', ') : '',
+    primary_muscles: [...(ex.primary_muscles || [])],
+    secondary_muscles: [...(ex.secondary_muscles || [])],
+    equipment_tags: [...(ex.equipment_tags || [])],
+    difficulty: ex.difficulty || 'beginner',
+    movement_pattern: ex.movement_pattern || 'push',
+    steps: ex.steps && ex.steps.length ? [...ex.steps] : [''],
+    common_mistakes: ex.common_mistakes && ex.common_mistakes.length ? [...ex.common_mistakes] : [''],
+    safety_tips: ex.safety_tips && ex.safety_tips.length ? [...ex.safety_tips] : [''],
+    status: ex.status || 'published'
+  });
+  showExerciseModal.value = true;
+};
+
+const addFormField = (type) => {
+  exerciseForm[type].push('');
+};
+
+const removeFormField = (type, index) => {
+  if (exerciseForm[type].length > 1) {
+    exerciseForm[type].splice(index, 1);
+  } else {
+    exerciseForm[type][0] = '';
+  }
+};
+
+const saveExercise = async () => {
+  if (!exerciseForm.name) {
+    alert('请输入动作名称！');
+    return;
+  }
+  if (!exerciseForm.primary_muscles.length) {
+    alert('请至少选择一个主肌群！');
+    return;
+  }
+  
+  isSaving.value = true;
+  try {
+    // 整理表单数据
+    const payload = {
+      name: exerciseForm.name,
+      aliases: exerciseForm.aliasesString.split(',').map(s => s.trim()).filter(Boolean),
+      primary_muscles: exerciseForm.primary_muscles,
+      secondary_muscles: exerciseForm.secondary_muscles,
+      equipment_tags: exerciseForm.equipment_tags,
+      difficulty: exerciseForm.difficulty,
+      movement_pattern: exerciseForm.movement_pattern,
+      steps: exerciseForm.steps.map(s => s.trim()).filter(Boolean),
+      common_mistakes: exerciseForm.common_mistakes.map(s => s.trim()).filter(Boolean),
+      safety_tips: exerciseForm.safety_tips.map(s => s.trim()).filter(Boolean),
+      status: exerciseForm.status
+    };
+    if (exerciseForm._id) {
+      payload._id = exerciseForm._id;
+    }
+
+    const savedEx = await callCloudApi('save_exercise', payload);
+    
+    // 更新本地缓存列表
+    if (exerciseForm._id) {
+      const idx = exercisesList.value.findIndex(e => e._id === exerciseForm._id);
+      if (idx !== -1) exercisesList.value[idx] = savedEx;
+    } else {
+      exercisesList.value.unshift(savedEx);
+      stats.value.exercises += 1;
+    }
+
+    showExerciseModal.value = false;
+    alert('动作保存成功！');
+  } catch (err) {
+    alert('动作保存失败: ' + err.message);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deleteExercise = async (ex) => {
+  if (!confirm(`确认要将动作“${ex.name}”下架停用吗？下架后，已发布的计划中仍会保留它的历史数据，但新计划将无法选择。`)) {
+    return;
+  }
+  try {
+    await callCloudApi('delete_exercise', { id: ex._id });
+    ex.status = 'disabled';
+    exercisesList.value = exercisesList.value.filter(e => e._id !== ex._id);
+    stats.value.exercises -= 1;
+    alert('动作下架成功！');
+  } catch (err) {
+    alert('动作下架失败: ' + err.message);
+  }
+};
+
+// ==================== 5. 计划管理模块逻辑 ====================
+const showPlanModal = ref(false);
+const editingPlan = ref(null);
+
+// 计划表单的响应式状态
+const planForm = reactive({
+  _id: '',
+  name: '',
+  source_type: 'self_curated',
+  goal_tags: [],
+  level: 'beginner',
+  duration_weeks: 6,
+  weekly_frequency: 3,
+  equipment_tags: [],
+  target_users: [''],
+  summary: '',
+  notes: [''],
+  status: 'draft'
+});
+
+// 编辑计划时的训练日和动作编排临时数组
+const planDaysForm = ref([]);
+const planDayExercisesForm = ref([]);
+
+const openNewPlanModal = () => {
+  editingPlan.value = null;
+  Object.assign(planForm, {
+    _id: '',
+    name: '',
+    source_type: 'self_curated',
+    goal_tags: [],
+    level: 'beginner',
+    duration_weeks: 6,
+    weekly_frequency: 3,
+    equipment_tags: [],
+    target_users: [''],
+    summary: '',
+    notes: [''],
+    status: 'draft'
+  });
+  
+  planDaysForm.value = [];
+  planDayExercisesForm.value = [];
+  
+  // 根据默认频次初始化训练日列表
+  adjustPlanDays();
+  
+  showPlanModal.value = true;
+};
+
+const openEditPlanModal = (plan) => {
+  editingPlan.value = plan;
+  Object.assign(planForm, {
+    _id: plan._id,
+    name: plan.name,
+    source_type: plan.source_type || 'self_curated',
+    goal_tags: [...(plan.goal_tags || [])],
+    level: plan.level || 'beginner',
+    duration_weeks: plan.duration_weeks || 4,
+    weekly_frequency: plan.weekly_frequency || 3,
+    equipment_tags: [...(plan.equipment_tags || [])],
+    target_users: plan.target_users && plan.target_users.length ? [...plan.target_users] : [''],
+    summary: plan.summary || '',
+    notes: plan.notes && plan.notes.length ? [...plan.notes] : [''],
+    status: plan.status || 'draft'
+  });
+
+  const version = plan.current_version || 1;
+
+  // 过滤出该计划且版本对应的训练日
+  const matchedDays = planDaysList.value
+    .filter(d => d.plan_template_id === plan._id && d.plan_version === version)
+    .sort((a, b) => a.day_index - b.day_index);
+
+  planDaysForm.value = JSON.parse(JSON.stringify(matchedDays));
+
+  // 过滤出这些训练日的动作编排
+  const dayIds = matchedDays.map(d => d._id);
+  const matchedExs = planDayExercisesList.value
+    .filter(e => dayIds.includes(e.plan_day_id))
+    .sort((a, b) => a.order - b.order);
+
+  planDayExercisesForm.value = JSON.parse(JSON.stringify(matchedExs));
+
+  showPlanModal.value = true;
+};
+
+// 动态调整训练日天数
+const adjustPlanDays = () => {
+  const targetCount = parseInt(planForm.weekly_frequency) || 1;
+  const currentCount = planDaysForm.value.length;
+  
+  if (currentCount < targetCount) {
+    // 增加天数
+    for (let i = currentCount; i < targetCount; i++) {
+      const tempDayId = `temp_day_${Date.now()}_${i}`;
+      planDaysForm.value.push({
+        _id: tempDayId,
+        day_index: i + 1,
+        name: `训练日 ${i + 1}`,
+        focus: '',
+        target_muscles: []
+      });
+    }
+  } else if (currentCount > targetCount) {
+    // 减少天数 (从尾部移除)
+    const removedDays = planDaysForm.value.slice(targetCount);
+    const removedDayIds = removedDays.map(d => d._id);
+    
+    planDaysForm.value = planDaysForm.value.slice(0, targetCount);
+    // 同时也删除对应的动作编排
+    planDayExercisesForm.value = planDayExercisesForm.value.filter(e => !removedDayIds.includes(e.plan_day_id));
+  }
+};
+
+// 添加编排动作
+const addExerciseToDay = (dayId) => {
+  const dayExs = planDayExercisesForm.value.filter(e => e.plan_day_id === dayId);
+  const maxOrder = dayExs.reduce((max, e) => e.order > max ? e.order : max, 0);
+  
+  planDayExercisesForm.value.push({
+    _id: `temp_ex_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    plan_day_id: dayId,
+    exercise_id: '',
+    order: maxOrder + 1,
+    role: 'assistance',
+    sets: 3,
+    reps: '8-12',
+    rpe: '8',
+    rest_seconds: 90,
+    weight_rule: '',
+    progression_rule: '',
+    notes: ''
+  });
+};
+
+// 移除编排动作
+const removeExerciseFromDay = (exId) => {
+  planDayExercisesForm.value = planDayExercisesForm.value.filter(e => e._id !== exId);
+  resortExercises();
+};
+
+// 重新排序
+const resortExercises = () => {
+  planDaysForm.value.forEach(day => {
+    const exs = planDayExercisesForm.value
+      .filter(e => e.plan_day_id === day._id)
+      .sort((a, b) => a.order - b.order);
+      
+    exs.forEach((e, idx) => {
+      e.order = idx + 1;
+    });
+  });
+};
+
+const moveExercise = (ex, direction) => {
+  const dayId = ex.plan_day_id;
+  const dayExs = planDayExercisesForm.value
+    .filter(e => e.plan_day_id === dayId)
+    .sort((a, b) => a.order - b.order);
+    
+  const currentIdx = dayExs.findIndex(e => e._id === ex._id);
+  
+  if (direction === 'up' && currentIdx > 0) {
+    const target = dayExs[currentIdx - 1];
+    const tempOrder = ex.order;
+    ex.order = target.order;
+    target.order = tempOrder;
+  } else if (direction === 'down' && currentIdx < dayExs.length - 1) {
+    const target = dayExs[currentIdx + 1];
+    const tempOrder = ex.order;
+    ex.order = target.order;
+    target.order = tempOrder;
+  }
+  
+  resortExercises();
+};
+
+const savePlan = async () => {
+  if (!planForm.name) {
+    alert('请输入计划名称！');
+    return;
+  }
+  
+  // 基础数据校验
+  for (const day of planDaysForm.value) {
+    if (!day.name) {
+      alert(`请输入 训练日 ${day.day_index} 的名称！`);
+      return;
+    }
+    const dayExs = planDayExercisesForm.value.filter(e => e.plan_day_id === day._id);
+    if (!dayExs.length) {
+      alert(`训练日“${day.name}”至少需要配置一个训练动作！`);
+      return;
+    }
+    for (const ex of dayExs) {
+      if (!ex.exercise_id) {
+        alert(`请在“${day.name}”中选择对应的动作，不能留空！`);
+        return;
+      }
+      if (!ex.sets || ex.sets <= 0) {
+        alert(`“${day.name}”中动作的组数配置不正确，必须大于 0！`);
+        return;
+      }
+    }
+  }
+
+  isSaving.value = true;
+  try {
+    // 整理表单数据
+    const planPayload = {
+      name: planForm.name,
+      source_type: planForm.source_type,
+      goal_tags: planForm.goal_tags,
+      level: planForm.level,
+      duration_weeks: parseInt(planForm.duration_weeks) || 4,
+      weekly_frequency: parseInt(planForm.weekly_frequency) || 3,
+      equipment_tags: planForm.equipment_tags,
+      target_users: planForm.target_users.map(u => u.trim()).filter(Boolean),
+      summary: planForm.summary,
+      notes: planForm.notes.map(n => n.trim()).filter(Boolean),
+      status: planForm.status
+    };
+    if (planForm._id) {
+      planPayload._id = planForm._id;
+    }
+
+    // 动作列表整理并填补动作名称快照
+    const updatedDayExercises = planDayExercisesForm.value.map(ex => {
+      const matchObj = exercisesList.value.find(e => e._id === ex.exercise_id);
+      return {
+        ...ex,
+        exercise_name: matchObj ? matchObj.name : ''
+      };
+    });
+
+    const payload = {
+      plan_template: planPayload,
+      plan_days: planDaysForm.value,
+      plan_day_exercises: updatedDayExercises
+    };
+
+    const res = await callCloudApi('save_plan', payload);
+    
+    // 重新拉取一次数据以刷新关系与版本缓存
+    await fetchData();
+
+    showPlanModal.value = false;
+    alert('计划模板保存成功！');
+  } catch (err) {
+    alert('计划模板保存失败: ' + err.message);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deletePlan = async (plan) => {
+  if (!confirm(`确认要将计划“${plan.name}”下架并归档吗？下架后，正在执行此计划的用户仍可照常训练，但新用户将无法检索到该计划。`)) {
+    return;
+  }
+  try {
+    await callCloudApi('delete_plan', { id: plan._id });
+    alert('计划下架成功！');
+    await fetchData();
+  } catch (err) {
+    alert('计划下架失败: ' + err.message);
+  }
+};
+
+const publishNewVersion = async (plan) => {
+  if (!confirm(`您正准备为已发布计划“${plan.name}”发布全新版本（版本号将增加，如 v${plan.current_version} -> v${plan.current_version + 1}）。发布新版本后，新用户启用的计划将使用新版结构，历史用户的旧训练数据快照将不受影响。确定执行吗？`)) {
+    return;
+  }
+  loading.value = true;
+  try {
+    const res = await callCloudApi('publish_plan_new_version', { id: plan._id });
+    alert(`新版本 v${res.new_version} 发布成功！`);
+    await fetchData();
+  } catch (err) {
+    alert('版本发布失败: ' + err.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// ==================== 生命周期挂载 ====================
+onMounted(() => {
+  checkLoginState();
+});
+</script>
+
+<template>
+  <!-- 登录校验界面 -->
+  <div v-if="!isAuthenticated" class="login-overlay">
+    <div class="login-card">
+      <div class="logo-section login-logo">
+        <div class="logo-icon">G</div>
+        <div class="logo-text">FITNESS ASSISTANT</div>
+      </div>
+      <h3 class="login-title">管理后台登录</h3>
+      <p class="login-subtitle">请输入云环境安全访问口令以进行数据授权</p>
+      
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label>访问口令 (Token)</label>
+          <input 
+            type="password" 
+            v-model="loginTokenInput" 
+            class="form-input" 
+            placeholder="请输入管理员口令"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary login-btn" :disabled="loading">
+          {{ loading ? '口令验证中...' : '安全登录' }}
+        </button>
+      </form>
+      
+      <p v-if="loginError" class="login-error">{{ loginError }}</p>
+    </div>
+  </div>
+
+  <!-- 主应用容器 -->
+  <div v-else class="app-container">
+    
+    <!-- 侧边导航栏 -->
+    <aside class="sidebar">
+      <div class="logo-section">
+        <div class="logo-icon">G</div>
+        <div class="logo-text">健身计划助手</div>
+      </div>
+      
+      <nav class="nav-menu">
+        <li 
+          class="nav-item" 
+          :class="{ active: currentTab === 'dashboard' }"
+          @click="currentTab = 'dashboard'"
+        >
+          <span class="icon">📊</span> 运营看板
+        </li>
+        <li 
+          class="nav-item" 
+          :class="{ active: currentTab === 'exercises' }"
+          @click="currentTab = 'exercises'"
+        >
+          <span class="icon">🏋️</span> 标准动作库
+        </li>
+        <li 
+          class="nav-item" 
+          :class="{ active: currentTab === 'plans' }"
+          @click="currentTab = 'plans'"
+        >
+          <span class="icon">📅</span> 官方计划库
+        </li>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button class="logout-btn" @click="handleLogout">退出管理系统</button>
+      </div>
+    </aside>
+
+    <!-- 主工作区 -->
+    <main class="main-content">
+      
+      <!-- 渲染1：运营看板 -->
+      <section v-if="currentTab === 'dashboard'">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">系统大盘统计</h2>
+            <p class="page-subtitle">WeChat Fitness Assistant Dashboard</p>
+          </div>
+          <button class="btn btn-secondary" @click="fetchData" :disabled="loading">
+            🔄 刷新数据
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="stat-info">
+              <span class="stat-label">小程序注册用户</span>
+              <span class="stat-value">{{ stats.users }}</span>
+            </div>
+            <div class="stat-icon">👤</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-info">
+              <span class="stat-label">标准动作数量</span>
+              <span class="stat-value">{{ stats.exercises }}</span>
+            </div>
+            <div class="stat-icon">💪</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-info">
+              <span class="stat-label">官方计划模板</span>
+              <span class="stat-value">{{ stats.plans }}</span>
+            </div>
+            <div class="stat-icon">📋</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-info">
+              <span class="stat-label">用户累计训练组数</span>
+              <span class="stat-value">{{ stats.workouts }}</span>
+            </div>
+            <div class="stat-icon">🔥</div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <h3 class="mb-4">云端数据库状态诊断</h3>
+          <p class="mb-4" style="color: var(--text-muted); font-size: 0.95rem;">
+            数据库各项集合读写正常。当前版本由本地管理端通过安全云函数 <code>admin_api</code> 执行增删改查动作，具有全套操作快照记录与日志回溯保障。
+          </p>
+          <div class="badge badge-success">云服务已联调成功</div>
+        </div>
+      </section>
+
+      <!-- 渲染2：标准动作库管理 -->
+      <section v-else-if="currentTab === 'exercises'">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">标准动作库</h2>
+            <p class="page-subtitle">动作将被编排入计划，展示主辅肌群和安全步骤</p>
+          </div>
+          <button class="btn btn-primary" @click="openNewExerciseModal">
+            ➕ 新增标准动作
+          </button>
+        </div>
+
+        <!-- 过滤器 -->
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              v-model="searchExerciseQuery" 
+              class="search-input" 
+              placeholder="搜索动作名称或别名..."
+            />
+          </div>
+          
+          <select v-model="filterExerciseMuscle" class="select-filter">
+            <option value="">全部肌群</option>
+            <option v-for="m in musclesList" :key="m._id" :value="m._id">
+              {{ m.name }}
+            </option>
+          </select>
+
+          <select v-model="filterExerciseDifficulty" class="select-filter">
+            <option value="">全部难度</option>
+            <option value="beginner">新手</option>
+            <option value="intermediate">初中级</option>
+            <option value="advanced">进阶</option>
+          </select>
+        </div>
+
+        <!-- 动作数据表格 -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>动作 ID</th>
+                <th>动作名称</th>
+                <th>主要肌群</th>
+                <th>辅助肌群</th>
+                <th>使用器械</th>
+                <th>难度</th>
+                <th>状态</th>
+                <th class="text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ex in filteredExercises" :key="ex._id">
+                <td style="font-family: monospace; font-size: 0.8rem;">{{ ex._id }}</td>
+                <td style="font-weight: 600;">{{ ex.name }}</td>
+                <td>
+                  <span v-for="mId in ex.primary_muscles" :key="mId" class="badge badge-primary mr-2">
+                    {{ musclesList.find(m => m._id === mId)?.name || mId }}
+                  </span>
+                </td>
+                <td>
+                  <span v-for="mId in ex.secondary_muscles" :key="mId" class="muscle-tag">
+                    {{ musclesList.find(m => m._id === mId)?.name || mId }}
+                  </span>
+                  <span v-if="!ex.secondary_muscles || !ex.secondary_muscles.length" style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                </td>
+                <td>
+                  <span v-for="eq in ex.equipment_tags" :key="eq" class="muscle-tag">{{ eq }}</span>
+                </td>
+                <td>
+                  <span class="badge" :class="ex.difficulty === 'advanced' ? 'badge-danger' : ex.difficulty === 'intermediate' ? 'badge-primary' : 'badge-success'">
+                    {{ difficulties[ex.difficulty] }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" :class="ex.status === 'published' ? 'badge-success' : 'badge-muted'">
+                    {{ ex.status === 'published' ? '已发布' : '草稿' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <button class="btn btn-secondary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="openEditExerciseModal(ex)">
+                    编辑
+                  </button>
+                  <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="deleteExercise(ex)">
+                    下架
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!filteredExercises.length">
+                <td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                  没有找到符合条件的动作数据。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 渲染3：官方计划库管理 -->
+      <section v-else-if="currentTab === 'plans'">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">官方计划库</h2>
+            <p class="page-subtitle">配置训练计划，用户启用后生成个人训练日和动作流程</p>
+          </div>
+          <button class="btn btn-primary" @click="openNewPlanModal">
+            ➕ 创建新计划模板
+          </button>
+        </div>
+
+        <!-- 计划列表 -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>计划名称</th>
+                <th>难度</th>
+                <th>训练频次</th>
+                <th>周期</th>
+                <th>状态</th>
+                <th>当前版本</th>
+                <th class="text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="plan in plansList.filter(p => p.status !== 'archived')" :key="plan._id">
+                <td style="font-weight: 600; font-size: 0.95rem;">{{ plan.name }}</td>
+                <td>
+                  <span class="badge" :class="plan.level === 'advanced' ? 'badge-danger' : plan.level === 'intermediate' ? 'badge-primary' : 'badge-success'">
+                    {{ difficulties[plan.level] }}
+                  </span>
+                </td>
+                <td>每周 {{ plan.weekly_frequency }} 练</td>
+                <td>{{ plan.duration_weeks }} 周</td>
+                <td>
+                  <span class="badge" :class="plan.status === 'published' ? 'badge-success' : 'badge-muted'">
+                    {{ plan.status === 'published' ? '已发布' : '草稿' }}
+                  </span>
+                </td>
+                <td style="font-weight: 700; font-family: monospace;">v{{ plan.current_version }}</td>
+                <td class="text-right">
+                  <button class="btn btn-secondary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="openEditPlanModal(plan)">
+                    编排与修改
+                  </button>
+                  <button v-if="plan.status === 'published'" class="btn btn-primary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="publishNewVersion(plan)">
+                    发布新版本
+                  </button>
+                  <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="deletePlan(plan)">
+                    归档下架
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!plansList.filter(p => p.status !== 'archived').length">
+                <td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                  暂无已保存的官方计划模板。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==================== 动作编辑弹窗 ==================== -->
+    <div v-if="showExerciseModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ editingExercise ? '修改标准动作' : '新增标准动作' }}</h3>
+          <button class="close-btn" @click="showExerciseModal = false">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <form @submit.prevent="saveExercise">
+            <div class="form-grid">
+              
+              <div class="form-group">
+                <label>动作唯一 ID (英文字符，如 dumbbell_shoulder_press)</label>
+                <input 
+                  type="text" 
+                  v-model="exerciseForm._id" 
+                  class="form-input" 
+                  placeholder="留空则由数据库随机生成"
+                  :disabled="!!editingExercise"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>动作名称</label>
+                <input 
+                  type="text" 
+                  v-model="exerciseForm.name" 
+                  class="form-input" 
+                  placeholder="如: 哑铃上斜卧推"
+                  required
+                />
+              </div>
+
+              <div class="form-group full-width">
+                <label>别名 (别名可以帮助用户在录入匹配时更精准，多个用逗号隔开)</label>
+                <input 
+                  type="text" 
+                  v-model="exerciseForm.aliasesString" 
+                  class="form-input" 
+                  placeholder="如: 上斜哑铃卧推, 哑铃斜推"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>主要肌群 (必选)</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; background: rgba(255,255,255,0.015); padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                  <label v-for="m in musclesList" :key="'p_'+m._id" style="font-weight: normal; font-size: 0.85rem; display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" :value="m._id" v-model="exerciseForm.primary_muscles"> {{ m.name }}
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>辅助肌群</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; background: rgba(255,255,255,0.015); padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                  <label v-for="m in musclesList" :key="'s_'+m._id" style="font-weight: normal; font-size: 0.85rem; display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" :value="m._id" v-model="exerciseForm.secondary_muscles"> {{ m.name }}
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>困难程度</label>
+                <select v-model="exerciseForm.difficulty" class="form-input">
+                  <option value="beginner">新手 (Beginner)</option>
+                  <option value="intermediate">初中级 (Intermediate)</option>
+                  <option value="advanced">进阶 (Advanced)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>动作模式分类</label>
+                <select v-model="exerciseForm.movement_pattern" class="form-input">
+                  <option value="push">推 (Push)</option>
+                  <option value="pull">拉 (Pull)</option>
+                  <option value="squat">蹲 (Squat)</option>
+                  <option value="hinge">铰链 (Hinge)</option>
+                  <option value="other">其它 (Other)</option>
+                </select>
+              </div>
+
+              <div class="form-group full-width">
+                <label>使用器械需求 (支持复选)</label>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                  <label v-for="eq in equipmentOptions" :key="eq" style="font-weight: normal; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="checkbox" :value="eq" v-model="exerciseForm.equipment_tags"> {{ eq }}
+                  </label>
+                </div>
+              </div>
+
+              <!-- 步骤动态行 -->
+              <div class="form-group full-width">
+                <label>动作执行步骤</label>
+                <div v-for="(step, sIdx) in exerciseForm.steps" :key="'step_'+sIdx" class="list-item-edit">
+                  <span style="font-size: 0.85rem; color: var(--text-muted); width: 30px;">#{{ sIdx + 1 }}</span>
+                  <input type="text" v-model="exerciseForm.steps[sIdx]" class="form-input" style="flex-grow: 1; margin: 0 0.5rem;" placeholder="如: 坐在斜板凳上，双手推起哑铃到正上方" />
+                  <button type="button" class="btn btn-danger" style="padding: 0.35rem; font-size: 0.75rem;" @click="removeFormField('steps', sIdx)">删除</button>
+                </div>
+                <button type="button" class="btn btn-secondary mt-4" style="font-size: 0.8rem;" @click="addFormField('steps')">
+                  ➕ 添加操作步骤
+                </button>
+              </div>
+
+              <!-- 常见错误动态行 -->
+              <div class="form-group full-width">
+                <label>常见错误细节</label>
+                <div v-for="(err, eIdx) in exerciseForm.common_mistakes" :key="'err_'+eIdx" class="list-item-edit">
+                  <input type="text" v-model="exerciseForm.common_mistakes[eIdx]" class="form-input" style="flex-grow: 1; margin-right: 0.5rem;" placeholder="如: 哑铃下降过低导致肩关节张力过大" />
+                  <button type="button" class="btn btn-danger" style="padding: 0.35rem; font-size: 0.75rem;" @click="removeFormField('common_mistakes', eIdx)">删除</button>
+                </div>
+                <button type="button" class="btn btn-secondary mt-4" style="font-size: 0.8rem;" @click="addFormField('common_mistakes')">
+                  ➕ 添加常见错误说明
+                </button>
+              </div>
+
+              <!-- 安全提示动态行 -->
+              <div class="form-group full-width">
+                <label>安全防护建议</label>
+                <div v-for="(tips, tIdx) in exerciseForm.safety_tips" :key="'tips_'+tIdx" class="list-item-edit">
+                  <input type="text" v-model="exerciseForm.safety_tips[tIdx]" class="form-input" style="flex-grow: 1; margin-right: 0.5rem;" placeholder="如: 手肘不要过度向外锁死" />
+                  <button type="button" class="btn btn-danger" style="padding: 0.35rem; font-size: 0.75rem;" @click="removeFormField('safety_tips', tIdx)">删除</button>
+                </div>
+                <button type="button" class="btn btn-secondary mt-4" style="font-size: 0.8rem;" @click="addFormField('safety_tips')">
+                  ➕ 添加安全警告
+                </button>
+              </div>
+
+              <div class="form-group">
+                <label>发布状态</label>
+                <select v-model="exerciseForm.status" class="form-input">
+                  <option value="published">立即发布 (Published)</option>
+                  <option value="draft">暂存草稿 (Draft)</option>
+                </select>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showExerciseModal = false">取消</button>
+          <button class="btn btn-primary" @click="saveExercise" :disabled="isSaving">
+            {{ isSaving ? '保存中...' : '保存修改' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 计划编排弹窗 ==================== -->
+    <div v-if="showPlanModal" class="modal-backdrop">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h3>{{ editingPlan ? `编排计划: ${planForm.name} (当前 v${editingPlan.current_version})` : '创建新计划模板' }}</h3>
+          <button class="close-btn" @click="showPlanModal = false">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-grid">
+            
+            <div class="form-group">
+              <label>计划 ID (如 beginner_3day_split, 建议英文字符)</label>
+              <input 
+                type="text" 
+                v-model="planForm._id" 
+                class="form-input" 
+                placeholder="创建后不可修改"
+                :disabled="!!editingPlan"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>计划名称</label>
+              <input 
+                type="text" 
+                v-model="planForm.name" 
+                class="form-input" 
+                placeholder="如: 新手三分化增肌计划"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>难度阶段</label>
+              <select v-model="planForm.level" class="form-input">
+                <option value="beginner">新手入门</option>
+                <option value="intermediate">初中级强化</option>
+                <option value="advanced">进阶突破</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>计划来源类型</label>
+              <select v-model="planForm.source_type" class="form-input">
+                <option value="self_curated">官方原创 (Self-Curated)</option>
+                <option value="licensed">授权分发 (Licensed)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>建议周期 (周)</label>
+              <input 
+                type="number" 
+                v-model="planForm.duration_weeks" 
+                class="form-input" 
+                min="1"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>每周训练频次 (天/每周)</label>
+              <input 
+                type="number" 
+                v-model="planForm.weekly_frequency" 
+                class="form-input" 
+                min="1" 
+                max="7"
+                @change="adjustPlanDays"
+              />
+            </div>
+
+            <div class="form-group full-width">
+              <label>训练核心目标 (支持复选)</label>
+              <div style="display: flex; gap: 1.5rem;">
+                <label v-for="g in goalOptions" :key="g.value" style="font-weight: normal; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+                  <input type="checkbox" :value="g.value" v-model="planForm.goal_tags"> {{ g.label }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group full-width">
+              <label>计划摘要介绍</label>
+              <textarea v-model="planForm.summary" class="form-input" style="height: 80px;" placeholder="简述该计划的目标和受众..."></textarea>
+            </div>
+
+            <div class="form-group full-width">
+              <label>计划状态</label>
+              <select v-model="planForm.status" class="form-input" style="width: 200px;">
+                <option value="draft">存为草稿 (用户不可见)</option>
+                <option value="published">直接发布 (小程序端同步上架)</option>
+              </select>
+            </div>
+
+            <!-- ==================== 训练日动作编排区 ==================== -->
+            <div class="form-group full-width mt-4" style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+              <h3 class="mb-4">📅 训练日编排 & 动作流配置</h3>
+              
+              <div v-for="(day, dIdx) in planDaysForm" :key="day._id" class="day-builder-card">
+                <div class="day-builder-header">
+                  <div style="display: flex; gap: 1rem; align-items: center; flex-grow: 1;">
+                    <span class="badge badge-primary">DAY {{ day.day_index }}</span>
+                    <input 
+                      type="text" 
+                      v-model="day.name" 
+                      class="form-input" 
+                      style="width: 200px; font-weight: 700; height: 35px; padding: 0.25rem 0.5rem;"
+                      placeholder="如: 胸肩三头训练日"
+                    />
+                    <input 
+                      type="text" 
+                      v-model="day.focus" 
+                      class="form-input" 
+                      style="width: 150px; font-size: 0.85rem; height: 35px; padding: 0.25rem 0.5rem;"
+                      placeholder="训练侧重点(如: 推力容量)"
+                    />
+                  </div>
+                  
+                  <!-- 天关联的目标肌群复选框 -->
+                  <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.8rem; color: var(--text-muted);">
+                    目标肌群:
+                    <select v-model="day.target_muscles" class="select-filter" multiple style="height: 35px; padding: 0; min-width: 120px;">
+                      <option v-for="m in musclesList" :key="m._id" :value="m._id">{{ m.name }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 编排的动作列表 -->
+                <div class="day-exercises-list">
+                  <div 
+                    v-for="(ex, exIdx) in planDayExercisesForm.filter(e => e.plan_day_id === day._id).sort((a,b) => a.order - b.order)" 
+                    :key="ex._id" 
+                    class="day-exercise-row"
+                  >
+                    <div class="day-exercise-order">{{ exIdx + 1 }}</div>
+                    
+                    <!-- 动作下拉列表选择器 -->
+                    <select v-model="ex.exercise_id" class="form-input day-exercise-select" style="height: 38px; padding: 0.25rem 0.5rem;">
+                      <option value="" disabled>-- 请选择标准动作 --</option>
+                      <option v-for="stdEx in exercisesList" :key="stdEx._id" :value="stdEx._id">
+                        {{ stdEx.name }} ({{ stdEx.difficulty === 'advanced' ? '难' : stdEx.difficulty === 'intermediate' ? '中' : '易' }})
+                      </option>
+                    </select>
+
+                    <!-- 角色设定 -->
+                    <select v-model="ex.role" class="form-input" style="width: 90px; height: 38px; padding: 0.25rem 0.5rem;">
+                      <option value="main">主项</option>
+                      <option value="assistance">辅助项</option>
+                      <option value="isolation">孤立项</option>
+                    </select>
+
+                    <!-- 组数 -->
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <input type="number" v-model.number="ex.sets" class="form-input day-exercise-input-small" style="height: 38px;" min="1" placeholder="组数" />
+                      <span style="font-size: 0.8rem; color: var(--text-muted);">组</span>
+                    </div>
+
+                    <!-- 次数范围 -->
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <input type="text" v-model="ex.reps" class="form-input day-exercise-input-medium" style="height: 38px;" placeholder="次数范围 (如 8-12)" />
+                      <span style="font-size: 0.8rem; color: var(--text-muted);">次</span>
+                    </div>
+
+                    <!-- 建议 RPE -->
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <input type="text" v-model="ex.rpe" class="form-input day-exercise-input-small" style="height: 38px;" placeholder="RPE" />
+                      <span style="font-size: 0.8rem; color: var(--text-muted);">RPE</span>
+                    </div>
+
+                    <!-- 休息秒数 -->
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <input type="number" v-model.number="ex.rest_seconds" class="form-input day-exercise-input-medium" style="height: 38px;" min="0" placeholder="休息(秒)" />
+                      <span style="font-size: 0.8rem; color: var(--text-muted);">秒</span>
+                    </div>
+
+                    <!-- 操作：上移，下移，移除 -->
+                    <div class="day-exercise-actions">
+                      <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(ex, 'up')" :disabled="exIdx === 0">▲</button>
+                      <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(ex, 'down')" :disabled="exIdx === planDayExercisesForm.filter(e => e.plan_day_id === day._id).length - 1">▼</button>
+                      <button type="button" class="btn btn-danger" style="padding: 0.25rem 0.5rem;" @click="removeExerciseFromDay(ex._id)">✕</button>
+                    </div>
+                  </div>
+
+                  <div v-if="!planDayExercisesForm.filter(e => e.plan_day_id === day._id).length" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                    ⚠️ 该训练日暂无动作，请点击下方添加动作！
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary mt-2" style="font-size: 0.8rem; width: 100%; border-style: dashed;" @click="addExerciseToDay(day._id)">
+                  ➕ 为当天添加动作编排
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showPlanModal = false">取消</button>
+          <button class="btn btn-primary" @click="savePlan" :disabled="isSaving">
+            {{ isSaving ? '计划保存中...' : '保存计划模板' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<style scoped>
+/* 可以在此编写少量 App 组件专属的细微微调 */
+</style>
