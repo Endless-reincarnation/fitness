@@ -1,0 +1,598 @@
+[
+  {
+    "_id": "barbell_bench_press",
+    "name": "杠铃卧推",
+    "aliases": [
+      "卧推",
+      "平板杠铃卧推"
+    ],
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "equipment_tags": [
+      "杠铃",
+      "卧推凳"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "push",
+    "steps": [
+      "仰卧在卧推凳上，双脚踩稳地面。",
+      "握距略宽于肩，肩胛后缩下沉。",
+      "控制杠铃下降到胸部附近。",
+      "保持身体稳定，将杠铃推回起始位置。"
+    ],
+    "common_mistakes": [
+      "肩膀前顶。",
+      "臀部明显离凳。",
+      "杠铃下降失控。"
+    ],
+    "safety_tips": [
+      "新手建议有人保护或使用安全架。",
+      "肩部不适时降低重量或改用哑铃卧推。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "incline_dumbbell_press",
+    "name": "哑铃上斜卧推",
+    "aliases": [
+      "上斜哑铃卧推",
+      "上胸哑铃推"
+    ],
+    "primary_muscles": [
+      "upper_pectoralis"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "equipment_tags": [
+      "哑铃",
+      "上斜凳"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "push",
+    "steps": [
+      "将训练凳调到上斜角度。",
+      "双手持哑铃，肩胛保持稳定。",
+      "控制哑铃下降到胸上部两侧。",
+      "向上推起哑铃，顶部不要猛烈碰撞。"
+    ],
+    "common_mistakes": [
+      "凳子角度过高导致肩部代偿。",
+      "手腕后折。",
+      "下降过快。"
+    ],
+    "safety_tips": [
+      "优先使用可控重量。",
+      "肩部不适时降低凳子角度。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "parallel_bar_dip",
+    "name": "双杠臂屈伸",
+    "aliases": [
+      "双杠臂屈伸",
+      "双杠屈臂撑"
+    ],
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "equipment_tags": [
+      "双杠",
+      "自重"
+    ],
+    "difficulty": "intermediate",
+    "movement_pattern": "push",
+    "steps": [
+      "双手撑住双杠，身体保持稳定。",
+      "控制身体下降，肘部自然弯曲。",
+      "下降到肩部舒适范围内。",
+      "推起身体回到起始位置。"
+    ],
+    "common_mistakes": [
+      "下降过深导致肩部不适。",
+      "身体晃动。",
+      "耸肩完成动作。"
+    ],
+    "safety_tips": [
+      "无法稳定完成时先做辅助双杠或窄距俯卧撑。",
+      "肩前侧疼痛时停止动作。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "lying_barbell_triceps_extension",
+    "name": "仰卧杠铃臂屈伸",
+    "aliases": [
+      "仰卧臂屈伸",
+      "碎颅者"
+    ],
+    "primary_muscles": [
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [],
+    "equipment_tags": [
+      "杠铃",
+      "卧推凳"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "elbow_extension",
+    "steps": [
+      "仰卧在训练凳上，双手握杠。",
+      "上臂保持相对固定。",
+      "屈肘让杠铃向额头或头后下降。",
+      "收缩肱三头肌伸直手臂。"
+    ],
+    "common_mistakes": [
+      "上臂大幅摆动。",
+      "使用过大重量。",
+      "手腕不稳。"
+    ],
+    "safety_tips": [
+      "建议从轻重量开始。",
+      "肘部不适时改用绳索下压。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "y_raise_lateral_raise",
+    "name": "Y 字侧平举",
+    "aliases": [
+      "Y 字平举",
+      "Y Raise"
+    ],
+    "primary_muscles": [
+      "middle_deltoid"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "equipment_tags": [
+      "哑铃"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "shoulder_abduction",
+    "steps": [
+      "双手持轻哑铃，身体保持稳定。",
+      "手臂沿身体斜前方抬起形成 Y 字轨迹。",
+      "抬到肩部舒适高度后短暂停顿。",
+      "控制下放回起始位置。"
+    ],
+    "common_mistakes": [
+      "耸肩借力。",
+      "身体后仰甩动。",
+      "重量过大导致轨迹变形。"
+    ],
+    "safety_tips": [
+      "使用小重量训练控制感。",
+      "肩部夹痛时降低抬高手臂角度。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "single_arm_cable_pulldown",
+    "name": "单手钢线下拉",
+    "aliases": [
+      "单臂绳索下拉",
+      "单手绳索下拉"
+    ],
+    "primary_muscles": [
+      "latissimus_dorsi"
+    ],
+    "secondary_muscles": [
+      "biceps_brachii"
+    ],
+    "equipment_tags": [
+      "龙门架",
+      "绳索"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "pull",
+    "steps": [
+      "单手握住绳索把手。",
+      "身体保持稳定，肩胛先下沉。",
+      "将手肘向身体侧后方拉下。",
+      "控制还原并保持背阔肌张力。"
+    ],
+    "common_mistakes": [
+      "用手臂硬拉。",
+      "耸肩。",
+      "身体过度旋转。"
+    ],
+    "safety_tips": [
+      "先用轻重量找背部发力。",
+      "避免为了追重量牺牲动作幅度。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "neutral_grip_lat_pulldown",
+    "name": "对握下拉",
+    "aliases": [
+      "中立握下拉",
+      "对握高位下拉"
+    ],
+    "primary_muscles": [
+      "latissimus_dorsi"
+    ],
+    "secondary_muscles": [
+      "biceps_brachii",
+      "middle_lower_trapezius"
+    ],
+    "equipment_tags": [
+      "高位下拉器",
+      "器械"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "pull",
+    "steps": [
+      "坐稳并固定大腿。",
+      "双手对握把手，肩胛下沉。",
+      "将把手拉向上胸区域。",
+      "控制回放到手臂伸展但不耸肩。"
+    ],
+    "common_mistakes": [
+      "身体后仰过多。",
+      "拉到腹部导致轨迹偏移。",
+      "顶部完全放松耸肩。"
+    ],
+    "safety_tips": [
+      "保持胸椎自然伸展。",
+      "肩部不适时缩小动作幅度。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "single_arm_machine_row",
+    "name": "单手器械划船",
+    "aliases": [
+      "单臂器械划船",
+      "单手划船器"
+    ],
+    "primary_muscles": [
+      "latissimus_dorsi"
+    ],
+    "secondary_muscles": [
+      "middle_lower_trapezius",
+      "biceps_brachii"
+    ],
+    "equipment_tags": [
+      "器械"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "pull",
+    "steps": [
+      "调整座椅和胸垫位置。",
+      "单手握住把手，躯干贴稳。",
+      "手肘向后拉，感受背部收缩。",
+      "控制回放，不让重量片猛烈碰撞。"
+    ],
+    "common_mistakes": [
+      "身体离开胸垫借力。",
+      "只用手臂拉。",
+      "左右重量差异过大。"
+    ],
+    "safety_tips": [
+      "单侧动作先从弱侧开始。",
+      "保持动作节奏稳定。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "seated_elbow_out_row",
+    "name": "坐姿开肘划船",
+    "aliases": [
+      "开肘划船",
+      "坐姿宽肘划船"
+    ],
+    "primary_muscles": [
+      "posterior_deltoid",
+      "middle_lower_trapezius",
+      "rhomboids"
+    ],
+    "secondary_muscles": [
+      "latissimus_dorsi",
+      "biceps_brachii"
+    ],
+    "equipment_tags": [
+      "器械",
+      "绳索"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "pull",
+    "steps": [
+      "坐姿保持躯干稳定。",
+      "手肘略打开，向后划动。",
+      "终点感受肩胛后缩。",
+      "控制还原，保持胸椎伸展。"
+    ],
+    "common_mistakes": [
+      "耸肩。",
+      "腰部后仰借力。",
+      "手肘轨迹过低。"
+    ],
+    "safety_tips": [
+      "肩痛用户优先轻重量控制。",
+      "动作中避免突然猛拉。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "cable_curl",
+    "name": "钢线弯举",
+    "aliases": [
+      "绳索弯举",
+      "钢索弯举"
+    ],
+    "primary_muscles": [
+      "biceps_brachii"
+    ],
+    "secondary_muscles": [],
+    "equipment_tags": [
+      "龙门架",
+      "绳索"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "elbow_flexion",
+    "steps": [
+      "站稳并握住绳索把手。",
+      "上臂贴近身体两侧。",
+      "屈肘将把手向上拉起。",
+      "控制离心回到起始位置。"
+    ],
+    "common_mistakes": [
+      "身体前后摆动。",
+      "上臂大幅移动。",
+      "下放过快。"
+    ],
+    "safety_tips": [
+      "肘部不适时降低重量。",
+      "保持手腕自然中立。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "single_leg_deadlift",
+    "name": "单腿硬拉",
+    "aliases": [
+      "单腿罗马尼亚硬拉",
+      "单腿 RDL"
+    ],
+    "primary_muscles": [
+      "hamstrings",
+      "gluteus_maximus"
+    ],
+    "secondary_muscles": [
+      "erector_spinae",
+      "core"
+    ],
+    "equipment_tags": [
+      "哑铃",
+      "自重"
+    ],
+    "difficulty": "intermediate",
+    "movement_pattern": "hinge",
+    "steps": [
+      "单脚站稳，手持哑铃或徒手。",
+      "髋部向后折叠，躯干前倾。",
+      "后侧腿自然向后伸保持平衡。",
+      "收缩臀腿回到站立。"
+    ],
+    "common_mistakes": [
+      "骨盆明显旋转。",
+      "弓背。",
+      "膝盖锁死。"
+    ],
+    "safety_tips": [
+      "可扶固定物降低平衡难度。",
+      "优先掌握髋铰链再加重量。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "bulgarian_split_squat",
+    "name": "保加利亚蹲",
+    "aliases": [
+      "保加利亚分腿蹲",
+      "后脚抬高分腿蹲"
+    ],
+    "primary_muscles": [
+      "quadriceps",
+      "gluteus_maximus"
+    ],
+    "secondary_muscles": [
+      "hamstrings",
+      "core"
+    ],
+    "equipment_tags": [
+      "哑铃",
+      "训练凳"
+    ],
+    "difficulty": "intermediate",
+    "movement_pattern": "squat",
+    "steps": [
+      "后脚搭在训练凳上，前脚站稳。",
+      "身体垂直下蹲，控制膝盖轨迹。",
+      "下降到舒适深度。",
+      "前脚发力站起。"
+    ],
+    "common_mistakes": [
+      "前脚距离过近。",
+      "膝盖内扣。",
+      "身体晃动。"
+    ],
+    "safety_tips": [
+      "初学可先徒手练习。",
+      "膝盖不适时调整步距和深度。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "front_squat",
+    "name": "颈前深蹲",
+    "aliases": [
+      "前蹲",
+      "杠铃前蹲"
+    ],
+    "primary_muscles": [
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "gluteus_maximus",
+      "core",
+      "erector_spinae"
+    ],
+    "equipment_tags": [
+      "杠铃",
+      "深蹲架"
+    ],
+    "difficulty": "intermediate",
+    "movement_pattern": "squat",
+    "steps": [
+      "杠铃置于肩前侧，肘部抬高。",
+      "双脚站距约与肩同宽。",
+      "保持躯干稳定下蹲。",
+      "脚掌均匀发力站起。"
+    ],
+    "common_mistakes": [
+      "肘部下掉导致杠铃前滑。",
+      "塌腰或弓背。",
+      "膝盖内扣。"
+    ],
+    "safety_tips": [
+      "优先使用深蹲架和安全杆。",
+      "手腕不适时可使用交叉握或拉力带辅助。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "romanian_deadlift",
+    "name": "罗马尼亚硬拉",
+    "aliases": [
+      "RDL",
+      "罗马尼亚硬举"
+    ],
+    "primary_muscles": [
+      "hamstrings",
+      "gluteus_maximus"
+    ],
+    "secondary_muscles": [
+      "erector_spinae",
+      "core"
+    ],
+    "equipment_tags": [
+      "杠铃",
+      "哑铃"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "hinge",
+    "steps": [
+      "双脚站稳，双手持杠铃或哑铃。",
+      "保持背部中立，髋部向后推。",
+      "重量沿腿部附近下放。",
+      "感受后侧链拉伸后伸髋站起。"
+    ],
+    "common_mistakes": [
+      "弓背下放。",
+      "膝盖弯曲过多变成深蹲。",
+      "重量离身体太远。"
+    ],
+    "safety_tips": [
+      "腰部不适时降低重量。",
+      "先学会髋铰链再追求重量。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  },
+  {
+    "_id": "back_extension",
+    "name": "山羊挺身",
+    "aliases": [
+      "背伸",
+      "罗马椅挺身"
+    ],
+    "primary_muscles": [
+      "erector_spinae",
+      "gluteus_maximus"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "equipment_tags": [
+      "罗马椅",
+      "自重"
+    ],
+    "difficulty": "beginner",
+    "movement_pattern": "hip_extension",
+    "steps": [
+      "调整罗马椅高度，让髋部能自由活动。",
+      "身体从髋部折叠下放。",
+      "收缩臀部和下背部抬起身体。",
+      "回到身体接近直线的位置即可。"
+    ],
+    "common_mistakes": [
+      "顶部过度反弓。",
+      "快速甩动。",
+      "只用腰部发力。"
+    ],
+    "safety_tips": [
+      "避免过度后仰。",
+      "腰部敏感用户先做小幅度动作。"
+    ],
+    "media_urls": [],
+    "status": "published",
+    "created_at": "2026-06-05T08:57:51.408Z",
+    "updated_at": "2026-06-05T08:57:51.408Z"
+  }
+]
