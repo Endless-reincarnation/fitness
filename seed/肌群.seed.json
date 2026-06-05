@@ -1,0 +1,122 @@
+[
+  {
+    "_id": "pectoralis_major",
+    "name": "胸大肌",
+    "body_region": "chest",
+    "view_side": "front",
+    "color": "#E85D75",
+    "sort_order": 10
+  },
+  {
+    "_id": "upper_pectoralis",
+    "name": "胸大肌上束",
+    "body_region": "chest",
+    "view_side": "front",
+    "color": "#F28482",
+    "sort_order": 11
+  },
+  {
+    "_id": "anterior_deltoid",
+    "name": "三角肌前束",
+    "body_region": "shoulders",
+    "view_side": "front",
+    "color": "#F6BD60",
+    "sort_order": 20
+  },
+  {
+    "_id": "middle_deltoid",
+    "name": "三角肌中束",
+    "body_region": "shoulders",
+    "view_side": "front",
+    "color": "#F7C948",
+    "sort_order": 21
+  },
+  {
+    "_id": "posterior_deltoid",
+    "name": "三角肌后束",
+    "body_region": "shoulders",
+    "view_side": "back",
+    "color": "#F4A261",
+    "sort_order": 22
+  },
+  {
+    "_id": "triceps_brachii",
+    "name": "肱三头肌",
+    "body_region": "arms",
+    "view_side": "back",
+    "color": "#9B5DE5",
+    "sort_order": 30
+  },
+  {
+    "_id": "biceps_brachii",
+    "name": "肱二头肌",
+    "body_region": "arms",
+    "view_side": "front",
+    "color": "#00BBF9",
+    "sort_order": 31
+  },
+  {
+    "_id": "latissimus_dorsi",
+    "name": "背阔肌",
+    "body_region": "back",
+    "view_side": "back",
+    "color": "#2A9D8F",
+    "sort_order": 40
+  },
+  {
+    "_id": "middle_lower_trapezius",
+    "name": "中下斜方肌",
+    "body_region": "back",
+    "view_side": "back",
+    "color": "#52B788",
+    "sort_order": 41
+  },
+  {
+    "_id": "rhomboids",
+    "name": "菱形肌",
+    "body_region": "back",
+    "view_side": "back",
+    "color": "#74C69D",
+    "sort_order": 42
+  },
+  {
+    "_id": "gluteus_maximus",
+    "name": "臀大肌",
+    "body_region": "legs",
+    "view_side": "back",
+    "color": "#E76F51",
+    "sort_order": 50
+  },
+  {
+    "_id": "quadriceps",
+    "name": "股四头肌",
+    "body_region": "legs",
+    "view_side": "front",
+    "color": "#EF476F",
+    "sort_order": 51
+  },
+  {
+    "_id": "hamstrings",
+    "name": "腘绳肌",
+    "body_region": "legs",
+    "view_side": "back",
+    "color": "#06D6A0",
+    "sort_order": 52
+  },
+  {
+    "_id": "erector_spinae",
+    "name": "竖脊肌",
+    "body_region": "back",
+    "view_side": "back",
+    "color": "#118AB2",
+    "sort_order": 60
+  },
+  {
+    "_id": "core",
+    "name": "核心肌群",
+    "body_region": "core",
+    "view_side": "both",
+    "color": "#073B4C",
+    "sort_order": 70
+  }
+]

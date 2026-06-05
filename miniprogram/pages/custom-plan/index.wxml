@@ -1,0 +1,59 @@
+<view class="page theme-{{theme}}">
+  <view class="page-header">
+    <view class="eyebrow">CUSTOM PROGRAM</view>
+    <view class="page-title">新建计划</view>
+    <view class="muted intro">支持多个训练日。先选择训练日，再给当前训练日添加动作。</view>
+  </view>
+
+  <view class="card block">
+    <view class="field-label">计划名称</view>
+    <input class="input" value="{{planName}}" data-field="planName" bindinput="onInput" placeholder="例如：我的胸肩训练" />
+  </view>
+
+  <view class="card block">
+    <view class="section-title">训练日</view>
+    <view class="day-tabs">
+      <view wx:for="{{days}}" wx:key="name" class="day-tab {{currentDayIndex === index ? 'active' : ''}}" data-index="{{index}}" bindtap="switchDay">
+        {{item.name}}
+      </view>
+    </view>
+    <button class="ghost-button add-day-button" bindtap="addDay">添加训练日</button>
+    <view class="field-label second">当前训练日名称</view>
+    <input class="input" value="{{currentDayName}}" bindinput="onDayNameInput" placeholder="例如：胸肩三头" />
+  </view>
+
+  <view class="card block">
+    <view class="section-title">添加动作</view>
+    <picker mode="selector" range="{{exerciseOptions}}" value="{{selectedExerciseIndex}}" bindchange="onExerciseChange">
+      <view class="picker-box">{{exerciseOptions[selectedExerciseIndex]}}</view>
+    </picker>
+    <view class="form-row">
+      <view class="field-box">
+        <view class="field-label">组数</view>
+        <input class="mini-input" type="number" value="{{sets}}" data-field="sets" bindinput="onInput" />
+      </view>
+      <view class="field-box">
+        <view class="field-label">次数</view>
+        <input class="mini-input" value="{{reps}}" data-field="reps" bindinput="onInput" />
+      </view>
+      <view class="field-box">
+        <view class="field-label">休息</view>
+        <input class="mini-input" type="number" value="{{restSeconds}}" data-field="restSeconds" bindinput="onInput" />
+      </view>
+    </view>
+    <button class="ghost-button add-button" bindtap="addExercise">添加动作</button>
+  </view>
+
+  <view class="section-title list-title">当前训练日动作</view>
+  <view wx:if="{{!currentDayExercises.length}}" class="empty muted">当前训练日还没有动作</view>
+  <view wx:for="{{currentDayExercises}}" wx:key="exerciseId" class="exercise-row">
+    <view class="mark"></view>
+    <view class="exercise-main">
+      <view class="exercise-name">{{item.exerciseName}}</view>
+      <view class="exercise-sub">{{item.sets}} 组 · {{item.reps}} 次 · 休 {{item.restSeconds}} 秒</view>
+    </view>
+    <view class="remove-action" data-index="{{index}}" bindtap="removeExercise">删除</view>
+  </view>
+
+  <button class="primary-button save-button" bindtap="savePlan">保存计划</button>
+</view>

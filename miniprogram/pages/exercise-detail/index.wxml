@@ -1,0 +1,29 @@
+<view class="page theme-{{theme}}" wx:if="{{exercise}}">
+  <view class="header">
+    <view class="eyebrow">EXERCISE GUIDE</view>
+    <view class="exercise-title">{{exercise.name}}</view>
+    <view class="muted">{{equipmentText}}</view>
+  </view>
+
+  <view class="lift-card">
+    <view class="lift-label">目标肌群</view>
+    <view class="lift-name">{{primaryText}}</view>
+    <view class="lift-meta">辅助：{{secondaryText}}</view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">动作步骤</view>
+    <view wx:for="{{exercise.steps}}" wx:key="*this" class="step-row">
+      <view class="step-index">{{index + 1}}</view>
+      <view class="step-text">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">常见错误</view>
+    <view wx:for="{{exercise.mistakes}}" wx:key="*this" class="mistake-row">
+      <view class="mark"></view>
+      <view>{{item}}</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,45 @@
+<view class="page theme-{{theme}}">
+  <view class="report-header">
+    <view class="eyebrow">SESSION REPORT</view>
+    <view class="report-title">今日表现</view>
+    <view class="muted">胸肩三头 · {{latestSetCount}} 组 · 总容量 {{latestTotalVolume}} kg</view>
+  </view>
+
+  <view class="next-card">
+    <view class="next-label">下次建议</view>
+    <view class="next-title">{{nextExerciseName}} +2.5kg</view>
+    <view class="next-text">所有组达到目标次数，RPE 未超过 8。</view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">肌群刺激</view>
+    <view class="muscle-row">
+      <view class="muted">胸大肌</view>
+      <view class="bar"><view class="bar-fill chest"></view></view>
+    </view>
+    <view class="muscle-row">
+      <view class="muted">肱三头肌</view>
+      <view class="bar"><view class="bar-fill tri"></view></view>
+    </view>
+    <view class="muscle-row">
+      <view class="muted">三角肌前束</view>
+      <view class="bar"><view class="bar-fill delt"></view></view>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">体重趋势</view>
+    <view class="weight-bars">
+      <view wx:for="{{[42,50,46,64,68,84,78]}}" wx:key="*this" class="weight-bar" style="height: {{item}}rpx;"></view>
+    </view>
+  </view>
+
+  <view class="weight-row">
+    <input class="weight-input" type="digit" value="{{weightKg}}" bindinput="onWeightInput" placeholder="今日体重 kg" />
+    <button class="primary-button save-button" bindtap="saveWeight">保存</button>
+  </view>
+
+  <view wx:for="{{latestSuggestions}}" wx:key="exerciseId" class="suggestion-card">
+    {{item.advice}}
+  </view>
+</view>

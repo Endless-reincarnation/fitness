@@ -1,0 +1,58 @@
+<view class="page home-page theme-{{theme}}">
+  <view wx:if="{{!activePlan}}" class="card block">
+    <view class="eyebrow">TODAY PROGRAM</view>
+    <view class="section-title">还没有启用计划</view>
+    <view class="muted block-text">先从计划库选择一套计划，之后首页会直接显示今日训练。</view>
+    <button class="primary-button" bindtap="goPlans">去选择计划</button>
+  </view>
+
+  <block wx:else>
+    <view wx:if="{{workoutDraft}}" class="resume-card">
+      <view>
+        <view class="resume-label">未完成训练</view>
+        <view class="resume-title">{{workoutDraft.dayName}}</view>
+        <view class="resume-sub">练到：{{workoutDraft.currentExerciseName}} · 第 {{workoutDraft.currentSetIndex + 1}} 组</view>
+      </view>
+      <button class="primary-button resume-button" bindtap="resumeWorkout">继续训练</button>
+    </view>
+
+    <view class="screen-header">
+      <view class="eyebrow">TODAY PROGRAM</view>
+      <view class="hero-title">{{todayDay.name}}</view>
+      <view class="muted">{{activePlan.name}} · 第 {{activePlan.currentDayIndex + 1}} / {{totalDays}} 天 · 已完成 {{activePlan.completedSessions}} 次</view>
+      <picker mode="selector" range="{{dayOptions}}" value="{{activePlan.currentDayIndex}}" bindchange="onDayChange">
+        <view class="day-picker">切换训练日</view>
+      </picker>
+    </view>
+
+    <view class="lift-card">
+      <view class="lift-label">当前动作</view>
+      <view class="lift-name">{{firstExercise.detail.name}}</view>
+      <view class="lift-meta">{{firstExercise.sets}} 组 · {{firstExercise.reps}} 次 · RPE {{firstExercise.rpe}} · REST {{firstExercise.restSeconds}}s</view>
+    </view>
+
+    <view class="grid">
+      <view class="card stat-card">
+        <view class="stat-label">完成进度</view>
+        <view class="stat-value">0 / {{todayDay.exercises.length}}</view>
+      </view>
+      <view class="card stat-card">
+        <view class="stat-label">下次训练</view>
+        <view class="stat-value small">{{nextDayName}}</view>
+      </view>
+    </view>
+
+    <view class="section-title list-title">动作清单</view>
+    <view class="exercise-list">
+      <view wx:for="{{todayDay.exercises}}" wx:key="exerciseId" class="exercise-row">
+        <view class="mark"></view>
+        <view class="exercise-main">
+          <view class="exercise-name">{{item.detail.name}}</view>
+          <view class="exercise-sub">{{item.sets}} 组 · {{item.reps}} 次 · 休 {{item.restSeconds}} 秒</view>
+        </view>
+        <view class="sets-label">{{item.sets}} 组</view>
+      </view>
+    </view>
+    <button class="primary-button start-button" bindtap="startWorkout">{{workoutDraft ? '重新开始今日训练' : '开始训练'}}</button>
+  </block>
+</view>

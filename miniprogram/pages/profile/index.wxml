@@ -1,0 +1,43 @@
+<view class="page theme-{{theme}}">
+  <view class="card profile-card">
+    <view class="avatar">训</view>
+    <view>
+      <view class="name">训练用户</view>
+      <view class="muted">微信登录接入前使用本地身份</view>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">当前计划</view>
+    <view class="muted plan-text">{{activePlan ? activePlan.name : '暂无启用计划'}}</view>
+  </view>
+
+  <view class="grid">
+    <view class="card stat-card">
+      <view class="muted">训练次数</view>
+      <view class="stat-value">{{workoutCount}}</view>
+    </view>
+    <view class="card stat-card">
+      <view class="muted">体重记录</view>
+      <view class="stat-value">{{weightCount}}</view>
+    </view>
+  </view>
+
+  <view class="card block action-card" bindtap="openExercises">
+    <view>
+      <view class="section-title">动作库</view>
+      <view class="muted plan-text">查看动作步骤、目标肌群和常见错误</view>
+    </view>
+    <view class="action-arrow">›</view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title">训练皮肤</view>
+    <view class="theme-row">
+      <view wx:for="{{themeOptions}}" wx:key="value" class="theme-option {{theme === item.value ? 'active' : ''}}" data-theme="{{item.value}}" bindtap="switchTheme">
+        <view class="theme-dot {{item.value}}"></view>
+        <view>{{item.label}}</view>
+      </view>
+    </view>
+  </view>
+</view>

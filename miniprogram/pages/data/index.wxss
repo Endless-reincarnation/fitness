@@ -1,0 +1,136 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.report-header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.report-title {
+  margin-top: 18rpx;
+  color: var(--text);
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.next-card {
+  margin-bottom: 28rpx;
+  padding: 36rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.18);
+  border-radius: 14rpx;
+  background: var(--primary);
+  color: var(--button-text);
+}
+
+.next-label {
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.next-title {
+  margin-top: 34rpx;
+  font-size: 52rpx;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.next-text {
+  margin-top: 28rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.weight-row {
+  display: grid;
+  grid-template-columns: 1fr 180rpx;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.weight-input {
+  height: 88rpx;
+  padding: 0 20rpx;
+  border-radius: 14rpx;
+  background: var(--card-strong);
+  color: var(--text);
+  border: 2rpx solid var(--border);
+  font-size: 30rpx;
+}
+
+.save-button {
+  height: 88rpx;
+  line-height: 88rpx;
+}
+
+.block {
+  margin-top: 24rpx;
+  border-radius: 12rpx;
+}
+
+.empty {
+  margin-top: 18rpx;
+}
+
+.muscle-row {
+  margin-top: 24rpx;
+}
+
+.bar {
+  height: 24rpx;
+  margin-top: 12rpx;
+  border-radius: 6rpx;
+  background: rgba(255, 210, 63, 0.12);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6rpx;
+  background: var(--primary);
+}
+
+.bar-fill.chest {
+  width: 82%;
+}
+
+.bar-fill.tri {
+  width: 62%;
+  background: var(--primary-strong);
+}
+
+.bar-fill.delt {
+  width: 45%;
+  background: #b45309;
+}
+
+.weight-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16rpx;
+  height: 150rpx;
+  margin-top: 28rpx;
+}
+
+.weight-bar {
+  flex: 1;
+  border-radius: 10rpx 10rpx 0 0;
+  background: var(--primary);
+}
+
+.suggestion-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card);
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: 900;
+}

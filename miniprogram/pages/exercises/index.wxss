@@ -1,0 +1,61 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.page-header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.page-title {
+  margin-top: 18rpx;
+  margin-bottom: 18rpx;
+  color: var(--text);
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.intro {
+  line-height: 1.5;
+}
+
+.exercise-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 22rpx;
+  padding: 24rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card);
+}
+
+.mark {
+  width: 10rpx;
+  height: 72rpx;
+  margin-right: 24rpx;
+  border-radius: 999rpx;
+  background: var(--primary);
+}
+
+.exercise-main {
+  flex: 1;
+}
+
+.exercise-name {
+  color: var(--text);
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.exercise-sub {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}

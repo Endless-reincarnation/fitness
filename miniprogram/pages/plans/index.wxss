@@ -1,0 +1,97 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.page-header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.page-title {
+  margin-top: 18rpx;
+  margin-bottom: 18rpx;
+  color: var(--text);
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.intro {
+  line-height: 1.5;
+}
+
+.create-button {
+  margin-bottom: 32rpx;
+  border-radius: 10rpx;
+}
+
+.group-title {
+  margin: 34rpx 0 22rpx;
+  font-size: 34rpx;
+}
+
+.plan-card {
+  margin-bottom: 28rpx;
+  padding: 32rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 14rpx;
+  background: var(--card);
+}
+
+.plan-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.plan-title {
+  margin-top: 18rpx;
+  color: var(--text);
+  font-size: 42rpx;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.plan-summary {
+  margin-top: 16rpx;
+  color: var(--muted);
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.metric-box {
+  min-height: 92rpx;
+  padding: 14rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 20rpx;
+  font-weight: 900;
+}
+
+.metric-value {
+  margin-top: 10rpx;
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.tags {
+  margin-top: 18rpx;
+}

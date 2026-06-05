@@ -1,0 +1,16 @@
+<view class="page theme-{{theme}}">
+  <view class="page-header">
+    <view class="eyebrow">EXERCISE LIBRARY</view>
+    <view class="page-title">动作库</view>
+    <view class="muted intro">先收录当前计划用到的标准动作，后续继续补肌群筛选和器械筛选。</view>
+  </view>
+
+  <view wx:for="{{exercises}}" wx:key="id" class="exercise-card" data-id="{{item.id}}" bindtap="openExercise">
+    <view class="mark"></view>
+    <view class="exercise-main">
+      <view class="exercise-name">{{item.name}}</view>
+      <view class="exercise-sub">主肌群：{{item.primaryMusclesText}}</view>
+      <view class="exercise-sub">器械：{{item.equipmentText}}</view>
+    </view>
+  </view>
+</view>

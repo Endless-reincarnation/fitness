@@ -1,0 +1,51 @@
+<view class="page theme-{{theme}}" wx:if="{{day}}">
+  <view class="workout-header">
+    <view class="eyebrow">LIVE SET</view>
+    <view class="day-title">{{currentExercise.detail.name}}</view>
+    <view class="muted">{{currentExercise.roleLabel}} · {{currentExerciseMusclesText}}</view>
+  </view>
+
+  <view class="card workout-card">
+    <view class="set-label">第 {{currentSetIndex + 1}} 组 / {{currentExercise.sets}} 组</view>
+    <view class="live-number-row">
+      <view class="live-number">{{weightKg || 0}}</view>
+      <view class="unit">KG</view>
+      <view class="live-number">{{reps || currentExerciseMinReps}}</view>
+      <view class="unit">次</view>
+    </view>
+    <view class="live-meta">RPE {{rpe || currentExercise.rpe}} · REST {{currentExercise.restSeconds}}s · 保留 2 次余量</view>
+  </view>
+
+  <view class="form-row">
+    <view class="field-box">
+      <view class="field-label">重量</view>
+      <input class="input" type="digit" value="{{weightKg}}" data-field="weightKg" bindinput="onInput" placeholder="0" />
+    </view>
+    <view class="field-box">
+      <view class="field-label">次数</view>
+      <input class="input" type="number" value="{{reps}}" data-field="reps" bindinput="onInput" placeholder="{{currentExerciseMinReps}}" />
+    </view>
+    <view class="field-box">
+      <view class="field-label">RPE</view>
+      <input class="input" type="digit" value="{{rpe}}" data-field="rpe" bindinput="onInput" placeholder="{{currentExercise.rpe}}" />
+    </view>
+  </view>
+
+  <view class="target">
+    <view class="rule-title">重量规则</view>
+    <view class="muted">{{currentExercise.weightRule}}</view>
+  </view>
+
+  <view wx:if="{{isResting}}" class="card rest-card">
+    <view class="rest-time">{{restLeft}}s</view>
+    <view class="muted rest-label">组间休息</view>
+    <view class="rest-bars">
+      <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="rest-bar {{index < 7 ? 'on' : ''}}"></view>
+    </view>
+  </view>
+
+  <view class="action-row">
+    <button class="ghost-button quick-button" bindtap="useLastSet">沿用上一组</button>
+    <button class="primary-button done-button" bindtap="finishSet">完成本组</button>
+  </view>
+</view>

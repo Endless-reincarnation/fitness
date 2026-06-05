@@ -1,0 +1,165 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.page-header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.page-title {
+  margin-top: 18rpx;
+  margin-bottom: 18rpx;
+  color: var(--text);
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.intro {
+  line-height: 1.5;
+}
+
+.block {
+  margin-bottom: 26rpx;
+  border-radius: 12rpx;
+}
+
+.field-label {
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.field-label.second {
+  margin-top: 24rpx;
+}
+
+.day-tabs {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 20rpx;
+  overflow-x: auto;
+}
+
+.day-tab {
+  flex: 0 0 auto;
+  padding: 16rpx 22rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 10rpx;
+  color: var(--muted);
+  background: var(--card-strong);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.day-tab.active {
+  border-color: var(--primary);
+  color: var(--button-text);
+  background: var(--primary);
+}
+
+.add-day-button {
+  margin-top: 20rpx;
+  border-radius: 10rpx;
+}
+
+.input,
+.picker-box,
+.mini-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 78rpx;
+  margin-top: 12rpx;
+  padding: 0 18rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.picker-box {
+  line-height: 78rpx;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.field-box {
+  min-width: 0;
+}
+
+.mini-input {
+  text-align: center;
+}
+
+.add-button {
+  margin-top: 22rpx;
+  border-radius: 10rpx;
+}
+
+.list-title {
+  margin: 30rpx 0 18rpx;
+}
+
+.empty {
+  margin-bottom: 20rpx;
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  margin-bottom: 18rpx;
+  padding: 0 24rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card-strong);
+}
+
+.mark {
+  width: 10rpx;
+  height: 48rpx;
+  margin-right: 24rpx;
+  border-radius: 999rpx;
+  background: var(--primary);
+}
+
+.exercise-main {
+  flex: 1;
+}
+
+.exercise-name {
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.exercise-sub {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.remove-action {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.save-button {
+  margin-top: 26rpx;
+  border-radius: 10rpx;
+}

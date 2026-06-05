@@ -1,0 +1,28 @@
+<view class="page theme-{{theme}}" wx:if="{{plan}}">
+  <view class="header">
+    <view class="eyebrow">PROGRAM DETAIL</view>
+    <view class="plan-title">{{plan.name}}</view>
+    <view class="muted">{{plan.summary}}</view>
+    <view class="tags">
+      <text wx:for="{{plan.goal}}" wx:key="*this" class="tag">{{item}}</text>
+      <text class="tag">{{plan.level}}</text>
+      <text class="tag">每周 {{plan.weeklyFrequency}} 练</text>
+      <text class="tag">{{plan.durationWeeks}} 周</text>
+    </view>
+  </view>
+
+  <view wx:for="{{plan.days}}" wx:key="id" class="card day-card">
+    <view class="day-title">第 {{index + 1}} 天 · {{item.name}}</view>
+    <view class="muted">{{item.focus}}</view>
+    <view class="exercise-row" wx:for="{{item.exercises}}" wx:for-item="exercise" wx:key="exerciseId" data-id="{{exercise.exerciseId}}" bindtap="openExercise">
+      <view class="mark"></view>
+      <view class="exercise-main">
+        <view class="exercise-name">{{exercise.detail.name}}</view>
+        <view class="exercise-sub">{{exercise.sets}} 组 · {{exercise.reps}} 次 · RPE {{exercise.rpe}} · 休 {{exercise.restSeconds}} 秒</view>
+      </view>
+      <view class="role-label">{{exercise.roleLabel}}</view>
+    </view>
+  </view>
+
+  <button class="primary-button fixed-action" bindtap="enablePlan">启用这个计划</button>
+</view>

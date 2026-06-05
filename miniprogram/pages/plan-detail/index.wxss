@@ -1,0 +1,85 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.plan-title {
+  margin-top: 18rpx;
+  margin-bottom: 18rpx;
+  color: var(--text);
+  font-size: 56rpx;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.tags {
+  margin-top: 16rpx;
+}
+
+.day-card {
+  margin-bottom: 24rpx;
+  border-radius: 12rpx;
+}
+
+.day-title {
+  margin-bottom: 10rpx;
+  color: var(--text);
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  margin-top: 18rpx;
+  padding: 0 20rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card-strong);
+}
+
+.mark {
+  width: 10rpx;
+  height: 48rpx;
+  margin-right: 20rpx;
+  border-radius: 999rpx;
+  background: var(--primary);
+}
+
+.exercise-main {
+  flex: 1;
+}
+
+.exercise-name {
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.exercise-sub {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.role-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.fixed-action {
+  margin-top: 24rpx;
+  margin-bottom: 32rpx;
+}

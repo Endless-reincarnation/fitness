@@ -1,0 +1,57 @@
+<view class="page theme-{{theme}}">
+  <view class="page-header">
+    <view class="eyebrow">PROGRAM LIBRARY</view>
+    <view class="page-title">计划库</view>
+    <view class="muted intro">选择一套可执行计划，系统会拆成训练日、动作、组数和休息时间。</view>
+  </view>
+
+  <button class="primary-button create-button" bindtap="createPlan">新建我的计划</button>
+
+  <view wx:if="{{customPlans.length}}" class="section-title group-title">我的计划</view>
+  <view wx:for="{{customPlans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="custom">
+    <view class="plan-label">自定义计划</view>
+    <view class="plan-title">{{item.name}}</view>
+    <view class="plan-summary">{{item.summary}}</view>
+    <view class="metric-row">
+      <view class="metric-box">
+        <view class="metric-label">难度</view>
+        <view class="metric-value">{{item.level}}</view>
+      </view>
+      <view class="metric-box">
+        <view class="metric-label">频率</view>
+        <view class="metric-value">{{item.weeklyFrequency}}练</view>
+      </view>
+      <view class="metric-box">
+        <view class="metric-label">训练日</view>
+        <view class="metric-value">{{item.days.length}}天</view>
+      </view>
+    </view>
+    <view class="tags">
+      <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="section-title group-title">官方计划</view>
+  <view wx:for="{{plans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="official">
+    <view class="plan-label">官方模板</view>
+    <view class="plan-title">{{item.name}}</view>
+    <view class="plan-summary">{{item.summary}}</view>
+    <view class="metric-row">
+      <view class="metric-box">
+        <view class="metric-label">难度</view>
+        <view class="metric-value">{{item.level}}</view>
+      </view>
+      <view class="metric-box">
+        <view class="metric-label">频率</view>
+        <view class="metric-value">{{item.weeklyFrequency}}练</view>
+      </view>
+      <view class="metric-box">
+        <view class="metric-label">周期</view>
+        <view class="metric-value">{{item.durationWeeks}}周</view>
+      </view>
+    </view>
+    <view class="tags">
+      <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
+    </view>
+  </view>
+</view>

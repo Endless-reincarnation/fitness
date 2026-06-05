@@ -1,0 +1,160 @@
+.page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.workout-header {
+  margin-bottom: 32rpx;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.day-title {
+  margin-top: 18rpx;
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.workout-card {
+  margin-bottom: 28rpx;
+  border: 4rpx solid var(--primary);
+  border-radius: 14rpx;
+}
+
+.set-label {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.live-number-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 18rpx;
+  margin: 42rpx 0 26rpx;
+}
+
+.live-number {
+  color: var(--text);
+  font-size: 76rpx;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.unit {
+  color: var(--primary);
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.live-meta {
+  color: var(--primary);
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.target {
+  margin-bottom: 28rpx;
+  padding: 28rpx;
+  border-radius: 12rpx;
+  background: rgba(255, 210, 63, 0.06);
+  border: 4rpx solid var(--primary);
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+
+.rule-title {
+  margin-bottom: 12rpx;
+  color: var(--primary);
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18rpx;
+  margin-bottom: 28rpx;
+}
+
+.field-box {
+  min-height: 118rpx;
+  padding: 16rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card-strong);
+}
+
+.field-label {
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.input {
+  height: 58rpx;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.rest-card {
+  margin-bottom: 28rpx;
+  border-radius: 12rpx;
+  text-align: center;
+}
+
+.rest-time {
+  margin: 16rpx 0 10rpx;
+  font-size: 86rpx;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.rest-label {
+  text-align: left;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.rest-bars {
+  display: flex;
+  gap: 8rpx;
+  margin-top: 18rpx;
+}
+
+.rest-bar {
+  flex: 1;
+  height: 20rpx;
+  border-radius: 5rpx;
+  background: rgba(255, 210, 63, 0.12);
+}
+
+.rest-bar.on {
+  background: var(--primary);
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.quick-button,
+.done-button {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}

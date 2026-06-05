@@ -1,0 +1,189 @@
+.home-page {
+  padding: 48rpx 28rpx 32rpx;
+}
+
+.hero-title {
+  margin-top: 18rpx;
+  margin-bottom: 18rpx;
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.screen-header {
+  margin-bottom: 32rpx;
+}
+
+.resume-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
+  padding: 24rpx;
+  border: 4rpx solid var(--primary);
+  border-radius: 14rpx;
+  background: rgba(255, 210, 63, 0.06);
+}
+
+.resume-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.resume-title {
+  margin-top: 8rpx;
+  color: var(--text);
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.resume-sub {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.resume-button {
+  flex: 0 0 180rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 24rpx;
+  border-radius: 10rpx;
+}
+
+.day-picker {
+  display: inline-flex;
+  margin-top: 20rpx;
+  padding: 14rpx 20rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 10rpx;
+  color: var(--primary);
+  background: var(--card-strong);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.block {
+  margin-bottom: 24rpx;
+}
+
+.block-text {
+  margin: 16rpx 0 24rpx;
+}
+
+.lift-card {
+  margin-bottom: 28rpx;
+  padding: 36rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.18);
+  border-radius: 14rpx;
+  background: var(--primary);
+  color: var(--button-text);
+}
+
+.lift-label {
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.lift-name {
+  margin-top: 36rpx;
+  font-size: 56rpx;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.lift-meta {
+  margin-top: 28rpx;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.list-title {
+  margin: 34rpx 0 20rpx;
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  margin-bottom: 22rpx;
+  padding: 0 24rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  background: var(--card-strong);
+  font-size: 28rpx;
+}
+
+.mark {
+  width: 10rpx;
+  height: 48rpx;
+  margin-right: 24rpx;
+  border-radius: 999rpx;
+  background: var(--primary);
+}
+
+.exercise-name {
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.exercise-main {
+  flex: 1;
+}
+
+.exercise-sub {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.sets-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.stat-card {
+  min-height: 144rpx;
+  border-radius: 12rpx;
+}
+
+.stat-value {
+  margin-top: 14rpx;
+  color: var(--text);
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.stat-value.small {
+  font-size: 30rpx;
+  line-height: 1.25;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.start-button {
+  margin-top: 10rpx;
+  border-radius: 10rpx;
+}

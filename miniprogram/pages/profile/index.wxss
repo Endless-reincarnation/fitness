@@ -1,0 +1,93 @@
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--button-text);
+  text-align: center;
+  line-height: 96rpx;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.name {
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.block {
+  margin: 24rpx 0;
+}
+
+.plan-text {
+  margin-top: 16rpx;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.stat-value {
+  margin-top: 14rpx;
+  font-size: 44rpx;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.theme-row {
+  margin-top: 22rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 18rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 12rpx;
+  color: var(--muted);
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.theme-option.active {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.theme-dot {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+}
+
+.theme-dot.power-yellow {
+  background: #ffd23f;
+}
+
+.theme-dot.tech-green {
+  background: #20f0a0;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-arrow {
+  color: var(--primary);
+  font-size: 54rpx;
+  font-weight: 900;
+}
