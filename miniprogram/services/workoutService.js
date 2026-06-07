@@ -212,6 +212,58 @@ async function syncPendingCloudWrites() {
   };
 }
 
+/**
+ * 获取某个特定动作的最近一次训练记录（重量、次数、RPE）
+ * 支持云端查询与本地缓存回落
+ * @param {string} exerciseId 动作ID
+ */
+async function getLastWorkoutRecord(exerciseId) {
+  if (!isCloudEnabled()) {
+    const history = workoutStore.getWorkoutHistory();
+    for (const session of history) {
+      if (session.records && session.records.length) {
+        const match = session.records.find((r) => r.exerciseId === exerciseId);
+        if (match) return match;
+      }
+    }
+    return null;
+  }
+
+  try {
+    const collection = getCollection('workoutSets');
+    if (!collection) return null;
+
+    // 查询当前用户该动作在云端按时间倒序的第一组记录
+    const res = await collection
+      .where({ exercise_id: exerciseId })
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .get();
+
+    if (res.data && res.data.length > 0) {
+      const cloudSet = res.data[0];
+      return {
+        exerciseId: cloudSet.exercise_id,
+        weightKg: cloudSet.weight_kg,
+        reps: cloudSet.reps,
+        rpe: cloudSet.rpe
+      };
+    }
+  } catch (err) {
+    console.warn('获取动作云端历史记录失败，回落本地查询：', err);
+  }
+
+  // 本地缓存回落
+  const history = workoutStore.getWorkoutHistory();
+  for (const session of history) {
+    if (session.records && session.records.length) {
+      const match = session.records.find((r) => r.exerciseId === exerciseId);
+      if (match) return match;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   ...workoutStore,
   getWorkoutHistory,
@@ -219,5 +271,6 @@ module.exports = {
   getBodyWeights,
   saveBodyWeight,
   getPendingCloudWriteCount,
-  syncPendingCloudWrites
+  syncPendingCloudWrites,
+  getLastWorkoutRecord
 };

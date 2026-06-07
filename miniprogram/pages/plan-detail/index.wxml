@@ -24,5 +24,7 @@
     </view>
   </view>
 
-  <button class="primary-button fixed-action" bindtap="enablePlan">启用这个计划</button>
+  <view class="bottom-action-area">
+    <button class="primary-button fixed-action" bindtap="enablePlan">启用这个计划</button>
+  </view>
 </view>

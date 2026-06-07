@@ -52,6 +52,7 @@
         </view>
         <view class="sets-label">{{item.sets}} 组</view>
       </view>
+    </view>
     <view class="bottom-action-area">
       <button class="primary-button start-button" bindtap="startWorkout">{{workoutDraft ? '重新开始今日训练' : '开始训练'}}</button>
     </view>

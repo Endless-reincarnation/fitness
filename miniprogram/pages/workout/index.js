@@ -4,7 +4,8 @@ const {
   clearWorkoutDraft,
   getWorkoutDraft,
   saveWorkoutDraft,
-  saveWorkoutSession
+  saveWorkoutSession,
+  getLastWorkoutRecord
 } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
@@ -24,6 +25,8 @@ Page({
     isResting: false,
     restLeft: 0,
     lastSetRecord: null,
+    lastWorkoutRecord: null,
+    rpeDesc: '',
     theme: 'power-yellow'
   },
 
@@ -35,10 +38,20 @@ Page({
 
   onShow() {
     applyTheme(this);
+    wx.setKeepScreenOn({
+      keepScreenOn: true,
+      success: () => console.log('屏幕常亮已开启'),
+      fail: (err) => console.warn('开启屏幕常亮失败', err)
+    });
+  },
+
+  onHide() {
+    wx.setKeepScreenOn({ keepScreenOn: false });
   },
 
   onUnload() {
     this.clearTimer();
+    wx.setKeepScreenOn({ keepScreenOn: false });
   },
 
   async loadWorkout(query) {
@@ -64,6 +77,7 @@ Page({
     const currentSetIndex = canRestoreDraft ? draft.currentSetIndex : 0;
     const currentExercise = dayView.exercises[currentExerciseIndex] || dayView.exercises[0];
 
+    const rpeVal = canRestoreDraft ? draft.rpe : '';
     this.setData({
       plan,
       day: dayView,
@@ -75,15 +89,20 @@ Page({
       records: canRestoreDraft ? draft.records : [],
       weightKg: canRestoreDraft ? draft.weightKg : '',
       reps: canRestoreDraft ? draft.reps : '',
-      rpe: canRestoreDraft ? draft.rpe : '',
+      rpe: rpeVal,
+      rpeDesc: this.getRpeDesc(rpeVal),
       lastSetRecord: canRestoreDraft ? draft.lastSetRecord : null
     });
     this.saveDraft();
+    this.loadLastRecord(currentExercise.exerciseId, !canRestoreDraft);
   },
 
   onInput(event) {
     const { field } = event.currentTarget.dataset;
     this.setData({ [field]: event.detail.value });
+    if (field === 'rpe') {
+      this.setData({ rpeDesc: this.getRpeDesc(event.detail.value) });
+    }
     this.saveDraft();
   },
 
@@ -107,7 +126,30 @@ Page({
     });
   },
 
+  async loadLastRecord(exerciseId, shouldBackfill = true) {
+    this.setData({ lastWorkoutRecord: null });
+    try {
+      const lastRecord = await getLastWorkoutRecord(exerciseId);
+      if (lastRecord) {
+        this.setData({ lastWorkoutRecord: lastRecord });
+        if (shouldBackfill && this.data.currentSetIndex === 0) {
+          const rpeVal = lastRecord.rpe ? String(lastRecord.rpe) : '';
+          this.setData({
+            weightKg: lastRecord.weightKg ? String(lastRecord.weightKg) : '',
+            reps: lastRecord.reps ? String(lastRecord.reps) : '',
+            rpe: rpeVal,
+            rpeDesc: this.getRpeDesc(rpeVal)
+          });
+          this.saveDraft();
+        }
+      }
+    } catch (e) {
+      console.error('加载上次训练记录失败', e);
+    }
+  },
+
   finishSet() {
+    wx.vibrateShort({ type: 'medium' });
     // 训练中减少录入负担，未填次数时默认使用目标次数范围的下限。
     const finalReps = Number(this.data.reps || this.getDefaultReps(this.data.currentExercise.reps));
     const finalWeightKg = Number(this.data.weightKg || 0);
@@ -138,6 +180,7 @@ Page({
     });
 
     const nextSetIndex = currentSetIndex + 1;
+    const rpeVal = setRecord.rpe ? String(setRecord.rpe) : '';
     this.setData({
       records: nextRecords,
       lastSetRecord: {
@@ -149,7 +192,8 @@ Page({
       // 同一动作的下一组默认沿用刚填写的数据，用户只需要改变化的项。
       weightKg: setRecord.weightKg ? String(setRecord.weightKg) : '',
       reps: String(setRecord.reps),
-      rpe: setRecord.rpe ? String(setRecord.rpe) : ''
+      rpe: rpeVal,
+      rpeDesc: this.getRpeDesc(rpeVal)
     });
 
     if (nextSetIndex < current.sets) {
@@ -160,23 +204,59 @@ Page({
     }
 
     if (currentExerciseIndex + 1 < day.exercises.length) {
+      const nextExercise = day.exercises[currentExerciseIndex + 1];
       this.setData({
         currentExerciseIndex: currentExerciseIndex + 1,
         currentSetIndex: 0,
-        currentExercise: day.exercises[currentExerciseIndex + 1],
-        currentExerciseMusclesText: day.exercises[currentExerciseIndex + 1].detail.primaryMuscles.join(' / '),
-        currentExerciseMinReps: String(this.getDefaultReps(day.exercises[currentExerciseIndex + 1].reps)),
+        currentExercise: nextExercise,
+        currentExerciseMusclesText: nextExercise.detail.primaryMuscles.join(' / '),
+        currentExerciseMinReps: String(this.getDefaultReps(nextExercise.reps)),
         // 切换动作时清空输入，避免把上一个动作重量误带到新动作。
         weightKg: '',
         reps: '',
-        rpe: ''
+        rpe: '',
+        rpeDesc: '',
+        lastSetRecord: null
       });
       this.saveDraft();
+      this.loadLastRecord(nextExercise.exerciseId, true);
       this.startRest(current.restSeconds);
       return;
     }
 
     this.finishWorkout(nextRecords);
+  },
+
+  adjustValue(event) {
+    const { field, delta } = event.currentTarget.dataset;
+    const change = Number(delta);
+    let currentValue = Number(this.data[field] || 0);
+
+    if (field === 'reps' && !this.data.reps) {
+      currentValue = this.getDefaultReps(this.data.currentExercise.reps);
+    }
+
+    if (field === 'rpe' && !this.data.rpe) {
+      currentValue = Number(this.data.currentExercise.rpe || 8);
+    }
+
+    let newValue = currentValue + change;
+
+    if (field === 'weightKg') {
+      newValue = Math.max(0, Math.round(newValue * 100) / 100);
+    } else if (field === 'reps') {
+      newValue = Math.max(1, Math.round(newValue));
+    } else if (field === 'rpe') {
+      newValue = Math.max(1, Math.min(10, Math.round(newValue * 2) / 2));
+    }
+
+    this.setData({
+      [field]: String(newValue)
+    });
+    if (field === 'rpe') {
+      this.setData({ rpeDesc: this.getRpeDesc(newValue) });
+    }
+    this.saveDraft();
   },
 
   getDefaultReps(repsText) {
@@ -192,6 +272,7 @@ Page({
   },
 
   useLastSet() {
+    wx.vibrateShort({ type: 'medium' });
     const { currentExercise, lastSetRecord } = this.data;
     if (!lastSetRecord) {
       wx.showToast({ title: '还没有上一组', icon: 'none' });
@@ -219,6 +300,7 @@ Page({
       if (next <= 0) {
         this.clearTimer();
         this.setData({ isResting: false, restLeft: 0 });
+        wx.vibrateLong(); // 休息结束，触发长震动提醒
       } else {
         this.setData({ restLeft: next });
       }
@@ -226,6 +308,7 @@ Page({
   },
 
   skipRest() {
+    wx.vibrateShort({ type: 'medium' });
     this.clearTimer();
     this.setData({ isResting: false, restLeft: 0 });
   },
@@ -296,5 +379,21 @@ Page({
         advice
       };
     });
+  },
+
+  getRpeDesc(rpe) {
+    if (!rpe) return '';
+    const val = Number(rpe);
+    if (isNaN(val) || val <= 0) return '';
+    if (val >= 10) return '力竭（无法再做一次）';
+    if (val >= 9.5) return '力竭边缘（不确定能否多做）';
+    if (val >= 9) return '保留 1 次余量 (1 RIR)';
+    if (val >= 8.5) return '保留 1-2 次余量';
+    if (val >= 8) return '保留 2 次余量 (2 RIR)';
+    if (val >= 7.5) return '保留 2-3 次余量';
+    if (val >= 7) return '保留 3 次余量 (3 RIR)';
+    if (val >= 6.5) return '保留 3-4 次余量';
+    if (val >= 6) return '热身/较轻爆发力';
+    return '非常轻松';
   }
 });

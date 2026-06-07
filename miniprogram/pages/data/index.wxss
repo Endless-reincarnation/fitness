@@ -110,18 +110,92 @@
   background: #b45309;
 }
 
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.bmi-badge {
+  font-size: 20rpx;
+  font-weight: 800;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.bmi-empty {
+  border: 2rpx dashed var(--primary);
+  color: var(--primary);
+  background: rgba(255, 210, 63, 0.05);
+}
+
+.bmi-normal {
+  border: 2rpx solid var(--primary);
+  color: var(--primary);
+  background: rgba(255, 210, 63, 0.08);
+}
+
+.bmi-underweight {
+  border: 2rpx solid var(--muted);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bmi-overweight {
+  border: 2rpx solid var(--primary-strong);
+  color: var(--primary-strong);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.bmi-obese {
+  border: 2rpx solid var(--danger);
+  color: var(--danger);
+  background: rgba(255, 81, 72, 0.08);
+}
+
 .weight-bars {
   display: flex;
   align-items: flex-end;
   gap: 16rpx;
-  height: 150rpx;
+  height: 180rpx;
   margin-top: 28rpx;
 }
 
-.weight-bar {
+.weight-bar-wrapper {
   flex: 1;
-  border-radius: 10rpx 10rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.weight-bar-val {
+  font-size: 20rpx;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8rpx;
+}
+
+.weight-bar {
+  width: 100%;
+  border-radius: 8rpx 8rpx 0 0;
   background: var(--primary);
+  opacity: 0.85;
+}
+
+.weight-bar-date {
+  font-size: 18rpx;
+  color: var(--muted);
+  margin-top: 10rpx;
+  white-space: nowrap;
+}
+
+.weight-empty {
+  padding: 40rpx 0;
+  text-align: center;
+  font-size: 26rpx;
 }
 
 .suggestion-card {
@@ -133,4 +207,138 @@
   color: var(--text);
   font-size: 26rpx;
   font-weight: 900;
+}
+
+/* 日历卡片 */
+.calendar-card {
+  padding: 24rpx;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.calendar-btn {
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.calendar-month {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 12rpx;
+  text-align: center;
+}
+
+.weekday-label {
+  font-size: 20rpx;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 16rpx;
+  column-gap: 12rpx;
+  text-align: center;
+}
+
+.day-cell {
+  position: relative;
+  height: 64rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10rpx;
+  transition: all 0.1s ease;
+}
+
+.day-cell.blank {
+  background: transparent;
+}
+
+.day-cell:not(.blank):active {
+  background: rgba(255, 210, 63, 0.12);
+}
+
+.day-num {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.day-cell.today {
+  border: 2rpx solid var(--primary);
+}
+
+.day-cell.selected {
+  background: var(--primary) !important;
+}
+
+.day-cell.selected .day-num {
+  color: var(--button-text);
+}
+
+.day-cell.selected .workout-dot {
+  background: var(--button-text);
+}
+
+.workout-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--primary);
+  position: absolute;
+  bottom: 8rpx;
+}
+
+/* 布局辅助 */
+.block-margin {
+  margin-top: 36rpx;
+}
+
+.muted-stats {
+  font-size: 26rpx;
+  color: var(--primary);
+  font-weight: 800;
+  margin-top: 10rpx;
+}
+
+/* 空状态样式 */
+.report-empty {
+  padding: 60rpx 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 26rpx;
+}
+
+/* 折叠展开切换栏 */
+.calendar-toggle {
+  margin-top: 18rpx;
+  padding-top: 14rpx;
+  border-top: 2rpx solid var(--border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.toggle-icon {
+  font-size: 18rpx;
 }

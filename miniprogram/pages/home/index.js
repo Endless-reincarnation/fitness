@@ -55,10 +55,12 @@ Page({
   },
 
   startWorkout() {
+    wx.vibrateShort({ type: 'medium' });
     wx.navigateTo({ url: '/pages/workout/index' });
   },
 
   resumeWorkout() {
+    wx.vibrateShort({ type: 'medium' });
     wx.navigateTo({ url: '/pages/workout/index?resume=1' });
   },
 

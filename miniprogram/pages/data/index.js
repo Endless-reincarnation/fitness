@@ -1,4 +1,5 @@
 const { getBodyWeights, getWorkoutHistory, saveBodyWeight, syncPendingCloudWrites } = require('../../services/workoutService');
+const { getUserProfile } = require('../../services/userService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -7,11 +8,26 @@ Page({
     weights: [],
     weightKg: '',
     latestSession: null,
-    latestSetCount: 15,
-    latestTotalVolume: 5820,
-    nextExerciseName: '卧推',
+    latestSetCount: 0,
+    latestTotalVolume: 0,
+    nextExerciseName: '',
     latestSuggestions: [],
-    theme: 'power-yellow'
+    theme: 'power-yellow',
+
+    // BMI 与动态柱状图状态
+    chartWeights: [],
+    heightCm: 0,
+    bmi: '',
+    bmiText: '',
+    bmiCategory: '',
+    latestWeightRecord: null,
+
+    // 训练打卡日历状态
+    calendarMode: 'week', // 默认周视图，可选 'week' 或 'month'
+    currentYear: new Date().getFullYear(),
+    currentMonth: new Date().getMonth(),
+    calendarGrid: [],
+    selectedDateStr: ''
   },
 
   onShow() {
@@ -23,15 +39,338 @@ Page({
     await syncPendingCloudWrites();
     const history = await getWorkoutHistory();
     const latestSession = history[0] || null;
-    const latestSuggestions = latestSession && latestSession.suggestions ? latestSession.suggestions : [];
+    const weights = await getBodyWeights();
+
+    // 1. 获取身高 (云端优先，本地缓存 fallback)
+    let heightCm = 0;
+    try {
+      const profile = await getUserProfile();
+      if (profile && profile.height_cm) {
+        heightCm = profile.height_cm;
+        wx.setStorageSync('userProfile', profile);
+      } else {
+        const cached = wx.getStorageSync('userProfile');
+        if (cached && cached.height_cm) {
+          heightCm = cached.height_cm;
+        }
+      }
+    } catch (e) {
+      console.warn('获取身高数据失败', e);
+      const cached = wx.getStorageSync('userProfile');
+      if (cached && cached.height_cm) {
+        heightCm = cached.height_cm;
+      }
+    }
+
+    // 2. 构造最近 7 次的体重动态图表数据 (从左至右由远及近，reverse)
+    const recentWeights = weights.slice(0, 7).reverse();
+    let minWeight = Infinity;
+    let maxWeight = -Infinity;
+    recentWeights.forEach((item) => {
+      if (item.weightKg < minWeight) minWeight = item.weightKg;
+      if (item.weightKg > maxWeight) maxWeight = item.weightKg;
+    });
+
+    const range = maxWeight - minWeight;
+    const chartWeights = recentWeights.map((item) => {
+      const dateParts = item.date.split('-');
+      const displayDate = dateParts.length >= 3 ? `${dateParts[1]}-${dateParts[2]}` : item.date;
+      let height = 80; // 若体重无波动，使用默认高度 80rpx
+      if (range > 0) {
+        height = 40 + ((item.weightKg - minWeight) / range) * 80;
+      }
+      return {
+        ...item,
+        displayDate,
+        height: Math.round(height)
+      };
+    });
+
+    // 3. 计算 BMI
+    const latestWeightRecord = weights[0] || null;
+    let bmi = '';
+    let bmiText = '';
+    let bmiCategory = '';
+
+    if (latestWeightRecord && heightCm > 0) {
+      const weight = latestWeightRecord.weightKg;
+      const heightM = heightCm / 100;
+      const bmiVal = weight / (heightM * heightM);
+      bmi = bmiVal.toFixed(1);
+
+      if (bmiVal < 18.5) {
+        bmiText = '体重偏轻';
+        bmiCategory = 'bmi-underweight';
+      } else if (bmiVal < 24) {
+        bmiText = '正常体重';
+        bmiCategory = 'bmi-normal';
+      } else if (bmiVal < 28) {
+        bmiText = '体重超重';
+        bmiCategory = 'bmi-overweight';
+      } else {
+        bmiText = '肥胖';
+        bmiCategory = 'bmi-obese';
+      }
+    }
+
+    // 4. 初始化默认选中的日期（若当前没有选中日期且有最新训练记录，则默认选中该记录的日期）
+    let selectedDateStr = this.data.selectedDateStr;
+    let displaySession = null;
+
+    if (!selectedDateStr && latestSession) {
+      const d = new Date(latestSession.completedAt);
+      selectedDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // 在周视图下，若未选中日期，则自动关联最新一条记录的日期，且将 currentYear 与 currentMonth 动态对齐到该选中日期所在的年月
+    let currentYear = this.data.currentYear;
+    let currentMonth = this.data.currentMonth;
+    
+    let activeDateStr = selectedDateStr;
+    if (!activeDateStr) {
+      const today = new Date();
+      activeDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }
+
+    if (this.data.calendarMode === 'week') {
+      const parts = activeDateStr.split('-');
+      currentYear = Number(parts[0]);
+      currentMonth = Number(parts[1]) - 1;
+    }
+
+    if (selectedDateStr) {
+      // 检查当前选中的日期对应的训练记录
+      const matched = history.find(session => {
+        const d = new Date(session.completedAt);
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return dateKey === selectedDateStr;
+      });
+      displaySession = matched || null;
+    } else {
+      displaySession = latestSession;
+    }
+
+    // 5. 生成日历网格数据 (传入当前折叠模式)
+    const calendarGrid = this.generateCalendar(currentYear, currentMonth, history, selectedDateStr, this.data.calendarMode);
+    const displaySuggestions = displaySession && displaySession.suggestions ? displaySession.suggestions : [];
+
     this.setData({
       history,
-      weights: await getBodyWeights(),
-      latestSession,
-      latestSetCount: latestSession ? latestSession.setCount : 15,
-      latestTotalVolume: latestSession ? latestSession.totalVolume : 5820,
-      nextExerciseName: latestSuggestions[0] ? latestSuggestions[0].exerciseName : '卧推',
-      latestSuggestions
+      weights,
+      latestSession: displaySession,
+      latestSetCount: displaySession ? displaySession.setCount : 0,
+      latestTotalVolume: displaySession ? displaySession.totalVolume : 0,
+      nextExerciseName: displaySession && displaySuggestions[0] ? displaySuggestions[0].exerciseName : '',
+      latestSuggestions: displaySuggestions,
+      heightCm,
+      chartWeights,
+      bmi,
+      bmiText,
+      bmiCategory,
+      latestWeightRecord,
+      calendarGrid,
+      selectedDateStr,
+      currentYear,
+      currentMonth
+    });
+  },
+
+  generateCalendar(year, month, history, selectedDateStr, calendarMode) {
+    // 按日期将训练记录分类映射，支持在本地时间下完成比对
+    const workoutDates = {};
+    history.forEach((session) => {
+      if (session.completedAt) {
+        const d = new Date(session.completedAt);
+        const yStr = d.getFullYear();
+        const mStr = String(d.getMonth() + 1).padStart(2, '0');
+        const dStr = String(d.getDate()).padStart(2, '0');
+        const dateKey = `${yStr}-${mStr}-${dStr}`;
+        if (!workoutDates[dateKey]) {
+          workoutDates[dateKey] = [];
+        }
+        workoutDates[dateKey].push(session);
+      }
+    });
+
+    const grid = [];
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    if (calendarMode === 'week') {
+      // 周视图：以选中日期（或今天）所在的周一为起点生成连续 7 天，不留空白
+      let targetDateStr = selectedDateStr;
+      if (!targetDateStr) {
+        targetDateStr = todayStr;
+      }
+      const parts = targetDateStr.split('-');
+      const targetDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      const dayOfWeek = targetDate.getDay(); // 0 是周日，1-6 是周一到周六
+      const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 转换为以周一为首天（偏移 0-6）
+      
+      const monday = new Date(targetDate);
+      monday.setDate(targetDate.getDate() - offset);
+
+      for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(monday);
+        dayDate.setDate(monday.getDate() + i);
+        
+        const yStr = dayDate.getFullYear();
+        const mStr = String(dayDate.getMonth() + 1).padStart(2, '0');
+        const dStr = String(dayDate.getDate()).padStart(2, '0');
+        const dateKey = `${yStr}-${mStr}-${dStr}`;
+        
+        const sessions = workoutDates[dateKey] || [];
+        const hasWorkout = sessions.length > 0;
+        
+        grid.push({
+          type: 'day',
+          day: dayDate.getDate(),
+          dateStr: dateKey,
+          hasWorkout,
+          isToday: dateKey === todayStr,
+          isSelected: dateKey === selectedDateStr,
+          sessions
+        });
+      }
+    } else {
+      // 月视图：原有的空白填充及整月网格生成逻辑
+      const firstDayOfWeek = new Date(year, month, 1).getDay();
+      const blankCount = (firstDayOfWeek === 0 ? 7 : firstDayOfWeek) - 1;
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      
+      for (let i = 0; i < blankCount; i++) {
+        grid.push({ type: 'blank', id: `blank-${i}` });
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const sessions = workoutDates[dateKey] || [];
+        const hasWorkout = sessions.length > 0;
+        
+        grid.push({
+          type: 'day',
+          day,
+          dateStr: dateKey,
+          hasWorkout,
+          isToday: dateKey === todayStr,
+          isSelected: dateKey === selectedDateStr,
+          sessions
+        });
+      }
+    }
+
+    return grid;
+  },
+
+  toggleCalendarMode() {
+    wx.vibrateShort({ type: 'light' });
+    const newMode = this.data.calendarMode === 'week' ? 'month' : 'week';
+    this.setData({
+      calendarMode: newMode
+    }, () => {
+      this.refreshData();
+    });
+  },
+
+  prevPeriod() {
+    wx.vibrateShort({ type: 'light' });
+    if (this.data.calendarMode === 'week') {
+      // 周模式：选中日期向前推 7 天
+      let selectedDateStr = this.data.selectedDateStr;
+      if (!selectedDateStr) {
+        const today = new Date();
+        selectedDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      }
+      const parts = selectedDateStr.split('-');
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      d.setDate(d.getDate() - 7);
+      
+      const newSelectedDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      this.setData({
+        selectedDateStr: newSelectedDateStr,
+        currentYear: d.getFullYear(),
+        currentMonth: d.getMonth()
+      }, () => {
+        this.refreshData();
+      });
+    } else {
+      // 月模式：月份减一
+      let { currentYear, currentMonth } = this.data;
+      currentMonth -= 1;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear -= 1;
+      }
+      this.setData({
+        currentYear,
+        currentMonth
+      }, () => {
+        this.refreshData();
+      });
+    }
+  },
+
+  nextPeriod() {
+    wx.vibrateShort({ type: 'light' });
+    if (this.data.calendarMode === 'week') {
+      // 周模式：选中日期向后推 7 天
+      let selectedDateStr = this.data.selectedDateStr;
+      if (!selectedDateStr) {
+        const today = new Date();
+        selectedDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      }
+      const parts = selectedDateStr.split('-');
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      d.setDate(d.getDate() + 7);
+      
+      const newSelectedDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      this.setData({
+        selectedDateStr: newSelectedDateStr,
+        currentYear: d.getFullYear(),
+        currentMonth: d.getMonth()
+      }, () => {
+        this.refreshData();
+      });
+    } else {
+      // 月模式：月份加一
+      let { currentYear, currentMonth } = this.data;
+      currentMonth += 1;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear += 1;
+      }
+      this.setData({
+        currentYear,
+        currentMonth
+      }, () => {
+        this.refreshData();
+      });
+    }
+  },
+
+  selectDate(event) {
+    const { date } = event.currentTarget.dataset;
+    if (!date) return;
+    
+    wx.vibrateShort({ type: 'light' });
+    
+    // 更新选中日期并同步修改 currentYear / currentMonth 保证月度状态同步
+    const parts = date.split('-');
+    const year = Number(parts[0]);
+    const month = Number(parts[1]) - 1;
+
+    this.setData({
+      selectedDateStr: date,
+      currentYear: year,
+      currentMonth: month
+    }, () => {
+      this.refreshData();
+    });
+  },
+
+  goProfile() {
+    wx.switchTab({
+      url: '/pages/profile/index'
     });
   },
 

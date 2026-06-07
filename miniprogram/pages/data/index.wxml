@@ -1,45 +1,99 @@
 <view class="page theme-{{theme}}">
-  <view class="report-header">
-    <view class="eyebrow">SESSION REPORT</view>
-    <view class="report-title">今日表现</view>
-    <view class="muted">胸肩三头 · {{latestSetCount}} 组 · 总容量 {{latestTotalVolume}} kg</view>
+  <!-- 训练打卡日历 -->
+  <view class="card block calendar-card">
+    <view class="calendar-header">
+      <view class="calendar-btn" bindtap="prevPeriod">◀</view>
+      <view class="calendar-month">{{currentYear}} 年 {{currentMonth + 1}} 月</view>
+      <view class="calendar-btn" bindtap="nextPeriod">▶</view>
+    </view>
+    
+    <view class="weekday-row">
+      <view wx:for="{{['一','二','三','四','五','六','日']}}" wx:key="*this" class="weekday-label">{{item}}</view>
+    </view>
+    
+    <view class="days-grid">
+      <block wx:for="{{calendarGrid}}" wx:key="id">
+        <view class="day-cell blank" wx:if="{{item.type === 'blank'}}"></view>
+        <view class="day-cell {{item.isToday ? 'today' : ''}} {{item.isSelected ? 'selected' : ''}} {{item.hasWorkout ? 'has-workout' : ''}}" 
+              wx:else 
+              bindtap="selectDate" 
+              data-date="{{item.dateStr}}">
+          <view class="day-num">{{item.day}}</view>
+          <view class="workout-dot" wx:if="{{item.hasWorkout}}"></view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 折叠展开切换栏 -->
+    <view class="calendar-toggle" bindtap="toggleCalendarMode">
+      <text>{{calendarMode === 'week' ? '展开月历' : '收起月历'}}</text>
+      <text class="toggle-icon">{{calendarMode === 'week' ? '▼' : '▲'}}</text>
+    </view>
   </view>
 
-  <view class="next-card">
-    <view class="next-label">下次建议</view>
-    <view class="next-title">{{nextExerciseName}} +2.5kg</view>
-    <view class="next-text">所有组达到目标次数，RPE 未超过 8。</view>
-  </view>
+  <!-- 训练历史数据回溯 -->
+  <block wx:if="{{latestSession}}">
+    <view class="report-header block-margin">
+      <view class="eyebrow">SESSION REPORT</view>
+      <view class="report-title">训练表现</view>
+      <view class="muted">{{latestSession.planName}} · {{latestSession.dayName}}</view>
+      <view class="muted-stats">{{latestSetCount}} 组 · 总容量 {{latestTotalVolume}} kg</view>
+    </view>
 
+    <view class="next-card" wx:if="{{nextExerciseName}}">
+      <view class="next-label">下次建议</view>
+      <view class="next-title">{{nextExerciseName}} +2.5kg</view>
+      <view class="next-text">本组动作完成质量高，建议在下次训练中微调递进重量。</view>
+    </view>
+
+    <view class="card block">
+      <view class="section-title">肌群刺激</view>
+      <view class="muscle-row">
+        <view class="muted">主导肌群</view>
+        <view class="bar"><view class="bar-fill chest"></view></view>
+      </view>
+      <view class="muscle-row">
+        <view class="muted">辅助肌群</view>
+        <view class="bar"><view class="bar-fill tri"></view></view>
+      </view>
+    </view>
+
+    <view wx:for="{{latestSuggestions}}" wx:key="exerciseId" class="suggestion-card">
+      {{item.advice}}
+    </view>
+  </block>
+  <block wx:else>
+    <view class="card block report-empty">
+      <view class="muted">所选日期无训练记录</view>
+    </view>
+  </block>
+
+  <!-- 体重趋势 -->
   <view class="card block">
-    <view class="section-title">肌群刺激</view>
-    <view class="muscle-row">
-      <view class="muted">胸大肌</view>
-      <view class="bar"><view class="bar-fill chest"></view></view>
+    <view class="section-header-row">
+      <view class="section-title">体重趋势</view>
+      <view class="bmi-badge {{bmiCategory}}" wx:if="{{latestWeightRecord && heightCm && bmi}}">
+        BMI {{bmi}} · {{bmiText}}
+      </view>
+      <view class="bmi-badge bmi-empty" bindtap="goProfile" wx:if="{{latestWeightRecord && !heightCm}}">
+        去设置身高计算 BMI >
+      </view>
     </view>
-    <view class="muscle-row">
-      <view class="muted">肱三头肌</view>
-      <view class="bar"><view class="bar-fill tri"></view></view>
+    <view class="weight-bars" wx:if="{{chartWeights.length > 0}}">
+      <view wx:for="{{chartWeights}}" wx:key="date" class="weight-bar-wrapper">
+        <view class="weight-bar-val">{{item.weightKg}}</view>
+        <view class="weight-bar" style="height: {{item.height}}rpx;"></view>
+        <view class="weight-bar-date">{{item.displayDate}}</view>
+      </view>
     </view>
-    <view class="muscle-row">
-      <view class="muted">三角肌前束</view>
-      <view class="bar"><view class="bar-fill delt"></view></view>
+    <view class="weight-empty" wx:else>
+      <view class="muted">暂无体重数据，请在下方记录今日体重</view>
     </view>
   </view>
 
-  <view class="card block">
-    <view class="section-title">体重趋势</view>
-    <view class="weight-bars">
-      <view wx:for="{{[42,50,46,64,68,84,78]}}" wx:key="*this" class="weight-bar" style="height: {{item}}rpx;"></view>
-    </view>
-  </view>
-
+  <!-- 今日体重记录 -->
   <view class="weight-row">
     <input class="weight-input" type="digit" value="{{weightKg}}" bindinput="onWeightInput" placeholder="今日体重 kg" />
     <button class="primary-button save-button" bindtap="saveWeight">保存</button>
-  </view>
-
-  <view wx:for="{{latestSuggestions}}" wx:key="exerciseId" class="suggestion-card">
-    {{item.advice}}
   </view>
 </view>
