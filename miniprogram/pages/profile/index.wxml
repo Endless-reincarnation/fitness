@@ -1,10 +1,13 @@
 <view class="page theme-{{theme}}">
-  <view class="card profile-card">
-    <view class="avatar">训</view>
-    <view>
-      <view class="name">训练用户</view>
-      <view class="muted">微信登录接入前使用本地身份</view>
+  <!-- 用户名片区域 (点击可弹窗编辑资料) -->
+  <view class="card profile-card" bindtap="openEditModal">
+    <image wx:if="{{userProfile && userProfile.avatar_url}}" class="avatar-img" src="{{userProfile.avatar_url}}" mode="aspectFill"></image>
+    <view wx:else class="avatar">{{avatarFallback}}</view>
+    <view class="profile-info">
+      <view class="name">{{userProfile && userProfile.nickname ? userProfile.nickname : '训练用户'}}</view>
+      <view class="muted">{{userProfile && userProfile.nickname ? '同步微信身份已生效' : '点击完善个人资料与登录'}}</view>
     </view>
+    <view class="edit-icon">✎</view>
   </view>
 
   <view class="card block">
@@ -45,6 +48,69 @@
       <view wx:for="{{themeOptions}}" wx:key="value" class="theme-option {{theme === item.value ? 'active' : ''}}" data-theme="{{item.value}}" bindtap="switchTheme">
         <view class="theme-dot {{item.value}}"></view>
         <view>{{item.label}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== 个人资料编辑 Modal ==================== -->
+  <view class="modal-backdrop {{showEditModal ? 'show' : ''}}" bindtap="closeEditModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <view class="modal-title">编辑个人资料</view>
+        <view class="modal-close" bindtap="closeEditModal">×</view>
+      </view>
+      
+      <scroll-view scroll-y class="modal-body">
+        <!-- 头像设置 -->
+        <view class="form-row avatar-row">
+          <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            <image wx:if="{{tempAvatarUrl}}" class="avatar-preview" src="{{tempAvatarUrl}}" mode="aspectFill"></image>
+            <view wx:else class="avatar-placeholder">
+              <view class="plus-icon">＋</view>
+              <view class="text">设置头像</view>
+            </view>
+          </button>
+          <view class="hint">点击圆框选择微信头像或上传图片</view>
+        </view>
+
+        <!-- 昵称设置 -->
+        <view class="form-item">
+          <view class="label">昵称</view>
+          <input type="nickname" class="form-input" placeholder="请输入或一键填入微信昵称" value="{{tempNickname}}" bindblur="onNicknameBlur" bindinput="onNicknameInput" />
+        </view>
+
+        <!-- 性别选择 -->
+        <view class="form-item">
+          <view class="label">性别</view>
+          <picker mode="selector" range="{{genderOptions}}" range-key="label" bindchange="onGenderChange">
+            <view class="picker-value">
+              {{selectedGenderLabel}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 身高设置 -->
+        <view class="form-item">
+          <view class="label">身高 (cm)</view>
+          <input type="number" class="form-input" placeholder="例如: 175" value="{{tempHeight}}" bindinput="onHeightInput" />
+        </view>
+
+        <!-- 训练目标 -->
+        <view class="form-item">
+          <view class="label">训练目标</view>
+          <picker mode="selector" range="{{goalOptions}}" range-key="label" bindchange="onGoalChange">
+            <view class="picker-value">
+              {{selectedGoalLabel}}
+            </view>
+          </picker>
+        </view>
+      </scroll-view>
+
+      <view class="modal-footer">
+        <button class="btn-cancel" bindtap="closeEditModal">取消</button>
+        <button class="btn-save" bindtap="saveProfile" disabled="{{isSaving}}">
+          {{isSaving ? '正在保存...' : '保存并同步'}}
+        </button>
       </view>
     </view>
   </view>
