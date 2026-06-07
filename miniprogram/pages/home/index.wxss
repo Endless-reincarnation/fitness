@@ -1,5 +1,5 @@
 .home-page {
-  padding: 48rpx 28rpx 32rpx;
+  padding: 48rpx 28rpx calc(180rpx + env(safe-area-inset-bottom));
 }
 
 .hero-title {
@@ -183,7 +183,23 @@
   font-weight: 900;
 }
 
+.bottom-action-area {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 24rpx 28rpx calc(24rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: linear-gradient(to top, var(--bg) 75%, transparent);
+  z-index: 90;
+}
+
 .start-button {
-  margin-top: 10rpx;
-  border-radius: 10rpx;
+  margin-top: 0;
+  width: 100% !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
 }
