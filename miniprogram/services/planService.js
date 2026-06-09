@@ -1,14 +1,12 @@
 const { plans } = require('../data/mock');
-const {
-  advanceActivePlan,
-  getActivePlan,
-  getCustomPlans,
-  saveCustomPlan,
-  setActivePlan,
-  setActivePlanDay
-} = require('../utils/workout');
+const workoutStore = require('../utils/workout');
 const { getCollection, isCloudEnabled } = require('./cloudService');
 const { getExerciseById } = require('./exerciseService');
+
+const getActivePlan = () => workoutStore.getActivePlan();
+const getCustomPlans = () => workoutStore.getCustomPlans();
+const saveCustomPlan = (plan) => workoutStore.saveCustomPlan(plan);
+const setActivePlan = (plan) => workoutStore.setActivePlan(plan);
 
 let cloudPlansCache = null;
 
@@ -184,8 +182,47 @@ async function getPlanById(planId, planType) {
   return sourcePlans.find((plan) => plan.id === planId) || null;
 }
 
+async function getActivePlanFromCloud() {
+  if (!isCloudEnabled()) return null;
+
+  try {
+    const collection = getCollection('userPlans');
+    if (!collection) return null;
+
+    const res = await collection
+      .where({ status: 'active' })
+      .orderBy('updated_at', 'desc')
+      .limit(1)
+      .get();
+
+    if (res.data && res.data.length > 0) {
+      const cloudRecord = res.data[0];
+      return {
+        planId: cloudRecord.plan_id,
+        planType: cloudRecord.plan_type,
+        name: cloudRecord.name,
+        currentDayIndex: cloudRecord.current_day_index || 0,
+        totalDays: cloudRecord.total_days || 1,
+        completedSessions: cloudRecord.completed_sessions || 0,
+        startedAt: cloudRecord.started_at || Date.now()
+      };
+    }
+  } catch (error) {
+    console.warn('拉取云端活跃计划失败', error);
+  }
+  return null;
+}
+
 async function getActivePlanDetail() {
-  const activePlan = getActivePlan();
+  let activePlan = getActivePlan();
+
+  if (!activePlan && isCloudEnabled()) {
+    activePlan = await getActivePlanFromCloud();
+    if (activePlan) {
+      wx.setStorageSync('activePlan', activePlan);
+    }
+  }
+
   const plan = activePlan ? await getPlanById(activePlan.planId, activePlan.planType) : null;
 
   return {
@@ -218,8 +255,48 @@ async function buildPlanView(plan) {
   };
 }
 
-function enablePlan(plan) {
-  return setActivePlan(plan);
+async function enablePlan(plan) {
+  const activePlan = setActivePlan(plan);
+
+  if (isCloudEnabled()) {
+    try {
+      const collection = getCollection('userPlans');
+      if (collection) {
+        // 1. 将该用户在云端所有活跃的计划状态修改为 abandoned (已放弃)
+        const activeRecords = await collection.where({ status: 'active' }).get();
+        if (activeRecords.data && activeRecords.data.length > 0) {
+          for (const record of activeRecords.data) {
+            await collection.doc(record._id).update({
+              data: {
+                status: 'abandoned',
+                updated_at: new Date().toISOString()
+              }
+            });
+          }
+        }
+
+        // 2. 添加新活跃计划记录到云端
+        await collection.add({
+          data: {
+            plan_id: activePlan.planId,
+            plan_type: activePlan.planType,
+            name: activePlan.name,
+            current_day_index: activePlan.currentDayIndex,
+            total_days: activePlan.totalDays,
+            completed_sessions: activePlan.completedSessions,
+            started_at: activePlan.startedAt,
+            status: 'active',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('云端同步启用计划失败', error);
+    }
+  }
+
+  return activePlan;
 }
 
 async function saveUserPlan(plan) {
@@ -297,6 +374,63 @@ async function deleteUserPlan(planId) {
     console.warn('删除云端自定义计划失败', error);
   }
   return true;
+}
+
+async function advanceActivePlan(totalDays) {
+  const nextPlan = workoutStore.advanceActivePlan(totalDays);
+  if (nextPlan && isCloudEnabled()) {
+    try {
+      const collection = getCollection('userPlans');
+      if (collection) {
+        const res = await collection
+          .where({ status: 'active' })
+          .orderBy('updated_at', 'desc')
+          .limit(1)
+          .get();
+
+        if (res.data && res.data.length > 0) {
+          await collection.doc(res.data[0]._id).update({
+            data: {
+              current_day_index: nextPlan.currentDayIndex,
+              completed_sessions: nextPlan.completedSessions,
+              updated_at: new Date().toISOString()
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('云端同步推进训练日失败', error);
+    }
+  }
+  return nextPlan;
+}
+
+async function setActivePlanDay(dayIndex) {
+  const nextPlan = workoutStore.setActivePlanDay(dayIndex);
+  if (nextPlan && isCloudEnabled()) {
+    try {
+      const collection = getCollection('userPlans');
+      if (collection) {
+        const res = await collection
+          .where({ status: 'active' })
+          .orderBy('updated_at', 'desc')
+          .limit(1)
+          .get();
+
+        if (res.data && res.data.length > 0) {
+          await collection.doc(res.data[0]._id).update({
+            data: {
+              current_day_index: nextPlan.currentDayIndex,
+              updated_at: new Date().toISOString()
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('云端同步切换训练日失败', error);
+    }
+  }
+  return nextPlan;
 }
 
 module.exports = {

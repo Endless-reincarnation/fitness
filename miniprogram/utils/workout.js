@@ -4,7 +4,7 @@ function getActivePlan() {
 }
 
 function setActivePlan(plan) {
-  wx.setStorageSync('activePlan', {
+  const activePlan = {
     planId: plan.id,
     planType: plan.planType || 'official',
     name: plan.name,
@@ -12,7 +12,9 @@ function setActivePlan(plan) {
     totalDays: plan.days ? plan.days.length : 1,
     completedSessions: 0,
     startedAt: Date.now()
-  });
+  };
+  wx.setStorageSync('activePlan', activePlan);
+  return activePlan;
 }
 
 function advanceActivePlan(totalDays) {

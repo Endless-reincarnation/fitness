@@ -1,6 +1,5 @@
-const { buildDayView, getActivePlanDetail } = require('../../services/planService');
+const { buildDayView, getActivePlanDetail, advanceActivePlan } = require('../../services/planService');
 const {
-  advanceActivePlan,
   clearWorkoutDraft,
   getWorkoutDraft,
   saveWorkoutDraft,
@@ -337,7 +336,7 @@ Page({
 
     await saveWorkoutSession(session);
     clearWorkoutDraft();
-    const nextPlan = advanceActivePlan(this.data.plan.days.length);
+    const nextPlan = await advanceActivePlan(this.data.plan.days.length);
     const nextDayName = nextPlan ? this.data.plan.days[nextPlan.currentDayIndex].name : '';
     wx.showModal({
       title: '训练完成',

@@ -1,4 +1,5 @@
-const { getActivePlan, getBodyWeights, getWorkoutHistory, syncPendingCloudWrites } = require('../../services/workoutService');
+const { getBodyWeights, getWorkoutHistory, syncPendingCloudWrites } = require('../../services/workoutService');
+const { getActivePlanDetail } = require('../../services/planService');
 const { getUserProfile, saveUserProfile, uploadAvatar } = require('../../services/userService');
 const { applyTheme, syncTabBarTheme } = require('../../utils/theme');
 
@@ -50,8 +51,9 @@ Page({
     // 1. 读取基础训练数据
     const history = await getWorkoutHistory();
     const weights = await getBodyWeights();
+    const planDetail = await getActivePlanDetail();
     this.setData({
-      activePlan: getActivePlan(),
+      activePlan: planDetail.activePlan,
       workoutCount: history.length,
       weightCount: weights.length
     });

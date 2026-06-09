@@ -64,8 +64,8 @@ Page({
     wx.navigateTo({ url: '/pages/workout/index?resume=1' });
   },
 
-  onDayChange(event) {
-    setActivePlanDay(Number(event.detail.value));
+  async onDayChange(event) {
+    await setActivePlanDay(Number(event.detail.value));
     this.refreshHome();
   }
 });
