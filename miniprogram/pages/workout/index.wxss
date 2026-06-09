@@ -207,11 +207,6 @@
   font-weight: 700;
 }
 
-.last-workout-rpe {
-  color: var(--muted);
-  margin-left: 8rpx;
-}
-
 .exercise-guide-panel {
   margin-top: 40rpx;
   background: var(--card);
@@ -365,24 +360,3 @@
   flex: 1;
 }
 
-.rpe-desc-info {
-  margin-bottom: 24rpx;
-  font-size: 24rpx;
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  background: rgba(255, 210, 63, 0.05);
-  border: 2rpx solid rgba(255, 210, 63, 0.15);
-  padding: 14rpx 20rpx;
-  border-radius: 8rpx;
-}
-
-.rpe-desc-icon {
-  font-size: 26rpx;
-  font-weight: 900;
-}
-
-.rpe-desc-text {
-  font-weight: 700;
-}

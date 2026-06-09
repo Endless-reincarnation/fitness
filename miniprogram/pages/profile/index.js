@@ -1,6 +1,7 @@
 const { getBodyWeights, getWorkoutHistory, syncPendingCloudWrites } = require('../../services/workoutService');
 const { getActivePlanDetail } = require('../../services/planService');
-const { getUserProfile, saveUserProfile, uploadAvatar } = require('../../services/userService');
+const { saveFeedbackMessage } = require('../../services/feedbackService');
+const { getUserProfile, isAdminProfile, saveUserProfile, uploadAvatar } = require('../../services/userService');
 const { applyTheme, syncTabBarTheme } = require('../../utils/theme');
 
 Page({
@@ -16,9 +17,12 @@ Page({
 
     // 用户登录资料状态
     userProfile: null,
+    isAdmin: false,
     avatarFallback: '训',
     showEditModal: false,
+    showFeedbackModal: false,
     isSaving: false,
+    isSubmittingFeedback: false,
 
     // 编辑表单临时变量
     tempAvatarUrl: '',
@@ -26,6 +30,8 @@ Page({
     tempGender: 'unknown',
     tempHeight: '',
     tempGoal: '',
+    tempFeedbackContent: '',
+    tempFeedbackContact: '',
 
     // 选项字典
     genderOptions: [
@@ -64,8 +70,11 @@ Page({
       const fallbackChar = profile.nickname ? profile.nickname.charAt(0).toUpperCase() : '训';
       this.setData({
         userProfile: profile,
+        isAdmin: isAdminProfile(profile),
         avatarFallback: fallbackChar
       });
+    } else {
+      this.setData({ isAdmin: false });
     }
   },
 
@@ -92,6 +101,18 @@ Page({
 
   closeEditModal() {
     this.setData({ showEditModal: false });
+  },
+
+  openFeedbackModal() {
+    this.setData({
+      showFeedbackModal: true,
+      tempFeedbackContent: '',
+      tempFeedbackContact: ''
+    });
+  },
+
+  closeFeedbackModal() {
+    this.setData({ showFeedbackModal: false });
   },
 
   // 空操作函数，用于阻止事件冒泡
@@ -142,6 +163,43 @@ Page({
       tempGoal: option.value,
       selectedGoalLabel: option.label
     });
+  },
+
+  onFeedbackInput(event) {
+    const { field } = event.currentTarget.dataset;
+    this.setData({ [field]: event.detail.value });
+  },
+
+  async submitFeedback() {
+    const content = String(this.data.tempFeedbackContent || '').trim();
+    if (!content) {
+      wx.showToast({ title: '请先填写建议', icon: 'none' });
+      return;
+    }
+
+    this.setData({ isSubmittingFeedback: true });
+    try {
+      // 留言只收集必要上下文，方便后续定位反馈来源。
+      await saveFeedbackMessage({
+        content,
+        contact: this.data.tempFeedbackContact,
+        userSnapshot: this.data.userProfile ? {
+          id: this.data.userProfile._id || '',
+          nickname: this.data.userProfile.nickname || ''
+        } : null
+      });
+
+      this.setData({
+        showFeedbackModal: false,
+        tempFeedbackContent: '',
+        tempFeedbackContact: ''
+      });
+      wx.showToast({ title: '已收到建议', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '提交失败', icon: 'none' });
+    } finally {
+      this.setData({ isSubmittingFeedback: false });
+    }
   },
 
   // 收集表单数据，并保存同步到云端
@@ -221,6 +279,10 @@ Page({
   },
 
   openCloudDiagnostics() {
+    if (!this.data.isAdmin) {
+      wx.showToast({ title: '仅管理员可用', icon: 'none' });
+      return;
+    }
     wx.navigateTo({ url: '/pages/cloud-diagnostics/index' });
   }
 });

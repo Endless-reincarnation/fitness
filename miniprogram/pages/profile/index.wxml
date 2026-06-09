@@ -34,7 +34,15 @@
     <view class="action-arrow">›</view>
   </view>
 
-  <view class="card block action-card" bindtap="openCloudDiagnostics">
+  <view class="card block action-card" bindtap="openFeedbackModal">
+    <view>
+      <view class="section-title">建议留言</view>
+      <view class="muted plan-text">告诉我们哪里不好用，或者想加什么功能</view>
+    </view>
+    <view class="action-arrow">›</view>
+  </view>
+
+  <view wx:if="{{isAdmin}}" class="card block action-card" bindtap="openCloudDiagnostics">
     <view>
       <view class="section-title">云数据诊断</view>
       <view class="muted plan-text">检查集合数量、云端读写和待同步记录</view>
@@ -110,6 +118,33 @@
         <button class="btn-cancel" bindtap="closeEditModal">取消</button>
         <button class="btn-save" bindtap="saveProfile" disabled="{{isSaving}}">
           {{isSaving ? '正在保存...' : '保存并同步'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== 建议留言 Modal ==================== -->
+  <view class="modal-backdrop {{showFeedbackModal ? 'show' : ''}}" bindtap="closeFeedbackModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <view class="modal-title">建议留言</view>
+        <view class="modal-close" bindtap="closeFeedbackModal">×</view>
+      </view>
+
+      <view class="form-item">
+        <view class="label">建议内容</view>
+        <textarea class="feedback-textarea" value="{{tempFeedbackContent}}" data-field="tempFeedbackContent" bindinput="onFeedbackInput" maxlength="500" placeholder="哪里不好用，或者你希望加什么功能？" />
+      </view>
+
+      <view class="form-item">
+        <view class="label">联系方式（选填）</view>
+        <input class="form-input" value="{{tempFeedbackContact}}" data-field="tempFeedbackContact" bindinput="onFeedbackInput" placeholder="微信号或手机号，方便需要时联系你" />
+      </view>
+
+      <view class="modal-footer">
+        <button class="btn-cancel" bindtap="closeFeedbackModal">取消</button>
+        <button class="btn-save" bindtap="submitFeedback" disabled="{{isSubmittingFeedback}}">
+          {{isSubmittingFeedback ? '正在提交...' : '提交建议'}}
         </button>
       </view>
     </view>

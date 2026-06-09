@@ -1,4 +1,5 @@
 const { cloudConfig, countCollection, isCloudEnabled } = require('../../services/cloudService');
+const { getUserProfile, isAdminProfile } = require('../../services/userService');
 const { getPendingCloudWriteCount, syncPendingCloudWrites } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 
@@ -10,7 +11,8 @@ const checkItems = [
   ['planDayExercises', '训练编排'],
   ['workoutSessions', '训练记录'],
   ['workoutSets', '训练组'],
-  ['bodyWeights', '体重']
+  ['bodyWeights', '体重'],
+  ['feedbackMessages', '建议留言']
 ];
 
 Page({
@@ -23,8 +25,14 @@ Page({
     loading: false
   },
 
-  onShow() {
+  async onShow() {
     applyTheme(this);
+    const profile = await getUserProfile();
+    if (!isAdminProfile(profile)) {
+      wx.showToast({ title: '仅管理员可用', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 500);
+      return;
+    }
     this.refresh();
   },
 

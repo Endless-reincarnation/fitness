@@ -8,15 +8,16 @@ const loginTokenInput = ref('');
 const loginError = ref('');
 const loading = ref(false);
 const isSaving = ref(false);
-const currentTab = ref('dashboard'); // dashboard, exercises, plans
+const currentTab = ref('dashboard'); // dashboard, exercises, plans, feedback
 
 // 云数据库拉取的数据缓存
-const stats = ref({ users: 0, exercises: 0, plans: 0, workouts: 0 });
+const stats = ref({ users: 0, exercises: 0, plans: 0, workouts: 0, feedback: 0 });
 const musclesList = ref([]);
 const exercisesList = ref([]);
 const plansList = ref([]);
 const planDaysList = ref([]);
 const planDayExercisesList = ref([]);
+const feedbackList = ref([]);
 
 // 预设选项字典
 const bodyRegions = {
@@ -44,6 +45,12 @@ const goalOptions = [
   { value: 'body_shape', label: '塑形' },
   { value: 'strength', label: '力量' }
 ];
+
+const feedbackStatusText = {
+  new: '新留言',
+  processing: '处理中',
+  done: '已处理'
+};
 
 // ==================== 2. 云开发 SDK 联调 ====================
 let c1 = null;
@@ -106,7 +113,7 @@ const handleLogin = async () => {
 const handleLogout = () => {
   localStorage.removeItem('admin_token');
   isAuthenticated.value = false;
-  stats.value = { users: 0, exercises: 0, plans: 0, workouts: 0 };
+  stats.value = { users: 0, exercises: 0, plans: 0, workouts: 0, feedback: 0 };
 };
 
 const fetchData = async () => {
@@ -129,12 +136,37 @@ const fetchData = async () => {
     plansList.value = plansData.plans;
     planDaysList.value = plansData.days;
     planDayExercisesList.value = plansData.dayExercises;
+
+    // 5. 获取用户建议留言
+    const feedbackData = await callCloudApi('get_feedback_messages');
+    feedbackList.value = feedbackData;
+    stats.value.feedback = feedbackData.filter(item => item.status !== 'done').length;
   } catch (err) {
     console.error('拉取云端数据失败：', err);
     alert('同步云端数据出错: ' + err.message);
   } finally {
     loading.value = false;
   }
+};
+
+const updateFeedbackStatus = async (item, status) => {
+  if (item.status === status) return;
+
+  try {
+    await callCloudApi('update_feedback_status', { id: item._id, status });
+    item.status = status;
+    item.updated_at = new Date().toISOString();
+    stats.value.feedback = feedbackList.value.filter(entry => entry.status !== 'done').length;
+  } catch (err) {
+    alert('更新留言状态失败: ' + err.message);
+  }
+};
+
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('zh-CN', { hour12: false });
 };
 
 // ==================== 4. 动作管理模块逻辑 ====================
@@ -744,6 +776,13 @@ onMounted(() => {
         >
           <span class="icon">📅</span> 官方计划库
         </li>
+        <li 
+          class="nav-item" 
+          :class="{ active: currentTab === 'feedback' }"
+          @click="currentTab = 'feedback'"
+        >
+          <span class="icon">💬</span> 建议留言
+        </li>
       </nav>
       
       <div class="sidebar-footer">
@@ -794,6 +833,13 @@ onMounted(() => {
               <span class="stat-value">{{ stats.workouts }}</span>
             </div>
             <div class="stat-icon">🔥</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-info">
+              <span class="stat-label">未处理建议留言</span>
+              <span class="stat-value">{{ stats.feedback }}</span>
+            </div>
+            <div class="stat-icon">💬</div>
           </div>
         </div>
 
@@ -964,6 +1010,60 @@ onMounted(() => {
               <tr v-if="!plansList.filter(p => p.status !== 'archived').length">
                 <td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);">
                   暂无已保存的官方计划模板。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 渲染4：建议留言管理 -->
+      <section v-else-if="currentTab === 'feedback'">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">建议留言</h2>
+            <p class="page-subtitle">查看小程序用户提交的问题反馈和功能建议</p>
+          </div>
+          <button class="btn btn-secondary" @click="fetchData" :disabled="loading">
+            🔄 刷新留言
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>提交时间</th>
+                <th>状态</th>
+                <th>建议内容</th>
+                <th>联系方式</th>
+                <th>用户</th>
+                <th class="text-right">处理</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in feedbackList" :key="item._id">
+                <td style="white-space: nowrap;">{{ formatDateTime(item.created_at) }}</td>
+                <td>
+                  <span class="badge" :class="item.status === 'done' ? 'badge-success' : item.status === 'processing' ? 'badge-primary' : 'badge-danger'">
+                    {{ feedbackStatusText[item.status] || item.status }}
+                  </span>
+                </td>
+                <td class="feedback-content">{{ item.content }}</td>
+                <td>{{ item.contact || '-' }}</td>
+                <td>{{ item.user_snapshot && item.user_snapshot.nickname ? item.user_snapshot.nickname : '-' }}</td>
+                <td class="text-right">
+                  <button class="btn btn-secondary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="updateFeedbackStatus(item, 'processing')">
+                    处理中
+                  </button>
+                  <button class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="updateFeedbackStatus(item, 'done')">
+                    已处理
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!feedbackList.length">
+                <td colspan="6" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                  暂无用户建议留言。
                 </td>
               </tr>
             </tbody>

@@ -1,4 +1,14 @@
-const { getCollection, isCloudEnabled } = require('./cloudService');
+const { cloudConfig, getCollection, isCloudEnabled } = require('./cloudService');
+
+function isAdminProfile(profile) {
+  if (!profile) return false;
+
+  const openid = profile.openid || profile._openid;
+  const adminOpenids = cloudConfig.adminOpenids || [];
+
+  // 支持 users 表标记和本地白名单两种方式，方便开发期快速授权。
+  return Boolean(profile.is_admin || profile.isAdmin || (openid && adminOpenids.indexOf(openid) !== -1));
+}
 
 /**
  * 获取当前用户的云端个人资料
@@ -94,6 +104,7 @@ async function uploadAvatar(tempFilePath) {
 
 module.exports = {
   getUserProfile,
+  isAdminProfile,
   saveUserProfile,
   uploadAvatar
 };

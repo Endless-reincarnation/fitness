@@ -13,7 +13,7 @@
       <view class="live-number">{{reps || currentExerciseMinReps}}</view>
       <view class="unit">次</view>
     </view>
-    <view class="live-meta">RPE {{rpe || currentExercise.rpe}} · REST {{currentExercise.restSeconds}}s · 保留 2 次余量</view>
+    <view class="live-meta">REST {{currentRestSeconds}}s · {{currentExercise.reps}} 次目标</view>
   </view>
 
   <view class="form-row">
@@ -34,24 +34,18 @@
       </view>
     </view>
     <view class="field-box">
-      <view class="field-label">RPE</view>
-      <input class="input" type="digit" value="{{rpe}}" data-field="rpe" bindinput="onInput" placeholder="{{currentExercise.rpe}}" />
+      <view class="field-label">休息</view>
+      <input class="input" type="number" value="{{currentRestSeconds}}" data-field="currentRestSeconds" bindinput="onInput" placeholder="{{currentExercise.restSeconds}}" />
       <view class="quick-adjust-row">
-        <view class="adjust-btn" bindtap="adjustValue" data-field="rpe" data-delta="-0.5">-0.5</view>
-        <view class="adjust-btn" bindtap="adjustValue" data-field="rpe" data-delta="0.5">+0.5</view>
+        <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="-15">-15秒</view>
+        <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="15">+15秒</view>
       </view>
     </view>
-  </view>
-
-  <view wx:if="{{rpeDesc}}" class="rpe-desc-info">
-    <text class="rpe-desc-icon">ⓘ</text>
-    <text class="rpe-desc-text">RPE强度评级：{{rpeDesc}}</text>
   </view>
 
   <view wx:if="{{lastWorkoutRecord}}" class="last-workout-info">
     <text class="last-workout-label">上次训练：</text>
     <text class="last-workout-value">{{lastWorkoutRecord.weightKg}} kg × {{lastWorkoutRecord.reps}} 次</text>
-    <text wx:if="{{lastWorkoutRecord.rpe}}" class="last-workout-rpe"> (RPE {{lastWorkoutRecord.rpe}})</text>
   </view>
 
 

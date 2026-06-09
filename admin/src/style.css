@@ -1024,6 +1024,13 @@ h1, h2, h3, h4 {
   gap: 0.25rem;
 }
 
+.feedback-content {
+  max-width: 420px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
 /* Helpers & Utilities */
 .text-right { text-align: right; }
 .text-center { text-align: center; }

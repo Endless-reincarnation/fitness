@@ -213,7 +213,7 @@ async function syncPendingCloudWrites() {
 }
 
 /**
- * 获取某个特定动作的最近一次训练记录（重量、次数、RPE）
+ * 获取某个特定动作的最近一次训练记录（重量、次数、休息时间）
  * 支持云端查询与本地缓存回落
  * @param {string} exerciseId 动作ID
  */

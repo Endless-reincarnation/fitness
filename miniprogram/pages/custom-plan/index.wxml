@@ -24,9 +24,14 @@
 
   <view class="card block">
     <view class="section-title">添加动作</view>
-    <picker mode="selector" range="{{exerciseOptions}}" value="{{selectedExerciseIndex}}" bindchange="onExerciseChange">
-      <view class="picker-box">{{exerciseOptions[selectedExerciseIndex]}}</view>
-    </picker>
+    <input class="input" value="{{exerciseKeyword}}" bindinput="onExerciseSearchInput" placeholder="搜索或输入新动作" />
+    <view class="exercise-search-list" wx:if="{{filteredExercises.length}}">
+      <view wx:for="{{filteredExercises}}" wx:key="id" class="exercise-option" data-id="{{item.id}}" bindtap="selectExercise">
+        <view class="exercise-option-name">{{item.name}}</view>
+        <view class="exercise-option-sub">{{item.primaryMusclesText}} · {{item.equipmentText}}</view>
+      </view>
+    </view>
+    <button wx:if="{{canCreateExercise}}" class="ghost-button create-exercise-button" bindtap="createCustomExercise">新建“{{exerciseKeyword}}”</button>
     <view class="form-row">
       <view class="field-box">
         <view class="field-label">组数</view>

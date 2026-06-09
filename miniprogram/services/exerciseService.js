@@ -4,6 +4,34 @@ const { getCollection, isCloudEnabled } = require('./cloudService');
 let cloudExercisesCache = null;
 let cloudMusclesCache = null;
 
+function getCustomExercises() {
+  return wx.getStorageSync('customExercises') || [];
+}
+
+function saveCustomExercise(exerciseName) {
+  const name = String(exerciseName || '').trim();
+  if (!name) return null;
+
+  const customExercises = getCustomExercises();
+  const existing = customExercises.find((item) => item.name === name);
+  if (existing) return formatExercise(existing);
+
+  // 自定义动作也保存为结构化对象，计划里只引用 ID，避免自由文本散落。
+  const exercise = {
+    id: `custom_exercise_${Date.now()}`,
+    name,
+    sourceType: 'custom',
+    primaryMuscles: ['自定义'],
+    secondaryMuscles: [],
+    equipment: ['自定义'],
+    steps: ['自定义动作暂无标准步骤，训练时按自己的动作习惯执行。'],
+    mistakes: ['暂无常见错误记录。'],
+    note: '用户自定义动作'
+  };
+  wx.setStorageSync('customExercises', customExercises.concat(exercise));
+  return formatExercise(exercise);
+}
+
 async function listCloudCollection(collectionKey) {
   const collection = getCollection(collectionKey);
   if (!collection) return [];
@@ -48,7 +76,7 @@ function formatExercise(exercise, muscleNameMap = {}) {
 }
 
 function listLocalExercises() {
-  return exercises.map((exercise) => formatExercise(exercise));
+  return exercises.map((exercise) => formatExercise(exercise)).concat(getCustomExercises().map((exercise) => formatExercise(exercise)));
 }
 
 async function listExercises() {
@@ -61,7 +89,7 @@ async function listExercises() {
     ]);
     if (!cloudExercises.length) return listLocalExercises();
     cloudExercisesCache = cloudExercises;
-    return cloudExercises.map((exercise) => formatExercise(exercise, muscleNameMap));
+    return cloudExercises.map((exercise) => formatExercise(exercise, muscleNameMap)).concat(getCustomExercises().map((exercise) => formatExercise(exercise)));
   } catch (error) {
     console.warn('读取云端动作库失败，已回落本地数据', error);
     return listLocalExercises();
@@ -69,6 +97,9 @@ async function listExercises() {
 }
 
 async function getExerciseById(exerciseId) {
+  const customExercise = getCustomExercises().find((item) => item.id === exerciseId);
+  if (customExercise) return formatExercise(customExercise);
+
   if (!isCloudEnabled()) return formatExercise(getExercise(exerciseId));
 
   try {
@@ -91,5 +122,6 @@ async function getExerciseById(exerciseId) {
 module.exports = {
   listExercises,
   getExerciseById,
-  formatExercise
+  formatExercise,
+  saveCustomExercise
 };

@@ -1,4 +1,4 @@
-const { listExercises } = require('../../services/exerciseService');
+const { listExercises, saveCustomExercise } = require('../../services/exerciseService');
 const { saveUserPlan, getPlanById } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
@@ -26,9 +26,11 @@ Page({
       }
     ],
     currentDayExercises: [],
-    exerciseOptions: [],
     exerciseList: [],
-    selectedExerciseIndex: 0,
+    filteredExercises: [],
+    selectedExercise: null,
+    exerciseKeyword: '',
+    canCreateExercise: false,
     sets: '3',
     reps: '8-12',
     restSeconds: '120'
@@ -51,8 +53,8 @@ Page({
     if (!exerciseList.length) {
       exerciseList = await listExercises();
       this.setData({
-        exerciseOptions: exerciseList.map((item) => item.name),
-        exerciseList
+        exerciseList,
+        filteredExercises: exerciseList.slice(0, 8)
       });
     }
 
@@ -129,17 +131,67 @@ Page({
     });
   },
 
-  onExerciseChange(event) {
-    this.setData({ selectedExerciseIndex: Number(event.detail.value) });
+  refreshExerciseSearch(keyword) {
+    const text = String(keyword || '').trim();
+    const filteredExercises = this.data.exerciseList.filter((item) => {
+      if (!text) return true;
+      return item.name.indexOf(text) !== -1 || item.primaryMusclesText.indexOf(text) !== -1;
+    }).slice(0, 8);
+    const hasSameName = this.data.exerciseList.some((item) => item.name === text);
+
+    this.setData({
+      exerciseKeyword: keyword,
+      filteredExercises,
+      selectedExercise: null,
+      canCreateExercise: Boolean(text && !hasSameName)
+    });
+  },
+
+  onExerciseSearchInput(event) {
+    this.refreshExerciseSearch(event.detail.value);
+  },
+
+  selectExercise(event) {
+    const { id } = event.currentTarget.dataset;
+    const selectedExercise = this.data.exerciseList.find((item) => item.id === id);
+    if (!selectedExercise) return;
+
+    this.setData({
+      selectedExercise,
+      exerciseKeyword: selectedExercise.name,
+      filteredExercises: [],
+      canCreateExercise: false
+    });
+  },
+
+  createCustomExercise() {
+    const exercise = saveCustomExercise(this.data.exerciseKeyword);
+    if (!exercise) {
+      wx.showToast({ title: '请先输入动作名称', icon: 'none' });
+      return;
+    }
+
+    const exerciseList = this.data.exerciseList.some((item) => item.id === exercise.id) ? this.data.exerciseList : this.data.exerciseList.concat(exercise);
+
+    // 新建后立即写回动作列表，让下次搜索可以直接复用。
+    this.setData({
+      exerciseList,
+      selectedExercise: exercise,
+      exerciseKeyword: exercise.name,
+      filteredExercises: [],
+      canCreateExercise: false
+    });
   },
 
   addExercise() {
-    const exercise = this.data.exerciseList[this.data.selectedExerciseIndex];
+    const keyword = String(this.data.exerciseKeyword || '').trim();
+    const matchedExercise = this.data.exerciseList.find((item) => item.name === keyword);
+    const exercise = this.data.selectedExercise || matchedExercise || saveCustomExercise(keyword);
     const sets = Number(this.data.sets);
     const restSeconds = Number(this.data.restSeconds);
 
     if (!exercise) {
-      wx.showToast({ title: '动作库加载中', icon: 'none' });
+      wx.showToast({ title: '请选择或新建动作', icon: 'none' });
       return;
     }
 
@@ -154,6 +206,7 @@ Page({
     }
 
     const days = this.data.days.slice();
+    const exerciseList = this.data.exerciseList.some((item) => item.id === exercise.id) ? this.data.exerciseList : this.data.exerciseList.concat(exercise);
     days[this.data.currentDayIndex].exercises = days[this.data.currentDayIndex].exercises.concat({
       exerciseId: exercise.id,
       exerciseName: exercise.name,
@@ -165,7 +218,12 @@ Page({
 
     this.setData({
       days,
-      currentDayExercises: days[this.data.currentDayIndex].exercises
+      currentDayExercises: days[this.data.currentDayIndex].exercises,
+      exerciseList,
+      selectedExercise: null,
+      exerciseKeyword: '',
+      filteredExercises: exerciseList.slice(0, 8),
+      canCreateExercise: false
     });
   },
 

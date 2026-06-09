@@ -426,6 +426,54 @@ exports.main = async (event, context) => {
         };
       }
 
+      // ==================== 5. 建议留言管理 ====================
+      case 'get_feedback_messages': {
+        const res = await db.collection('feedback_messages')
+          .orderBy('created_at', 'desc')
+          .limit(200)
+          .get();
+        return {
+          code: 200,
+          data: res.data
+        };
+      }
+
+      case 'update_feedback_status': {
+        const { id, status } = payload;
+        if (!id || !['new', 'processing', 'done'].includes(status)) {
+          return { code: 400, message: '留言状态参数不正确' };
+        }
+
+        const existing = await db.collection('feedback_messages').doc(id).get().catch(() => null);
+        if (!existing || !existing.data) {
+          return { code: 404, message: '留言不存在' };
+        }
+
+        await db.collection('feedback_messages').doc(id).update({
+          data: {
+            status,
+            updated_at: now
+          }
+        });
+
+        await db.collection('admin_logs').add({
+          data: {
+            admin_id: 'web_admin',
+            action: 'update_feedback_status',
+            target_collection: 'feedback_messages',
+            target_id: id,
+            before: existing.data,
+            after: { ...existing.data, status, updated_at: now },
+            created_at: now
+          }
+        });
+
+        return {
+          code: 200,
+          data: { _id: id, status, updated_at: now }
+        };
+      }
+
       default:
         return {
           code: 400,
