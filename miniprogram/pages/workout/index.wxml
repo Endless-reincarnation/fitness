@@ -59,7 +59,7 @@
     <view class="rest-time">{{restLeft}}s</view>
     <view class="muted rest-label">组间休息</view>
     <view class="rest-bars">
-      <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="rest-bar {{index < 7 ? 'on' : ''}}"></view>
+      <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="rest-bar {{index < activeBarsCount ? 'on' : ''}}"></view>
     </view>
   </view>
 

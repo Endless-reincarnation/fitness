@@ -23,6 +23,8 @@ Page({
     records: [],
     isResting: false,
     restLeft: 0,
+    restTotal: 0,
+    activeBarsCount: 10,
     lastSetRecord: null,
     lastWorkoutRecord: null,
     rpeDesc: '',
@@ -293,15 +295,25 @@ Page({
 
   startRest(seconds) {
     this.clearTimer();
-    this.setData({ isResting: true, restLeft: seconds });
+    const restTotal = seconds || 120;
+    this.setData({
+      isResting: true,
+      restLeft: seconds,
+      restTotal,
+      activeBarsCount: 10
+    });
     this.timer = setInterval(() => {
       const next = this.data.restLeft - 1;
       if (next <= 0) {
         this.clearTimer();
-        this.setData({ isResting: false, restLeft: 0 });
+        this.setData({ isResting: false, restLeft: 0, activeBarsCount: 0 });
         wx.vibrateLong(); // 休息结束，触发长震动提醒
       } else {
-        this.setData({ restLeft: next });
+        const activeBarsCount = Math.ceil((next / restTotal) * 10);
+        this.setData({
+          restLeft: next,
+          activeBarsCount
+        });
       }
     }, 1000);
   },
@@ -309,7 +321,7 @@ Page({
   skipRest() {
     wx.vibrateShort({ type: 'medium' });
     this.clearTimer();
-    this.setData({ isResting: false, restLeft: 0 });
+    this.setData({ isResting: false, restLeft: 0, activeBarsCount: 0 });
   },
 
   clearTimer() {
