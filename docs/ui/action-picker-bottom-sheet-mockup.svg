@@ -1,0 +1,103 @@
+<svg width="900" height="980" viewBox="0 0 900 980" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#11110F"/>
+      <stop offset="1" stop-color="#080806"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="980" fill="#050505"/>
+  <text x="64" y="62" fill="#F7F1DD" font-family="Microsoft YaHei, Arial" font-size="30" font-weight="800">自定义计划：底部动作选择器效果图</text>
+  <text x="64" y="98" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="18">主页面只保留已选动作和训练参数，复杂选择放到底部弹窗里完成。</text>
+
+  <g transform="translate(70,130)">
+    <rect x="0" y="0" width="360" height="760" rx="34" fill="url(#bg)" stroke="#2E2A1C" stroke-width="2"/>
+    <rect x="24" y="34" width="312" height="96" rx="14" fill="#171713" stroke="#3A3421" stroke-width="2"/>
+    <text x="42" y="72" fill="#FFD23F" font-family="Microsoft YaHei, Arial" font-size="15" font-weight="900">CUSTOM PROGRAM</text>
+    <text x="42" y="108" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="28" font-weight="900">复制修改计划</text>
+
+    <rect x="24" y="150" width="312" height="148" rx="14" fill="#171713" stroke="#3A3421" stroke-width="2"/>
+    <text x="42" y="188" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="900">训练日</text>
+    <rect x="42" y="210" width="78" height="34" rx="8" fill="#171713" stroke="#3A3421"/>
+    <text x="60" y="233" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700">胸肩三头</text>
+    <rect x="130" y="210" width="78" height="34" rx="8" fill="#171713" stroke="#3A3421"/>
+    <text x="148" y="233" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700">背肩后二头</text>
+    <rect x="218" y="210" width="92" height="34" rx="8" fill="#FFD23F"/>
+    <text x="237" y="233" fill="#11110F" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="900">下肢后侧链</text>
+    <text x="42" y="270" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">当前训练日名称</text>
+
+    <rect x="24" y="324" width="312" height="298" rx="14" fill="#171713" stroke="#3A3421" stroke-width="2"/>
+    <text x="42" y="364" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="26" font-weight="900">添加动作</text>
+    <rect x="42" y="388" width="276" height="54" rx="10" fill="#0F0F0B" stroke="#3A3421"/>
+    <text x="60" y="423" fill="#FFD23F" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="900">已选择：杠铃深蹲</text>
+    <rect x="42" y="462" width="276" height="54" rx="10" fill="#FFD23F"/>
+    <text x="136" y="496" fill="#11110F" font-family="Microsoft YaHei, Arial" font-size="19" font-weight="900">选择动作</text>
+    <g transform="translate(42,536)">
+      <text x="0" y="0" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">组数</text>
+      <text x="100" y="0" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">次数</text>
+      <text x="200" y="0" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">休息</text>
+      <rect x="0" y="14" width="78" height="50" rx="9" fill="#0F0F0B" stroke="#3A3421"/>
+      <rect x="100" y="14" width="78" height="50" rx="9" fill="#0F0F0B" stroke="#3A3421"/>
+      <rect x="200" y="14" width="76" height="50" rx="9" fill="#0F0F0B" stroke="#3A3421"/>
+      <text x="34" y="47" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="21" font-weight="900">4</text>
+      <text x="122" y="47" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="21" font-weight="900">8-10</text>
+      <text x="220" y="47" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="21" font-weight="900">150</text>
+    </g>
+
+    <rect x="0" y="0" width="360" height="760" rx="34" fill="#000000" opacity="0.55"/>
+    <g transform="translate(0,250)" filter="url(#shadow)">
+      <rect x="0" y="0" width="360" height="510" rx="28" fill="#141410" stroke="#3A3421" stroke-width="2"/>
+      <rect x="145" y="16" width="70" height="5" rx="3" fill="#5B543D"/>
+      <text x="28" y="58" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="900">选择动作</text>
+      <rect x="28" y="78" width="304" height="52" rx="10" fill="#0D0D09" stroke="#3A3421"/>
+      <text x="48" y="112" fill="#8F8876" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="800">搜索动作名，例如 深蹲 / 卧推</text>
+      <g transform="translate(28,150)">
+        <rect x="0" y="0" width="52" height="34" rx="17" fill="#FFD23F"/>
+        <text x="15" y="23" fill="#11110F" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="900">全部</text>
+        <rect x="62" y="0" width="52" height="34" rx="17" fill="#1A1A14" stroke="#3A3421"/>
+        <text x="76" y="23" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">胸部</text>
+        <rect x="124" y="0" width="52" height="34" rx="17" fill="#1A1A14" stroke="#3A3421"/>
+        <text x="138" y="23" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">背部</text>
+        <rect x="186" y="0" width="52" height="34" rx="17" fill="#1A1A14" stroke="#3A3421"/>
+        <text x="200" y="23" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">腿部</text>
+        <rect x="248" y="0" width="52" height="34" rx="17" fill="#1A1A14" stroke="#3A3421"/>
+        <text x="262" y="23" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="800">肩部</text>
+      </g>
+      <g transform="translate(28,204)">
+        <rect x="0" y="0" width="304" height="62" rx="10" fill="#0F0F0B" stroke="#FFD23F"/>
+        <text x="18" y="25" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="900">杠铃深蹲</text>
+        <text x="18" y="48" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700">腿部 / 杠铃 / 主项</text>
+        <text x="274" y="38" fill="#FFD23F" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="900">✓</text>
+        <rect x="0" y="74" width="304" height="62" rx="10" fill="#0F0F0B" stroke="#3A3421"/>
+        <text x="18" y="99" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="900">罗马尼亚硬拉</text>
+        <text x="18" y="122" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700">腿部 / 后侧链 / 杠铃</text>
+        <rect x="0" y="148" width="304" height="62" rx="10" fill="#0F0F0B" stroke="#3A3421"/>
+        <text x="18" y="173" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="900">保加利亚蹲</text>
+        <text x="18" y="196" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700">腿部 / 哑铃 / 单侧</text>
+      </g>
+      <rect x="28" y="438" width="304" height="50" rx="12" fill="#FFD23F"/>
+      <text x="140" y="470" fill="#11110F" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="900">确认选择</text>
+    </g>
+  </g>
+
+  <g transform="translate(500,150)">
+    <text x="0" y="0" fill="#FFD23F" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="900">交互说明</text>
+    <rect x="0" y="28" width="330" height="530" rx="20" fill="#141410" stroke="#3A3421"/>
+    <text x="28" y="72" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="900">主页面</text>
+    <text x="28" y="108" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">1. 不直接展示动作列表，减少页面高度。</text>
+    <text x="28" y="140" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">2. 已选动作单独显示，用户确认感更强。</text>
+    <text x="28" y="172" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">3. 参数编辑仍在主页面，添加动作更快。</text>
+    <text x="28" y="226" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="900">底部弹窗</text>
+    <text x="28" y="262" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">1. 顶部搜索，适合知道动作名的用户。</text>
+    <text x="28" y="294" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">2. 肌群标签筛选，适合不知道动作名的用户。</text>
+    <text x="28" y="326" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">3. 搜索无结果时显示“新建该动作”。</text>
+    <text x="28" y="358" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">4. 选中后高亮，再确认返回主页面。</text>
+    <text x="28" y="412" fill="#FFF9E8" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="900">第一版可先做</text>
+    <text x="28" y="448" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">全部 / 胸 / 背 / 腿 / 肩 / 手臂 / 核心</text>
+    <text x="28" y="480" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">每类最多展示 8 条，搜索最多展示 8 条。</text>
+    <text x="28" y="512" fill="#A7A08B" font-family="Microsoft YaHei, Arial" font-size="16">后续再加“最近使用”和“常用动作”。</text>
+  </g>
+</svg>

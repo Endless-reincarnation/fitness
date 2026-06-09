@@ -18,7 +18,7 @@
       <view class="mark"></view>
       <view class="exercise-main">
         <view class="exercise-name">{{exercise.detail.name}}</view>
-        <view class="exercise-sub">{{exercise.sets}} 组 · {{exercise.reps}} 次 · RPE {{exercise.rpe}} · 休 {{exercise.restSeconds}} 秒</view>
+        <view class="exercise-sub">{{exercise.sets}} 组 · {{exercise.reps}} 次 · 休 {{exercise.restSeconds}} 秒</view>
       </view>
       <view class="role-label">{{exercise.roleLabel}}</view>
     </view>
@@ -27,10 +27,14 @@
   <view class="bottom-action-area">
     <block wx:if="{{plan.planType === 'custom'}}">
       <view class="custom-action-row">
-        <button class="ghost-button edit-btn" bindtap="editPlan">编辑计划</button>
+        <button class="ghost-button edit-btn" bindtap="editCustomPlan">编辑计划</button>
         <button class="ghost-button delete-btn" bindtap="deletePlan">删除计划</button>
       </view>
+      <button class="primary-button fixed-action" bindtap="enablePlan">启用计划</button>
     </block>
-    <button class="primary-button fixed-action" bindtap="enablePlan">启用这个计划</button>
+    <view wx:else class="action-grid">
+      <button class="ghost-button fixed-action secondary-action" bindtap="copyToCustomPlan">复制修改</button>
+      <button class="primary-button fixed-action" bindtap="enablePlan">启用计划</button>
+    </view>
   </view>
 </view>

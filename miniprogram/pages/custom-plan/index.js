@@ -1,5 +1,6 @@
 const { listExercises, saveCustomExercise } = require('../../services/exerciseService');
-const { saveUserPlan, getPlanById } = require('../../services/planService');
+const { buildPlanView, enablePlan, getPlanById, saveUserPlan } = require('../../services/planService');
+const { bodyRegionOptions, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
 const { applyTheme } = require('../../utils/theme');
 
 const defaultRule = {
@@ -13,11 +14,13 @@ const defaultRule = {
 Page({
   data: {
     theme: 'power-yellow',
-    planId: '',
-    isEdit: false,
-    planLoaded: false,
+    pageTitle: '新建计划',
+    introText: '支持多个训练日。先选择训练日，再给当前训练日添加动作。',
     planName: '',
+    planMeta: null,
+    editingPlanId: '',
     currentDayIndex: 0,
+    dayTabIntoView: 'day-tab-0',
     currentDayName: '训练日 1',
     days: [
       {
@@ -27,22 +30,24 @@ Page({
     ],
     currentDayExercises: [],
     exerciseList: [],
-    filteredExercises: [],
+    pickerExercises: [],
+    bodyRegionOptions,
+    selectedBodyRegion: 'all',
+    showExercisePicker: false,
     selectedExercise: null,
-    exerciseKeyword: '',
+    pickerKeyword: '',
     canCreateExercise: false,
     sets: '3',
     reps: '8-12',
     restSeconds: '120'
   },
 
-  onLoad(query) {
-    if (query.id) {
-      this.setData({
-        planId: query.id,
-        isEdit: true
-      });
-      wx.setNavigationBarTitle({ title: '编辑计划' });
+  async onLoad(query) {
+    const editId = query && (query.editId || query.id);
+    if (editId) {
+      await this.loadEditingPlan(editId);
+    } else if (query && query.copyFrom) {
+      await this.loadCopiedPlan(query.copyFrom, query.type || 'official');
     }
   },
 
@@ -54,45 +59,91 @@ Page({
       exerciseList = await listExercises();
       this.setData({
         exerciseList,
-        filteredExercises: exerciseList.slice(0, 8)
+        pickerExercises: exerciseList.slice(0, 8)
       });
     }
 
-    if (this.data.isEdit && !this.data.planLoaded) {
-      const plan = await getPlanById(this.data.planId, 'custom');
-      if (plan) {
-        const days = plan.days.map((day) => ({
-          id: day.id,
-          name: day.name,
-          exercises: day.exercises.map((item) => {
-            const exercise = exerciseList.find((e) => e.id === item.exerciseId);
-            return {
-              exerciseId: item.exerciseId,
-              exerciseName: exercise ? exercise.name : '未知动作',
-              sets: item.sets,
-              reps: item.reps,
-              restSeconds: item.restSeconds,
-              role: item.role || defaultRule.role,
-              roleLabel: item.roleLabel || defaultRule.roleLabel,
-              rpe: item.rpe || defaultRule.rpe,
-              weightRule: item.weightRule || defaultRule.weightRule,
-              progressionRule: item.progressionRule || defaultRule.progressionRule
-            };
-          })
-        }));
+  },
 
-        this.setData({
-          planName: plan.name,
-          days,
-          currentDayIndex: 0,
-          currentDayName: days[0] ? days[0].name : '训练日 1',
-          currentDayExercises: days[0] ? days[0].exercises : [],
-          planLoaded: true
-        });
-      } else {
-        wx.showToast({ title: '未找到该计划', icon: 'none' });
-      }
+  async loadCopiedPlan(planId, planType) {
+    // 复制官方/自定义计划时只复制可编辑结构，不改动原计划。
+    const sourcePlan = await getPlanById(planId, planType);
+    const planView = sourcePlan ? await buildPlanView(sourcePlan) : null;
+    if (!planView) {
+      wx.showToast({ title: '原计划不存在', icon: 'none' });
+      return;
     }
+
+    const days = this.normalizePlanDays(planView);
+
+    this.setData({
+      pageTitle: '复制修改计划',
+      introText: '已复制官方计划，可按自己的节奏调整训练日、动作、组数、次数和休息。',
+      planName: `${planView.name} 副本`,
+      planMeta: {
+        sourcePlanId: planView.id,
+        goal: planView.goal || ['自定义'],
+        level: planView.level || '自定义',
+        durationWeeks: planView.durationWeeks || 4,
+        equipmentTags: planView.equipmentTags || []
+      },
+      currentDayIndex: 0,
+      dayTabIntoView: 'day-tab-0',
+      currentDayName: days[0] ? days[0].name : '训练日 1',
+      days: days.length ? days : this.data.days,
+      currentDayExercises: days[0] ? days[0].exercises : []
+    });
+  },
+
+  async loadEditingPlan(planId) {
+    // 编辑模式复用同一个页面，保存时用原 ID 覆盖本地自定义计划。
+    const sourcePlan = await getPlanById(planId, 'custom');
+    const planView = sourcePlan ? await buildPlanView(sourcePlan) : null;
+    if (!planView) {
+      wx.showToast({ title: '自定义计划不存在', icon: 'none' });
+      return;
+    }
+
+    const days = this.normalizePlanDays(planView);
+    this.setData({
+      pageTitle: '编辑计划',
+      introText: '调整训练日、动作顺序、组数、次数和休息，保存后会覆盖当前计划。',
+      editingPlanId: planView.id,
+      planName: planView.name,
+      planMeta: {
+        sourcePlanId: planView.sourcePlanId || '',
+        goal: planView.goal || ['自定义'],
+        level: planView.level || '自定义',
+        durationWeeks: planView.durationWeeks || 4,
+        equipmentTags: planView.equipmentTags || []
+      },
+      currentDayIndex: 0,
+      dayTabIntoView: 'day-tab-0',
+      currentDayName: days[0] ? days[0].name : '训练日 1',
+      days: days.length ? days : this.data.days,
+      currentDayExercises: days[0] ? days[0].exercises : []
+    });
+  },
+
+  normalizePlanDays(planView) {
+    // 页面编辑态只保留计划编排需要的字段，动作详情仍通过 exerciseId 统一查询。
+    return planView.days.map((day) => ({
+      name: day.name,
+      focus: day.focus || '自定义训练日',
+      exercises: day.exercises.map((item) => ({
+        exerciseId: item.exerciseId,
+        exerciseName: item.detail ? item.detail.name : item.exerciseName,
+        sets: item.sets,
+        reps: item.reps,
+        rpe: item.rpe || defaultRule.rpe,
+        restSeconds: item.restSeconds,
+        role: item.role || defaultRule.role,
+        roleLabel: item.roleLabel || defaultRule.roleLabel,
+        weightRule: item.weightRule || defaultRule.weightRule,
+        progressionRule: item.progressionRule || defaultRule.progressionRule,
+        notes: item.notes || ''
+      }))
+    }));
   },
 
   onInput(event) {
@@ -112,11 +163,13 @@ Page({
   addDay() {
     const days = this.data.days.concat({
       name: `训练日 ${this.data.days.length + 1}`,
+      focus: '自定义训练日',
       exercises: []
     });
     this.setData({
       days,
       currentDayIndex: days.length - 1,
+      dayTabIntoView: `day-tab-${days.length - 1}`,
       currentDayName: days[days.length - 1].name,
       currentDayExercises: []
     });
@@ -126,29 +179,76 @@ Page({
     const index = Number(event.currentTarget.dataset.index);
     this.setData({
       currentDayIndex: index,
+      dayTabIntoView: `day-tab-${index}`,
       currentDayName: this.data.days[index].name,
       currentDayExercises: this.data.days[index].exercises
     });
   },
 
-  refreshExerciseSearch(keyword) {
+  refreshExercisePicker(keyword = this.data.pickerKeyword, region = this.data.selectedBodyRegion) {
     const text = String(keyword || '').trim();
-    const filteredExercises = this.data.exerciseList.filter((item) => {
-      if (!text) return true;
-      return item.name.indexOf(text) !== -1 || item.primaryMusclesText.indexOf(text) !== -1;
+    const pickerExercises = this.data.exerciseList.filter((item) => {
+      const matchesKeyword = text ? matchExerciseKeyword(item, text) : true;
+      const matchesRegion = text ? true : matchExerciseRegion(item, region);
+      return matchesKeyword && matchesRegion;
     }).slice(0, 8);
     const hasSameName = this.data.exerciseList.some((item) => item.name === text);
 
     this.setData({
-      exerciseKeyword: keyword,
-      filteredExercises,
-      selectedExercise: null,
+      pickerKeyword: keyword,
+      selectedBodyRegion: region,
+      pickerExercises,
       canCreateExercise: Boolean(text && !hasSameName)
     });
   },
 
-  onExerciseSearchInput(event) {
-    this.refreshExerciseSearch(event.detail.value);
+  openExercisePicker() {
+    this.setData({ showExercisePicker: true });
+    this.refreshExercisePicker('', this.data.selectedBodyRegion);
+  },
+
+  closeExercisePicker() {
+    this.setData({ showExercisePicker: false });
+  },
+
+  noop() {},
+
+  removeCurrentDay() {
+    if (this.data.days.length <= 1) {
+      wx.showToast({ title: '至少保留 1 个训练日', icon: 'none' });
+      return;
+    }
+
+    wx.showModal({
+      title: '删除训练日',
+      content: '确定删除当前训练日和其中的全部动作吗？',
+      confirmText: '删除',
+      confirmColor: '#FFD43B',
+      success: (res) => {
+        if (!res.confirm) return;
+
+        // 删除训练日会连带移除当天动作，必须二次确认后再更新本地计划。
+        const days = this.data.days.slice();
+        days.splice(this.data.currentDayIndex, 1);
+        const nextIndex = Math.min(this.data.currentDayIndex, days.length - 1);
+        this.setData({
+          days,
+          currentDayIndex: nextIndex,
+          dayTabIntoView: `day-tab-${nextIndex}`,
+          currentDayName: days[nextIndex].name,
+          currentDayExercises: days[nextIndex].exercises
+        });
+      }
+    });
+  },
+
+  onPickerSearchInput(event) {
+    this.refreshExercisePicker(event.detail.value, this.data.selectedBodyRegion);
+  },
+
+  switchExerciseRegion(event) {
+    const { region } = event.currentTarget.dataset;
+    this.refreshExercisePicker('', region);
   },
 
   selectExercise(event) {
@@ -158,14 +258,15 @@ Page({
 
     this.setData({
       selectedExercise,
-      exerciseKeyword: selectedExercise.name,
-      filteredExercises: [],
+      showExercisePicker: false,
+      pickerKeyword: '',
+      pickerExercises: [],
       canCreateExercise: false
     });
   },
 
   createCustomExercise() {
-    const exercise = saveCustomExercise(this.data.exerciseKeyword);
+    const exercise = saveCustomExercise(this.data.pickerKeyword);
     if (!exercise) {
       wx.showToast({ title: '请先输入动作名称', icon: 'none' });
       return;
@@ -177,14 +278,15 @@ Page({
     this.setData({
       exerciseList,
       selectedExercise: exercise,
-      exerciseKeyword: exercise.name,
-      filteredExercises: [],
+      showExercisePicker: false,
+      pickerKeyword: '',
+      pickerExercises: [],
       canCreateExercise: false
     });
   },
 
   addExercise() {
-    const keyword = String(this.data.exerciseKeyword || '').trim();
+    const keyword = String(this.data.selectedExercise ? this.data.selectedExercise.name : '').trim();
     const matchedExercise = this.data.exerciseList.find((item) => item.name === keyword);
     const exercise = this.data.selectedExercise || matchedExercise || saveCustomExercise(keyword);
     const sets = Number(this.data.sets);
@@ -221,16 +323,66 @@ Page({
       currentDayExercises: days[this.data.currentDayIndex].exercises,
       exerciseList,
       selectedExercise: null,
-      exerciseKeyword: '',
-      filteredExercises: exerciseList.slice(0, 8),
+      pickerKeyword: '',
+      pickerExercises: [],
       canCreateExercise: false
     });
   },
 
   removeExercise(event) {
     const { index } = event.currentTarget.dataset;
+    const currentIndex = Number(index);
+    const currentExercise = this.data.currentDayExercises[currentIndex];
+    if (!currentExercise) return;
+
+    wx.showModal({
+      title: '删除动作',
+      content: `确定删除「${currentExercise.exerciseName}」吗？`,
+      confirmText: '删除',
+      confirmColor: '#FFD43B',
+      success: (res) => {
+        if (!res.confirm) return;
+
+        // 动作删除只影响当前训练日，确认后同步回 days 和页面列表。
+        const days = this.data.days.slice();
+        days[this.data.currentDayIndex].exercises.splice(currentIndex, 1);
+        this.setData({
+          days,
+          currentDayExercises: days[this.data.currentDayIndex].exercises
+        });
+      }
+    });
+  },
+
+  moveExercise(event) {
+    const { index, direction } = event.currentTarget.dataset;
+    const currentIndex = Number(index);
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const days = this.data.days.slice();
-    days[this.data.currentDayIndex].exercises.splice(Number(index), 1);
+    const exercises = days[this.data.currentDayIndex].exercises;
+
+    if (targetIndex < 0 || targetIndex >= exercises.length) return;
+    const temp = exercises[currentIndex];
+    exercises[currentIndex] = exercises[targetIndex];
+    exercises[targetIndex] = temp;
+
+    this.setData({
+      days,
+      currentDayExercises: exercises
+    });
+  },
+
+  onPlanExerciseInput(event) {
+    const { index, field } = event.currentTarget.dataset;
+    const days = this.data.days.slice();
+    const exercise = days[this.data.currentDayIndex].exercises[Number(index)];
+    if (!exercise) return;
+
+    const value = field === 'sets' || field === 'restSeconds'
+      ? Number(event.detail.value || 0)
+      : event.detail.value;
+    exercise[field] = value;
+
     this.setData({
       days,
       currentDayExercises: days[this.data.currentDayIndex].exercises
@@ -249,7 +401,7 @@ Page({
     return days.map((day, index) => ({
       id: day.id || `custom_day_${Date.now()}_${index}`,
       name: day.name || `训练日 ${index + 1}`,
-      focus: '自定义训练日',
+      focus: day.focus || '自定义训练日',
       exercises: day.exercises.map((item) => ({
         exerciseId: item.exerciseId,
         sets: item.sets,
@@ -259,7 +411,8 @@ Page({
         role: item.role,
         roleLabel: item.roleLabel,
         weightRule: item.weightRule,
-        progressionRule: item.progressionRule
+        progressionRule: item.progressionRule,
+        notes: item.notes || ''
       }))
     }));
   },
@@ -281,24 +434,36 @@ Page({
     }
 
     const totalExerciseCount = this.getTotalExerciseCount(this.data.days);
-    const planId = this.data.planId || `custom_plan_${Date.now()}`;
+    const meta = this.data.planMeta || {};
     const plan = {
-      id: planId,
+      id: this.data.editingPlanId || `custom_plan_${Date.now()}`,
       planType: 'custom',
       name: this.data.planName,
-      goal: ['自定义'],
-      level: '自定义',
-      durationWeeks: 4,
+      sourcePlanId: meta.sourcePlanId || '',
+      goal: meta.goal || ['自定义'],
+      level: meta.level || '自定义',
+      durationWeeks: meta.durationWeeks || 4,
       weeklyFrequency: this.data.days.length,
-      equipmentTags: [],
+      equipmentTags: meta.equipmentTags || [],
       summary: `我的自定义计划 · ${this.data.days.length} 个训练日 · ${totalExerciseCount} 个动作`,
       days: this.buildPlanDays(this.data.days)
     };
 
-    await saveUserPlan(plan);
-    wx.showToast({ title: '已保存计划', icon: 'success' });
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 500);
+    const savedPlan = saveUserPlan(plan);
+    // 保存后直接询问是否启用，减少“保存后还要回列表再启用”的操作成本。
+    wx.showModal({
+      title: '已保存计划',
+      content: '要立即启用这个计划吗？',
+      confirmText: '立即启用',
+      cancelText: '稍后',
+      success: (res) => {
+        if (res.confirm) {
+          enablePlan(savedPlan);
+          wx.switchTab({ url: '/pages/home/index' });
+        } else {
+          wx.switchTab({ url: '/pages/plans/index' });
+        }
+      }
+    });
   }
 });

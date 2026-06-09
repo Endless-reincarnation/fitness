@@ -95,3 +95,18 @@
 .tags {
   margin-top: 18rpx;
 }
+
+.plan-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.plan-action-button {
+  width: 100% !important;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+}

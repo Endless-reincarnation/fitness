@@ -22,6 +22,11 @@ Page({
     wx.navigateTo({ url: `/pages/plan-detail/index?id=${id}&type=${type || 'official'}` });
   },
 
+  editPlan(event) {
+    const { id } = event.currentTarget.dataset;
+    wx.navigateTo({ url: `/pages/custom-plan/index?editId=${id}` });
+  },
+
   createPlan() {
     wx.navigateTo({ url: '/pages/custom-plan/index' });
   }

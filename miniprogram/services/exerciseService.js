@@ -1,5 +1,10 @@
 const { exercises, getExercise } = require('../data/mock');
 const { getCollection, isCloudEnabled } = require('./cloudService');
+const {
+  buildExerciseSearchText,
+  getExerciseBodyRegions,
+  getExerciseEquipmentCategories
+} = require('../utils/exerciseCategory');
 
 let cloudExercisesCache = null;
 let cloudMusclesCache = null;
@@ -60,7 +65,7 @@ function formatExercise(exercise, muscleNameMap = {}) {
   const secondaryMuscles = secondaryMuscleIds.map((id) => muscleNameMap[id] || id);
   const equipment = exercise.equipment_tags || exercise.equipment || [];
 
-  return {
+  const formattedExercise = {
     ...exercise,
     id: exercise.id || exercise._id,
     primaryMuscles,
@@ -72,6 +77,13 @@ function formatExercise(exercise, muscleNameMap = {}) {
     primaryMusclesText: primaryMuscles.join(' / '),
     secondaryMusclesText: secondaryMuscles.length ? secondaryMuscles.join(' / ') : '无',
     equipmentText: equipment.join(' / ')
+  };
+
+  return {
+    ...formattedExercise,
+    bodyRegions: getExerciseBodyRegions(formattedExercise),
+    equipmentCategories: getExerciseEquipmentCategories(formattedExercise),
+    searchText: buildExerciseSearchText(formattedExercise)
   };
 }
 

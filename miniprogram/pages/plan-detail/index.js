@@ -24,9 +24,21 @@ Page({
     }, 500);
   },
 
-  editPlan() {
+  copyToCustomPlan() {
+    const plan = this.data.plan;
+    if (!plan) return;
+
     wx.navigateTo({
-      url: `/pages/custom-plan/index?id=${this.data.plan.id}`
+      url: `/pages/custom-plan/index?copyFrom=${plan.id}&type=${plan.planType || 'official'}`
+    });
+  },
+
+  editCustomPlan() {
+    const plan = this.data.plan;
+    if (!plan) return;
+
+    wx.navigateTo({
+      url: `/pages/custom-plan/index?editId=${plan.id}`
     });
   },
 

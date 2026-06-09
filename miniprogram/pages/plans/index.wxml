@@ -29,6 +29,10 @@
     <view class="tags">
       <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
     </view>
+    <view class="plan-action-row">
+      <button class="ghost-button plan-action-button" data-id="{{item.id}}" catchtap="editPlan">编辑计划</button>
+      <button class="primary-button plan-action-button" data-id="{{item.id}}" data-type="custom" catchtap="openPlan">查看详情</button>
+    </view>
   </view>
 
   <view class="section-title group-title">官方计划</view>

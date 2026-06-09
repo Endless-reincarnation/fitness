@@ -1,8 +1,8 @@
 <view class="page theme-{{theme}}">
   <view class="page-header">
     <view class="eyebrow">CUSTOM PROGRAM</view>
-    <view class="page-title">{{isEdit ? '编辑计划' : '新建计划'}}</view>
-    <view class="muted intro">支持多个训练日。先选择训练日，再给当前训练日添加动作。</view>
+    <view class="page-title">{{pageTitle}}</view>
+    <view class="muted intro">{{introText}}</view>
   </view>
 
   <view class="card block">
@@ -12,26 +12,28 @@
 
   <view class="card block">
     <view class="section-title">训练日</view>
-    <view class="day-tabs">
-      <view wx:for="{{days}}" wx:key="name" class="day-tab {{currentDayIndex === index ? 'active' : ''}}" data-index="{{index}}" bindtap="switchDay">
+    <scroll-view scroll-x class="day-tabs" scroll-into-view="{{dayTabIntoView}}" scroll-with-animation show-scrollbar="false">
+      <view id="day-tab-{{index}}" wx:for="{{days}}" wx:key="name" class="day-tab {{currentDayIndex === index ? 'active' : ''}}" data-index="{{index}}" bindtap="switchDay">
         {{item.name}}
       </view>
+      <view class="day-tab add-day-tab" bindtap="addDay">＋训练日</view>
+    </scroll-view>
+    <view class="field-label-row second">
+      <view class="field-label">当前训练日名称</view>
+      <view wx:if="{{days.length > 1}}" class="delete-day-link" bindtap="removeCurrentDay">删除当前训练日</view>
     </view>
-    <button class="ghost-button add-day-button" bindtap="addDay">添加训练日</button>
-    <view class="field-label second">当前训练日名称</view>
     <input class="input" value="{{currentDayName}}" bindinput="onDayNameInput" placeholder="例如：胸肩三头" />
   </view>
 
   <view class="card block">
     <view class="section-title">添加动作</view>
-    <input class="input" value="{{exerciseKeyword}}" bindinput="onExerciseSearchInput" placeholder="搜索或输入新动作" />
-    <view class="exercise-search-list" wx:if="{{filteredExercises.length}}">
-      <view wx:for="{{filteredExercises}}" wx:key="id" class="exercise-option" data-id="{{item.id}}" bindtap="selectExercise">
-        <view class="exercise-option-name">{{item.name}}</view>
-        <view class="exercise-option-sub">{{item.primaryMusclesText}} · {{item.equipmentText}}</view>
+    <view class="selected-exercise {{selectedExercise ? 'active' : ''}}" bindtap="openExercisePicker">
+      <view>
+        <view class="selected-label">当前动作</view>
+        <view class="selected-name">{{selectedExercise ? selectedExercise.name : '还未选择动作'}}</view>
       </view>
+      <view class="selected-action">选择</view>
     </view>
-    <button wx:if="{{canCreateExercise}}" class="ghost-button create-exercise-button" bindtap="createCustomExercise">新建“{{exerciseKeyword}}”</button>
     <view class="form-row">
       <view class="field-box">
         <view class="field-label">组数</view>
@@ -54,11 +56,72 @@
   <view wx:for="{{currentDayExercises}}" wx:key="exerciseId" class="exercise-row">
     <view class="mark"></view>
     <view class="exercise-main">
-      <view class="exercise-name">{{item.exerciseName}}</view>
-      <view class="exercise-sub">{{item.sets}} 组 · {{item.reps}} 次 · 休 {{item.restSeconds}} 秒</view>
+      <view class="exercise-title-row">
+        <view class="exercise-title-copy">
+          <view class="exercise-name">{{item.exerciseName}}</view>
+          <view class="exercise-sub">{{item.sets}} 组 · {{item.reps}} 次 · 休 {{item.restSeconds}} 秒</view>
+        </view>
+        <view class="row-actions">
+          <view class="icon-action move-action {{index === 0 ? 'disabled' : ''}}" data-index="{{index}}" data-direction="up" bindtap="moveExercise" aria-label="上移动作">
+            <text class="action-icon">↑</text>
+          </view>
+          <view class="icon-action move-action {{index === currentDayExercises.length - 1 ? 'disabled' : ''}}" data-index="{{index}}" data-direction="down" bindtap="moveExercise" aria-label="下移动作">
+            <text class="action-icon">↓</text>
+          </view>
+          <view class="icon-action remove-action" data-index="{{index}}" bindtap="removeExercise" aria-label="删除动作">
+            <text class="action-icon">×</text>
+          </view>
+        </view>
+      </view>
+      <view class="exercise-edit-row">
+        <view class="exercise-edit-box">
+          <view class="exercise-edit-label">组</view>
+          <input class="exercise-edit-input" type="number" value="{{item.sets}}" data-index="{{index}}" data-field="sets" bindinput="onPlanExerciseInput" />
+        </view>
+        <view class="exercise-edit-box wide">
+          <view class="exercise-edit-label">次</view>
+          <input class="exercise-edit-input" value="{{item.reps}}" data-index="{{index}}" data-field="reps" bindinput="onPlanExerciseInput" />
+        </view>
+        <view class="exercise-edit-box">
+          <view class="exercise-edit-label">休</view>
+          <input class="exercise-edit-input" type="number" value="{{item.restSeconds}}" data-index="{{index}}" data-field="restSeconds" bindinput="onPlanExerciseInput" />
+        </view>
+      </view>
     </view>
-    <view class="remove-action" data-index="{{index}}" bindtap="removeExercise">删除</view>
   </view>
 
-  <button class="primary-button save-button" bindtap="savePlan">保存计划</button>
+  <button class="primary-button save-button" bindtap="savePlan">{{editingPlanId ? '保存修改' : '保存计划'}}</button>
+
+  <view class="picker-backdrop {{showExercisePicker ? 'show' : ''}}" bindtap="closeExercisePicker">
+    <view class="picker-sheet" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="sheet-header">
+        <view>
+          <view class="sheet-title">选择动作</view>
+          <view class="sheet-subtitle">支持中文、首字母和肌群筛选</view>
+        </view>
+        <view class="sheet-close" bindtap="closeExercisePicker">×</view>
+      </view>
+
+      <input class="picker-search" value="{{pickerKeyword}}" bindinput="onPickerSearchInput" placeholder="搜索动作名，例如 glwt / 卧推" />
+
+      <scroll-view scroll-x class="region-tabs" show-scrollbar="false">
+        <view class="region-tab {{selectedBodyRegion === item.value ? 'active' : ''}}" wx:for="{{bodyRegionOptions}}" wx:key="value" data-region="{{item.value}}" bindtap="switchExerciseRegion">
+          {{item.label}}
+        </view>
+      </scroll-view>
+
+      <scroll-view scroll-y class="picker-list">
+        <view wx:for="{{pickerExercises}}" wx:key="id" class="picker-exercise-option" data-id="{{item.id}}" bindtap="selectExercise">
+          <view>
+            <view class="picker-exercise-name">{{item.name}}</view>
+            <view class="picker-exercise-sub">{{item.primaryMusclesText}} · {{item.equipmentText}}</view>
+          </view>
+          <view class="picker-check">{{selectedExercise && selectedExercise.id === item.id ? '✓' : ''}}</view>
+        </view>
+        <view wx:if="{{!pickerExercises.length && !canCreateExercise}}" class="picker-empty">没有匹配动作，试试搜索动作名或切换肌群</view>
+        <button wx:if="{{canCreateExercise}}" class="ghost-button create-exercise-button" bindtap="createCustomExercise">新建“{{pickerKeyword}}”</button>
+      </scroll-view>
+    </view>
+  </view>
 </view>

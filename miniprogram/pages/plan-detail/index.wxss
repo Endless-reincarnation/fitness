@@ -90,6 +90,12 @@
   z-index: 90;
 }
 
+.action-grid {
+  display: grid;
+  grid-template-columns: 0.82fr 1fr;
+  gap: 18rpx;
+}
+
 .fixed-action {
   margin-top: 0;
   margin-bottom: 0;
@@ -122,4 +128,8 @@
 .custom-action-row .delete-btn {
   color: var(--danger) !important;
   border-color: var(--danger) !important;
+}
+
+.secondary-action {
+  font-size: 30rpx;
 }
