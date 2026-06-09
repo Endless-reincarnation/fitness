@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
+import draggable from 'vuedraggable';
 
 // ==================== 1. 基础状态变量 ====================
 const isAuthenticated = ref(false);
@@ -157,6 +158,54 @@ const filteredExercises = computed(() => {
   });
 });
 
+// 对标准动作列表按主肌群分类分组
+const groupedExercises = computed(() => {
+  const groups = {};
+  
+  // 初始化所有已知的肌群
+  musclesList.value.forEach(m => {
+    groups[m._id] = {
+      name: m.name,
+      exercises: []
+    };
+  });
+  
+  // 保留一个未匹配肌群的“其他”组
+  groups['other'] = {
+    name: '其他动作',
+    exercises: []
+  };
+
+  exercisesList.value.forEach(ex => {
+    const primaryId = ex.primary_muscles && ex.primary_muscles[0];
+    if (primaryId && groups[primaryId]) {
+      groups[primaryId].exercises.push(ex);
+    } else {
+      groups['other'].exercises.push(ex);
+    }
+  });
+
+  return Object.keys(groups)
+    .map(key => ({
+      id: key,
+      name: groups[key].name,
+      exercises: groups[key].exercises
+    }))
+    .filter(g => g.exercises.length > 0);
+});
+
+// 快速创建动作关联的计划动作行目标缓存
+const quickAddTargetRow = ref(null);
+
+const quickCreateExercise = (day, row) => {
+  quickAddTargetRow.value = row;
+  openNewExerciseModal();
+  // 智能联调：若当前训练日已设定了目标肌群，默认将新建动作的主肌群设为该训练日的首个目标肌群
+  if (day.target_muscles && day.target_muscles.length > 0) {
+    exerciseForm.primary_muscles = [day.target_muscles[0]];
+  }
+};
+
 // 动作表单编辑弹窗
 const showExerciseModal = ref(false);
 const editingExercise = ref(null);
@@ -177,6 +226,7 @@ const exerciseForm = reactive({
 
 const openNewExerciseModal = () => {
   editingExercise.value = null;
+  quickAddTargetRow.value = null; // 重置快速新增的绑定行引用
   Object.assign(exerciseForm, {
     _id: '',
     name: '',
@@ -264,6 +314,12 @@ const saveExercise = async () => {
     } else {
       exercisesList.value.unshift(savedEx);
       stats.value.exercises += 1;
+      
+      // 若处于快速新增动作的上下文，自动将该行动作绑定为新动作ID
+      if (quickAddTargetRow.value) {
+        quickAddTargetRow.value.exercise_id = savedEx._id;
+        quickAddTargetRow.value = null;
+      }
     }
 
     showExerciseModal.value = false;
@@ -310,9 +366,8 @@ const planForm = reactive({
   status: 'draft'
 });
 
-// 编辑计划时的训练日和动作编排临时数组
+// 编辑计划时的训练日（内部嵌套包含动作编排列表）响应式数组
 const planDaysForm = ref([]);
-const planDayExercisesForm = ref([]);
 
 const openNewPlanModal = () => {
   editingPlan.value = null;
@@ -332,7 +387,6 @@ const openNewPlanModal = () => {
   });
   
   planDaysForm.value = [];
-  planDayExercisesForm.value = [];
   
   // 根据默认频次初始化训练日列表
   adjustPlanDays();
@@ -364,17 +418,37 @@ const openEditPlanModal = (plan) => {
     .filter(d => d.plan_template_id === plan._id && d.plan_version === version)
     .sort((a, b) => a.day_index - b.day_index);
 
-  planDaysForm.value = JSON.parse(JSON.stringify(matchedDays));
-
-  // 过滤出这些训练日的动作编排
-  const dayIds = matchedDays.map(d => d._id);
-  const matchedExs = planDayExercisesList.value
-    .filter(e => dayIds.includes(e.plan_day_id))
-    .sort((a, b) => a.order - b.order);
-
-  planDayExercisesForm.value = JSON.parse(JSON.stringify(matchedExs));
+  planDaysForm.value = matchedDays.map(d => {
+    const exercises = planDayExercisesList.value
+      .filter(e => e.plan_day_id === d._id)
+      .sort((a, b) => a.order - b.order)
+      .map(e => {
+        const stdEx = exercisesList.value.find(s => s._id === e.exercise_id);
+        return {
+          ...e,
+          temp_muscle_id: stdEx && stdEx.primary_muscles && stdEx.primary_muscles.length ? stdEx.primary_muscles[0] : ''
+        };
+      });
+    return {
+      ...d,
+      exercises: JSON.parse(JSON.stringify(exercises))
+    };
+  });
 
   showPlanModal.value = true;
+};
+
+// 切换选择目标肌群
+const toggleMuscleSelection = (day, muscleId) => {
+  if (!day.target_muscles || !Array.isArray(day.target_muscles)) {
+    day.target_muscles = [];
+  }
+  const idx = day.target_muscles.indexOf(muscleId);
+  if (idx > -1) {
+    day.target_muscles.splice(idx, 1);
+  } else {
+    day.target_muscles.push(muscleId);
+  }
 };
 
 // 动态调整训练日天数
@@ -391,26 +465,25 @@ const adjustPlanDays = () => {
         day_index: i + 1,
         name: `训练日 ${i + 1}`,
         focus: '',
-        target_muscles: []
+        target_muscles: [],
+        exercises: []
       });
     }
   } else if (currentCount > targetCount) {
     // 减少天数 (从尾部移除)
-    const removedDays = planDaysForm.value.slice(targetCount);
-    const removedDayIds = removedDays.map(d => d._id);
-    
     planDaysForm.value = planDaysForm.value.slice(0, targetCount);
-    // 同时也删除对应的动作编排
-    planDayExercisesForm.value = planDayExercisesForm.value.filter(e => !removedDayIds.includes(e.plan_day_id));
   }
 };
 
 // 添加编排动作
 const addExerciseToDay = (dayId) => {
-  const dayExs = planDayExercisesForm.value.filter(e => e.plan_day_id === dayId);
-  const maxOrder = dayExs.reduce((max, e) => e.order > max ? e.order : max, 0);
+  const day = planDaysForm.value.find(d => d._id === dayId);
+  if (!day) return;
   
-  planDayExercisesForm.value.push({
+  const maxOrder = day.exercises.reduce((max, e) => e.order > max ? e.order : max, 0);
+  const defaultMuscle = day.target_muscles && day.target_muscles.length ? day.target_muscles[0] : '';
+  
+  day.exercises.push({
     _id: `temp_ex_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     plan_day_id: dayId,
     exercise_id: '',
@@ -422,50 +495,36 @@ const addExerciseToDay = (dayId) => {
     rest_seconds: 90,
     weight_rule: '',
     progression_rule: '',
-    notes: ''
+    notes: '',
+    temp_muscle_id: defaultMuscle
   });
 };
 
 // 移除编排动作
-const removeExerciseFromDay = (exId) => {
-  planDayExercisesForm.value = planDayExercisesForm.value.filter(e => e._id !== exId);
-  resortExercises();
+const removeExerciseFromDay = (day, exId) => {
+  day.exercises = day.exercises.filter(e => e._id !== exId);
+  resortExercises(day);
 };
 
 // 重新排序
-const resortExercises = () => {
-  planDaysForm.value.forEach(day => {
-    const exs = planDayExercisesForm.value
-      .filter(e => e.plan_day_id === day._id)
-      .sort((a, b) => a.order - b.order);
-      
-    exs.forEach((e, idx) => {
-      e.order = idx + 1;
-    });
+const resortExercises = (day) => {
+  day.exercises.forEach((e, idx) => {
+    e.order = idx + 1;
   });
 };
 
-const moveExercise = (ex, direction) => {
-  const dayId = ex.plan_day_id;
-  const dayExs = planDayExercisesForm.value
-    .filter(e => e.plan_day_id === dayId)
-    .sort((a, b) => a.order - b.order);
-    
-  const currentIdx = dayExs.findIndex(e => e._id === ex._id);
-  
-  if (direction === 'up' && currentIdx > 0) {
-    const target = dayExs[currentIdx - 1];
-    const tempOrder = ex.order;
-    ex.order = target.order;
-    target.order = tempOrder;
-  } else if (direction === 'down' && currentIdx < dayExs.length - 1) {
-    const target = dayExs[currentIdx + 1];
-    const tempOrder = ex.order;
-    ex.order = target.order;
-    target.order = tempOrder;
+const moveExercise = (day, exIdx, direction) => {
+  const arr = day.exercises;
+  if (direction === 'up' && exIdx > 0) {
+    const temp = arr[exIdx];
+    arr[exIdx] = arr[exIdx - 1];
+    arr[exIdx - 1] = temp;
+  } else if (direction === 'down' && exIdx < arr.length - 1) {
+    const temp = arr[exIdx];
+    arr[exIdx] = arr[exIdx + 1];
+    arr[exIdx + 1] = temp;
   }
-  
-  resortExercises();
+  resortExercises(day);
 };
 
 const savePlan = async () => {
@@ -480,12 +539,11 @@ const savePlan = async () => {
       alert(`请输入 训练日 ${day.day_index} 的名称！`);
       return;
     }
-    const dayExs = planDayExercisesForm.value.filter(e => e.plan_day_id === day._id);
-    if (!dayExs.length) {
+    if (!day.exercises.length) {
       alert(`训练日“${day.name}”至少需要配置一个训练动作！`);
       return;
     }
-    for (const ex of dayExs) {
+    for (const ex of day.exercises) {
       if (!ex.exercise_id) {
         alert(`请在“${day.name}”中选择对应的动作，不能留空！`);
         return;
@@ -517,19 +575,28 @@ const savePlan = async () => {
       planPayload._id = planForm._id;
     }
 
-    // 动作列表整理并填补动作名称快照
-    const updatedDayExercises = planDayExercisesForm.value.map(ex => {
-      const matchObj = exercisesList.value.find(e => e._id === ex.exercise_id);
-      return {
-        ...ex,
-        exercise_name: matchObj ? matchObj.name : ''
-      };
+    // 扁平化数据以匹配云数据库关系架构，并填补动作名称快照
+    const plan_days = planDaysForm.value.map(day => {
+      const d = { ...day };
+      delete d.exercises; // 移除辅助前端使用的嵌套数据
+      return d;
+    });
+
+    const plan_day_exercises = planDaysForm.value.flatMap(day => {
+      return day.exercises.map(ex => {
+        const matchObj = exercisesList.value.find(e => e._id === ex.exercise_id);
+        return {
+          ...ex,
+          plan_day_id: day._id, // 保证天ID绑定同步
+          exercise_name: matchObj ? matchObj.name : ''
+        };
+      });
     });
 
     const payload = {
       plan_template: planPayload,
-      plan_days: planDaysForm.value,
-      plan_day_exercises: updatedDayExercises
+      plan_days,
+      plan_day_exercises
     };
 
     const res = await callCloudApi('save_plan', payload);
@@ -575,9 +642,42 @@ const publishNewVersion = async (plan) => {
   }
 };
 
+// 级联动作面板状态与交互
+const activeCascaderRowId = ref(null);
+
+const toggleCascader = (rowId) => {
+  if (activeCascaderRowId.value === rowId) {
+    activeCascaderRowId.value = null;
+  } else {
+    activeCascaderRowId.value = rowId;
+  }
+};
+
+const selectExerciseCascade = (row, exId) => {
+  row.exercise_id = exId;
+  // 同时同步级联对应的 temp_muscle_id
+  const stdEx = exercisesList.value.find(s => s._id === exId);
+  if (stdEx && stdEx.primary_muscles && stdEx.primary_muscles.length) {
+    row.temp_muscle_id = stdEx.primary_muscles[0];
+  }
+  activeCascaderRowId.value = null; // 选择后自动收起
+};
+
+const getExerciseName = (exId) => {
+  const ex = exercisesList.value.find(e => e._id === exId);
+  return ex ? ex.name : '';
+};
+
 // ==================== 生命周期挂载 ====================
 onMounted(() => {
   checkLoginState();
+  
+  // 点击外部时关闭级联动作面板
+  window.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-cascader')) {
+      activeCascaderRowId.value = null;
+    }
+  });
 });
 </script>
 
@@ -1022,9 +1122,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ==================== 计划编排弹窗 ==================== -->
-    <div v-if="showPlanModal" class="modal-backdrop">
-      <div class="modal-content large">
+    <!-- ==================== 计划编排弹窗 (侧滑抽屉样式) ==================== -->
+    <div v-if="showPlanModal" class="drawer-backdrop" @click.self="showPlanModal = false">
+      <div class="drawer-content large">
         <div class="modal-header">
           <h3>{{ editingPlan ? `编排计划: ${planForm.name} (当前 v${editingPlan.current_version})` : '创建新计划模板' }}</h3>
           <button class="close-btn" @click="showPlanModal = false">×</button>
@@ -1139,73 +1239,148 @@ onMounted(() => {
                       placeholder="训练侧重点(如: 推力容量)"
                     />
                   </div>
-                  
-                  <!-- 天关联的目标肌群复选框 -->
-                  <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.8rem; color: var(--text-muted);">
-                    目标肌群:
-                    <select v-model="day.target_muscles" class="select-filter" multiple style="height: 35px; padding: 0; min-width: 120px;">
-                      <option v-for="m in musclesList" :key="m._id" :value="m._id">{{ m.name }}</option>
-                    </select>
+                </div>
+
+                <!-- 目标肌群选择器 (改造成可多选的药丸标签) -->
+                <div class="day-muscles-selector">
+                  <span class="label-text">目标肌群 (可多选):</span>
+                  <div class="muscle-pills-list">
+                    <span 
+                      v-for="m in musclesList" 
+                      :key="m._id" 
+                      class="muscle-pill"
+                      :class="{ active: (day.target_muscles || []).includes(m._id) }"
+                      @click="toggleMuscleSelection(day, m._id)"
+                    >
+                      {{ m.name }}
+                    </span>
                   </div>
                 </div>
 
-                <!-- 编排的动作列表 -->
+                <!-- 编排的动作列表 (支持拖拽排序) -->
                 <div class="day-exercises-list">
-                  <div 
-                    v-for="(ex, exIdx) in planDayExercisesForm.filter(e => e.plan_day_id === day._id).sort((a,b) => a.order - b.order)" 
-                    :key="ex._id" 
-                    class="day-exercise-row"
+                  <draggable 
+                    v-model="day.exercises" 
+                    item-key="_id" 
+                    handle=".drag-handle" 
+                    @end="resortExercises(day)"
+                    ghost-class="ghost-drag-item"
                   >
-                    <div class="day-exercise-order">{{ exIdx + 1 }}</div>
-                    
-                    <!-- 动作下拉列表选择器 -->
-                    <select v-model="ex.exercise_id" class="form-input day-exercise-select" style="height: 38px; padding: 0.25rem 0.5rem;">
-                      <option value="" disabled>-- 请选择标准动作 --</option>
-                      <option v-for="stdEx in exercisesList" :key="stdEx._id" :value="stdEx._id">
-                        {{ stdEx.name }} ({{ stdEx.difficulty === 'advanced' ? '难' : stdEx.difficulty === 'intermediate' ? '中' : '易' }})
-                      </option>
-                    </select>
+                    <template #item="{ element: ex, index: exIdx }">
+                      <div class="day-exercise-row">
+                        <!-- 拖拽手柄 -->
+                        <div class="drag-handle" title="按住拖拽排序">☰</div>
+                        
+                        <div class="day-exercise-order">{{ exIdx + 1 }}</div>
+                        
+                        <!-- 级联动作选择器 (抽屉式面板) + 快速创建 -->
+                        <div class="day-exercise-select-wrapper">
+                          <div class="custom-cascader" :class="{ active: activeCascaderRowId === ex._id }">
+                            <!-- 触发器：显示当前选中的动作名称 -->
+                            <div class="cascader-trigger" @click.stop="toggleCascader(ex._id)">
+                              <span class="cascader-value" :class="{ empty: !ex.exercise_id }">
+                                {{ getExerciseName(ex.exercise_id) || '-- 选择动作 --' }}
+                              </span>
+                              <span class="cascader-arrow">▼</span>
+                            </div>
 
-                    <!-- 角色设定 -->
-                    <select v-model="ex.role" class="form-input" style="width: 90px; height: 38px; padding: 0.25rem 0.5rem;">
-                      <option value="main">主项</option>
-                      <option value="assistance">辅助项</option>
-                      <option value="isolation">孤立项</option>
-                    </select>
+                            <!-- 级联下拉面板 -->
+                            <div v-if="activeCascaderRowId === ex._id" class="cascader-panel">
+                              <!-- 左列：肌群列表 -->
+                              <div class="cascader-menu">
+                                <div 
+                                  class="cascader-item" 
+                                  :class="{ active: ex.temp_muscle_id === '' }"
+                                  @click.stop="ex.temp_muscle_id = '';"
+                                  @mouseenter="ex.temp_muscle_id = ''"
+                                >
+                                  全部肌群
+                                </div>
+                                <div 
+                                  v-for="m in musclesList" 
+                                  :key="m._id"
+                                  class="cascader-item"
+                                  :class="{ active: ex.temp_muscle_id === m._id }"
+                                  @click.stop="ex.temp_muscle_id = m._id"
+                                  @mouseenter="ex.temp_muscle_id = m._id"
+                                >
+                                  {{ m.name }}
+                                </div>
+                              </div>
 
-                    <!-- 组数 -->
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <input type="number" v-model.number="ex.sets" class="form-input day-exercise-input-small" style="height: 38px;" min="1" placeholder="组数" />
-                      <span style="font-size: 0.8rem; color: var(--text-muted);">组</span>
-                    </div>
+                              <!-- 右列：动作列表 -->
+                              <div class="cascader-menu exercises-menu">
+                                <div 
+                                  v-for="stdEx in exercisesList.filter(s => !ex.temp_muscle_id || s.primary_muscles.includes(ex.temp_muscle_id))"
+                                  :key="stdEx._id"
+                                  class="cascader-item"
+                                  :class="{ selected: ex.exercise_id === stdEx._id }"
+                                  @click.stop="selectExerciseCascade(ex, stdEx._id)"
+                                >
+                                  <span class="ex-name">{{ stdEx.name }}</span>
+                                  <span class="ex-difficulty" :class="stdEx.difficulty">
+                                    {{ stdEx.difficulty === 'advanced' ? '难' : stdEx.difficulty === 'intermediate' ? '中' : '易' }}
+                                  </span>
+                                </div>
+                                <div v-if="!exercisesList.filter(s => !ex.temp_muscle_id || s.primary_muscles.includes(ex.temp_muscle_id)).length" class="cascader-empty">
+                                  ⚠️ 暂无动作
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-                    <!-- 次数范围 -->
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <input type="text" v-model="ex.reps" class="form-input day-exercise-input-medium" style="height: 38px;" placeholder="次数范围 (如 8-12)" />
-                      <span style="font-size: 0.8rem; color: var(--text-muted);">次</span>
-                    </div>
+                          <button 
+                            type="button" 
+                            class="btn btn-secondary quick-add-ex-btn" 
+                            title="快速新增标准动作"
+                            @click="quickCreateExercise(day, ex)"
+                          >
+                            ➕
+                          </button>
+                        </div>
 
-                    <!-- 建议 RPE -->
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <input type="text" v-model="ex.rpe" class="form-input day-exercise-input-small" style="height: 38px;" placeholder="RPE" />
-                      <span style="font-size: 0.8rem; color: var(--text-muted);">RPE</span>
-                    </div>
+                        <!-- 角色设定 -->
+                        <select v-model="ex.role" class="form-input" style="width: 90px; height: 38px; padding: 0.25rem 0.5rem;">
+                          <option value="main">主项</option>
+                          <option value="assistance">辅助项</option>
+                          <option value="isolation">孤立项</option>
+                        </select>
 
-                    <!-- 休息秒数 -->
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <input type="number" v-model.number="ex.rest_seconds" class="form-input day-exercise-input-medium" style="height: 38px;" min="0" placeholder="休息(秒)" />
-                      <span style="font-size: 0.8rem; color: var(--text-muted);">秒</span>
-                    </div>
+                        <!-- 组数 -->
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                          <input type="number" v-model.number="ex.sets" class="form-input day-exercise-input-small" style="height: 38px;" min="1" placeholder="组数" />
+                          <span style="font-size: 0.8rem; color: var(--text-muted);">组</span>
+                        </div>
 
-                    <!-- 操作：上移，下移，移除 -->
-                    <div class="day-exercise-actions">
-                      <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(ex, 'up')" :disabled="exIdx === 0">▲</button>
-                      <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(ex, 'down')" :disabled="exIdx === planDayExercisesForm.filter(e => e.plan_day_id === day._id).length - 1">▼</button>
-                      <button type="button" class="btn btn-danger" style="padding: 0.25rem 0.5rem;" @click="removeExerciseFromDay(ex._id)">✕</button>
-                    </div>
-                  </div>
+                        <!-- 次数范围 -->
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                          <input type="text" v-model="ex.reps" class="form-input day-exercise-input-medium" style="height: 38px;" placeholder="次数范围 (如 8-12)" />
+                          <span style="font-size: 0.8rem; color: var(--text-muted);">次</span>
+                        </div>
 
-                  <div v-if="!planDayExercisesForm.filter(e => e.plan_day_id === day._id).length" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        <!-- 建议 RPE -->
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                          <input type="text" v-model="ex.rpe" class="form-input day-exercise-input-small" style="height: 38px;" placeholder="RPE" />
+                          <span style="font-size: 0.8rem; color: var(--text-muted);">RPE</span>
+                        </div>
+
+                        <!-- 休息秒数 -->
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                          <input type="number" v-model.number="ex.rest_seconds" class="form-input day-exercise-input-medium" style="height: 38px;" min="0" placeholder="休息(秒)" />
+                          <span style="font-size: 0.8rem; color: var(--text-muted);">秒</span>
+                        </div>
+
+                        <!-- 操作：上移，下移，移除 -->
+                        <div class="day-exercise-actions">
+                          <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(day, exIdx, 'up')" :disabled="exIdx === 0">▲</button>
+                          <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" @click="moveExercise(day, exIdx, 'down')" :disabled="exIdx === day.exercises.length - 1">▼</button>
+                          <button type="button" class="btn btn-danger" style="padding: 0.25rem 0.5rem;" @click="removeExerciseFromDay(day, ex._id)">✕</button>
+                        </div>
+                      </div>
+                    </template>
+                  </draggable>
+
+                  <div v-if="!day.exercises || !day.exercises.length" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
                     ⚠️ 该训练日暂无动作，请点击下方添加动作！
                   </div>
                 </div>

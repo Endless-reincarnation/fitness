@@ -206,17 +206,20 @@ h1, h2, h3, h4 {
 
 /* Common Components: Cards */
 .card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: rgba(21, 28, 46, 0.65) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(38, 51, 84, 0.6);
   border-radius: 14px;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  transform: translateY(-3px);
+  border-color: rgba(255, 210, 63, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 210, 63, 0.05);
 }
 
 /* Buttons */
@@ -277,6 +280,19 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: space-between;
   padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  opacity: 0.8;
 }
 
 .stat-info {
@@ -546,8 +562,56 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 500;
+  z-index: 700;
   padding: 2rem;
+}
+
+/* Slide-out Drawers */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 600;
+}
+
+.drawer-content {
+  background-color: var(--bg-sidebar);
+  border-left: 1px solid var(--border-color);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  animation: drawerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.drawer-content.large {
+  max-width: 1200px;
+  width: 85vw;
+}
+
+.drawer-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--primary), transparent);
+  pointer-events: none;
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .modal-content {
@@ -555,7 +619,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   width: 100%;
-  max-width: 700px;
+  max-width: 1000px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -564,7 +628,9 @@ h1, h2, h3, h4 {
 }
 
 .modal-content.large {
-  max-width: 950px;
+  max-width: 1400px;
+  width: 95vw;
+  max-height: 95vh;
 }
 
 .modal-header {
@@ -664,6 +730,54 @@ h1, h2, h3, h4 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+.day-muscles-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.day-muscles-selector .label-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.muscle-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.muscle-pill {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.muscle-pill:hover {
+  border-color: rgba(255, 210, 63, 0.4);
+  color: var(--text-main);
+}
+
+.muscle-pill.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-dark);
+  font-weight: 600;
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
 .day-exercise-row {
   display: flex;
   gap: 0.75rem;
@@ -673,6 +787,12 @@ h1, h2, h3, h4 {
   border-radius: 8px;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.day-exercise-row:hover {
+  border-color: rgba(255, 210, 63, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .day-exercise-order {
@@ -687,19 +807,215 @@ h1, h2, h3, h4 {
   font-family: var(--font-title);
   color: var(--text-muted);
 }
+.day-exercise-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-grow: 1;
+  min-width: 320px;
+}
+
+.day-muscle-select {
+  width: 110px;
+  min-width: 110px;
+  flex-shrink: 0;
+}
 
 .day-exercise-select {
   flex-grow: 1;
   min-width: 150px;
+  width: 100%;
 }
 
+.quick-add-ex-btn {
+  height: 38px;
+  width: 38px;
+  min-width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-add-ex-btn:hover {
+  background-color: var(--primary-glow);
+  border-color: var(--primary);
+  color: var(--text-dark);
+}
+
+/* Custom Cascader Dropdown */
+.custom-cascader {
+  position: relative;
+  flex-grow: 1;
+  min-width: 200px;
+}
+
+.cascader-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  height: 38px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cascader-trigger:hover,
+.custom-cascader.active .cascader-trigger {
+  border-color: var(--primary);
+  box-shadow: 0 0 5px var(--primary-glow);
+}
+
+.cascader-value {
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.cascader-value.empty {
+  color: var(--text-muted);
+}
+
+.cascader-arrow {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.custom-cascader.active .cascader-arrow {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+/* Dropdown Panel */
+.cascader-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  z-index: 650;
+  overflow: hidden;
+  height: 250px;
+  animation: modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Cascader Menu Column */
+.cascader-menu {
+  width: 130px;
+  min-width: 130px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+  border-right: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.cascader-menu.exercises-menu {
+  width: 220px;
+  min-width: 220px;
+  border-right: none;
+  background: transparent;
+}
+
+/* Scrollbar for cascader menu */
+.cascader-menu::-webkit-scrollbar {
+  width: 5px;
+}
+.cascader-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+.cascader-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.cascader-item:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+}
+
+.cascader-item.active {
+  background-color: rgba(255, 210, 63, 0.08);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.cascader-item.selected {
+  background-color: var(--primary);
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.cascader-item.selected .ex-difficulty {
+  color: inherit;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.cascader-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Exercise Badges inside Cascader */
+.ex-name {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+
+.ex-difficulty {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-weight: normal;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ex-difficulty.beginner { color: var(--success); }
+.ex-difficulty.intermediate { color: var(--accent); }
+.ex-difficulty.advanced { color: var(--danger); }
+
+
 .day-exercise-input-small {
-  width: 70px;
+  width: 80px;
   text-align: center;
 }
 
 .day-exercise-input-medium {
-  width: 90px;
+  width: 150px;
   text-align: center;
 }
 
@@ -728,4 +1044,34 @@ h1, h2, h3, h4 {
 .empty-icon {
   font-size: 3rem;
   color: var(--border-color);
+}
+
+/* Drag and Drop Custom Classes */
+.drag-handle {
+  cursor: grab;
+  padding: 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  user-select: none;
+  transition: color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-handle:hover {
+  color: var(--primary);
+  transform: scale(1.15);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.ghost-drag-item {
+  opacity: 0.3;
+  background: rgba(255, 210, 63, 0.03) !important;
+  border: 1px dashed var(--primary) !important;
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }

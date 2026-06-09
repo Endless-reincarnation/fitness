@@ -34,36 +34,36 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "admin"
+        "value": "admin",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "docs"
+        "value": "docs",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "seed"
+        "value": "seed",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "tools"
+        "value": "tools",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "计划.txt"
+        "value": "计划.txt",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "第一天胸肩三头.txt"
+        "value": "第一天胸肩三头.txt",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "untitled.pen"
+        "value": "untitled.pen",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "AGENTS.md"
+        "value": "AGENTS.md",
+        "type": "file"
       }
     ],
     "include": []

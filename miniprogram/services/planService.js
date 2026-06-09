@@ -131,19 +131,56 @@ async function listOfficialPlans() {
   }
 }
 
-function listCustomPlans() {
-  return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
+async function listCustomPlans() {
+  if (!isCloudEnabled()) {
+    return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
+  }
+
+  try {
+    const collection = getCollection('customPlans');
+    if (!collection) return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
+
+    const result = await collection.limit(100).get();
+    let cloudCustomPlans = (result.data || []).map((item) => ({
+      id: item._id,
+      planType: 'custom',
+      name: item.name,
+      goal: item.goal_tags || ['自定义'],
+      level: '自定义',
+      durationWeeks: 4,
+      weeklyFrequency: item.weekly_frequency || item.days.length,
+      summary: `我的自定义计划 · ${item.days.length} 个训练日 · ${item.days.reduce((sum, d) => sum + d.exercises.length, 0)} 个动作`,
+      days: item.days,
+      updatedAt: item.updated_at
+    }));
+
+    cloudCustomPlans.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+
+    // 合并本地缓存
+    const localPlans = getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
+    const allPlans = [...cloudCustomPlans];
+    localPlans.forEach((localPlan) => {
+      if (!allPlans.some((p) => p.id === localPlan.id)) {
+        allPlans.push(localPlan);
+      }
+    });
+
+    return allPlans;
+  } catch (error) {
+    console.warn('读取云端自定义计划失败，已回落本地数据', error);
+    return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
+  }
 }
 
 async function listAllPlans() {
   return {
     officialPlans: await listOfficialPlans(),
-    customPlans: listCustomPlans()
+    customPlans: await listCustomPlans()
   };
 }
 
 async function getPlanById(planId, planType) {
-  const sourcePlans = planType === 'custom' ? listCustomPlans() : await listOfficialPlans();
+  const sourcePlans = planType === 'custom' ? await listCustomPlans() : await listOfficialPlans();
   return sourcePlans.find((plan) => plan.id === planId) || null;
 }
 
@@ -185,8 +222,81 @@ function enablePlan(plan) {
   return setActivePlan(plan);
 }
 
-function saveUserPlan(plan) {
-  return saveCustomPlan(plan);
+async function saveUserPlan(plan) {
+  saveCustomPlan(plan);
+
+  if (!isCloudEnabled()) return plan;
+
+  try {
+    const collection = getCollection('customPlans');
+    if (!collection) return plan;
+
+    const dataToSave = {
+      name: plan.name,
+      goal_tags: plan.goal || ['自定义'],
+      weekly_frequency: plan.weeklyFrequency,
+      days: plan.days.map((day) => ({
+        id: day.id,
+        name: day.name,
+        focus: day.focus || '自定义训练日',
+        exercises: day.exercises.map((item) => ({
+          exerciseId: item.exerciseId,
+          sets: Number(item.sets),
+          reps: item.reps,
+          rpe: item.rpe,
+          restSeconds: Number(item.restSeconds),
+          role: item.role,
+          roleLabel: item.roleLabel,
+          weightRule: item.weightRule,
+          progressionRule: item.progressionRule
+        }))
+      })),
+      status: 'active',
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      await collection.doc(plan.id).update({
+        data: dataToSave
+      });
+    } catch (err) {
+      await collection.doc(plan.id).set({
+        data: {
+          ...dataToSave,
+          created_at: new Date().toISOString()
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('保存云端自定义计划失败', error);
+  }
+  return plan;
+}
+
+async function deleteUserPlan(planId) {
+  // 1. 本地缓存删除
+  const plans = getCustomPlans();
+  const nextPlans = plans.filter((item) => item.id !== planId);
+  wx.setStorageSync('customPlans', nextPlans);
+
+  // 2. 检查并清理当前启用的计划
+  const activePlan = getActivePlan();
+  if (activePlan && activePlan.planId === planId) {
+    wx.removeStorageSync('activePlan');
+  }
+
+  // 3. 云端删除
+  if (!isCloudEnabled()) return true;
+
+  try {
+    const collection = getCollection('customPlans');
+    if (!collection) return true;
+
+    await collection.doc(planId).remove();
+  } catch (error) {
+    console.warn('删除云端自定义计划失败', error);
+  }
+  return true;
 }
 
 module.exports = {
@@ -200,5 +310,6 @@ module.exports = {
   listCustomPlans,
   listOfficialPlans,
   saveUserPlan,
+  deleteUserPlan,
   setActivePlanDay
 };

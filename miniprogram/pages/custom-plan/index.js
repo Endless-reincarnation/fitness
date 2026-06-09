@@ -1,5 +1,5 @@
 const { listExercises } = require('../../services/exerciseService');
-const { saveUserPlan } = require('../../services/planService');
+const { saveUserPlan, getPlanById } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 const defaultRule = {
@@ -13,6 +13,9 @@ const defaultRule = {
 Page({
   data: {
     theme: 'power-yellow',
+    planId: '',
+    isEdit: false,
+    planLoaded: false,
     planName: '',
     currentDayIndex: 0,
     currentDayName: '训练日 1',
@@ -31,14 +34,62 @@ Page({
     restSeconds: '120'
   },
 
+  onLoad(query) {
+    if (query.id) {
+      this.setData({
+        planId: query.id,
+        isEdit: true
+      });
+      wx.setNavigationBarTitle({ title: '编辑计划' });
+    }
+  },
+
   async onShow() {
     applyTheme(this);
-    if (!this.data.exerciseList.length) {
-      const exerciseList = await listExercises();
+    
+    let exerciseList = this.data.exerciseList;
+    if (!exerciseList.length) {
+      exerciseList = await listExercises();
       this.setData({
         exerciseOptions: exerciseList.map((item) => item.name),
         exerciseList
       });
+    }
+
+    if (this.data.isEdit && !this.data.planLoaded) {
+      const plan = await getPlanById(this.data.planId, 'custom');
+      if (plan) {
+        const days = plan.days.map((day) => ({
+          id: day.id,
+          name: day.name,
+          exercises: day.exercises.map((item) => {
+            const exercise = exerciseList.find((e) => e.id === item.exerciseId);
+            return {
+              exerciseId: item.exerciseId,
+              exerciseName: exercise ? exercise.name : '未知动作',
+              sets: item.sets,
+              reps: item.reps,
+              restSeconds: item.restSeconds,
+              role: item.role || defaultRule.role,
+              roleLabel: item.roleLabel || defaultRule.roleLabel,
+              rpe: item.rpe || defaultRule.rpe,
+              weightRule: item.weightRule || defaultRule.weightRule,
+              progressionRule: item.progressionRule || defaultRule.progressionRule
+            };
+          })
+        }));
+
+        this.setData({
+          planName: plan.name,
+          days,
+          currentDayIndex: 0,
+          currentDayName: days[0] ? days[0].name : '训练日 1',
+          currentDayExercises: days[0] ? days[0].exercises : [],
+          planLoaded: true
+        });
+      } else {
+        wx.showToast({ title: '未找到该计划', icon: 'none' });
+      }
     }
   },
 
@@ -138,7 +189,7 @@ Page({
 
   buildPlanDays(days) {
     return days.map((day, index) => ({
-      id: `custom_day_${Date.now()}_${index}`,
+      id: day.id || `custom_day_${Date.now()}_${index}`,
       name: day.name || `训练日 ${index + 1}`,
       focus: '自定义训练日',
       exercises: day.exercises.map((item) => ({
@@ -155,7 +206,7 @@ Page({
     }));
   },
 
-  savePlan() {
+  async savePlan() {
     if (!this.data.planName) {
       wx.showToast({ title: '请填写计划名称', icon: 'none' });
       return;
@@ -172,8 +223,9 @@ Page({
     }
 
     const totalExerciseCount = this.getTotalExerciseCount(this.data.days);
+    const planId = this.data.planId || `custom_plan_${Date.now()}`;
     const plan = {
-      id: `custom_plan_${Date.now()}`,
+      id: planId,
       planType: 'custom',
       name: this.data.planName,
       goal: ['自定义'],
@@ -185,7 +237,7 @@ Page({
       days: this.buildPlanDays(this.data.days)
     };
 
-    saveUserPlan(plan);
+    await saveUserPlan(plan);
     wx.showToast({ title: '已保存计划', icon: 'success' });
     setTimeout(() => {
       wx.navigateBack();

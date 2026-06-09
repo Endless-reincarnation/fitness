@@ -1,7 +1,7 @@
 <view class="page theme-{{theme}}">
   <view class="page-header">
     <view class="eyebrow">CUSTOM PROGRAM</view>
-    <view class="page-title">新建计划</view>
+    <view class="page-title">{{isEdit ? '编辑计划' : '新建计划'}}</view>
     <view class="muted intro">支持多个训练日。先选择训练日，再给当前训练日添加动作。</view>
   </view>
 

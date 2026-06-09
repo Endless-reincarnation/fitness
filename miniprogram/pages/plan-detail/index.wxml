@@ -25,6 +25,12 @@
   </view>
 
   <view class="bottom-action-area">
+    <block wx:if="{{plan.planType === 'custom'}}">
+      <view class="custom-action-row">
+        <button class="ghost-button edit-btn" bindtap="editPlan">编辑计划</button>
+        <button class="ghost-button delete-btn" bindtap="deletePlan">删除计划</button>
+      </view>
+    </block>
     <button class="primary-button fixed-action" bindtap="enablePlan">启用这个计划</button>
   </view>
 </view>

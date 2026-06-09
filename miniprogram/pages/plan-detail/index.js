@@ -1,4 +1,4 @@
-const { buildPlanView, enablePlan, getPlanById, listOfficialPlans } = require('../../services/planService');
+const { buildPlanView, enablePlan, getPlanById, listOfficialPlans, deleteUserPlan } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -22,6 +22,31 @@ Page({
     setTimeout(() => {
       wx.switchTab({ url: '/pages/home/index' });
     }, 500);
+  },
+
+  editPlan() {
+    wx.navigateTo({
+      url: `/pages/custom-plan/index?id=${this.data.plan.id}`
+    });
+  },
+
+  deletePlan() {
+    wx.showModal({
+      title: '删除计划',
+      content: '确定要删除这个自定义计划吗？删除后将无法恢复。',
+      confirmColor: '#ff5148',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '正在删除...' });
+          await deleteUserPlan(this.data.plan.id);
+          wx.hideLoading();
+          wx.showToast({ title: '计划已删除', icon: 'success' });
+          setTimeout(() => {
+            wx.navigateBack();
+          }, 500);
+        }
+      }
+    });
   },
 
   openExercise(event) {

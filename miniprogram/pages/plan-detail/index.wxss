@@ -100,3 +100,26 @@
   font-size: 32rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.4);
 }
+
+.custom-action-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.custom-action-row .ghost-button {
+  flex: 1;
+  width: 100% !important;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  margin: 0;
+  padding: 0;
+}
+
+.custom-action-row .delete-btn {
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
