@@ -17,7 +17,7 @@
       <view class="active-plan-title">{{activePlan.name}}</view>
       <view class="active-plan-sub">第 {{activePlan.currentDayIndex + 1}} / {{activePlan.totalDays}} 天 · 已完成 {{activePlan.completedSessions}} 次</view>
     </view>
-    <button class="primary-button active-plan-button" data-id="{{activePlan.planId}}" data-type="{{activePlan.planType}}" catchtap="openPlan">查看</button>
+    <view class="primary-button active-plan-button" hover-class="active-plan-button-hover" data-id="{{activePlan.planId}}" data-type="{{activePlan.planType}}" catchtap="openPlan">查看</view>
   </view>
   <view wx:else class="empty-card">
     <view class="empty-title">还没有启用计划</view>
@@ -57,8 +57,8 @@
         <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
       </view>
       <view class="plan-action-row">
-        <button class="ghost-button plan-action-button" data-id="{{item.id}}" catchtap="editPlan">编辑计划</button>
-        <button class="primary-button plan-action-button" data-id="{{item.id}}" data-type="custom" catchtap="openPlan">查看详情</button>
+        <view class="ghost-button plan-action-button" hover-class="plan-action-button-hover" data-id="{{item.id}}" catchtap="editPlan">编辑计划</view>
+        <view class="primary-button plan-action-button" hover-class="plan-action-button-hover" data-id="{{item.id}}" data-type="custom" catchtap="openPlan">查看详情</view>
       </view>
     </view>
   </block>

@@ -56,7 +56,8 @@ function normalizePlanTemplate(planTemplate) {
     current_version: version,
     version,
     summary: planTemplate.summary || '',
-    notes: planTemplate.notes || []
+    notes: planTemplate.notes || [],
+    nutrition: planTemplate.nutrition || null
   });
 }
 
@@ -99,34 +100,51 @@ function buildCloudSeed() {
 
   const muscles = readJsonBySuffix('肌群.seed.json').map((item) => withTimestamps(item));
   const exercises = readJsonBySuffix('动作库.seed.json').map((item) => withTimestamps(item));
-  const planSeed = readJsonBySuffix('三分化计划.seed.json');
-  const planTemplate = normalizePlanTemplate(planSeed.plan_template);
-  const planDays = planSeed.plan_days.map((day) => normalizePlanDay(day, planTemplate));
-  const planDayExercises = planSeed.plan_days.flatMap((day) => {
-    const normalizedDay = normalizePlanDay(day, planTemplate);
-    return day.exercises.map((exercise) => normalizePlanDayExercise(normalizedDay, exercise, planTemplate));
+
+  // 动态扫描并编译所有的计划种子文件（排除动作库和肌群）
+  const planFiles = fs.readdirSync(seedDir).filter((name) => name.endsWith('.seed.json') && name !== '动作库.seed.json' && name !== '肌群.seed.json');
+
+  const planTemplates = [];
+  const planTemplateVersions = [];
+  const allPlanDays = [];
+  const allPlanDayExercises = [];
+
+  planFiles.forEach((file) => {
+    const planSeed = JSON.parse(fs.readFileSync(path.join(seedDir, file), 'utf8'));
+    const planTemplate = normalizePlanTemplate(planSeed.plan_template);
+    const planDays = planSeed.plan_days.map((day) => normalizePlanDay(day, planTemplate));
+    const planDayExercises = planSeed.plan_days.flatMap((day) => {
+      const normalizedDay = normalizePlanDay(day, planTemplate);
+      return day.exercises.map((exercise) => normalizePlanDayExercise(normalizedDay, exercise, planTemplate));
+    });
+    
+    const planTemplateVersion = {
+      _id: `${planTemplate._id}_v${planTemplate.current_version}`,
+      plan_template_id: planTemplate._id,
+      version: planTemplate.current_version,
+      snapshot: {
+        plan_template: planTemplate,
+        plan_days: planDays,
+        plan_day_exercises: planDayExercises
+      },
+      status: planTemplate.status,
+      created_at: generatedAt,
+      published_at: planTemplate.status === 'published' ? generatedAt : null
+    };
+
+    planTemplates.push(planTemplate);
+    planTemplateVersions.push(planTemplateVersion);
+    allPlanDays.push(...planDays);
+    allPlanDayExercises.push(...planDayExercises);
   });
-  const planTemplateVersion = {
-    _id: `${planTemplate._id}_v${planTemplate.current_version}`,
-    plan_template_id: planTemplate._id,
-    version: planTemplate.current_version,
-    snapshot: {
-      plan_template: planTemplate,
-      plan_days: planDays,
-      plan_day_exercises: planDayExercises
-    },
-    status: planTemplate.status,
-    created_at: generatedAt,
-    published_at: planTemplate.status === 'published' ? generatedAt : null
-  };
 
   const collections = {
     muscles,
     exercises,
-    plan_templates: [planTemplate],
-    plan_template_versions: [planTemplateVersion],
-    plan_days: planDays,
-    plan_day_exercises: planDayExercises,
+    plan_templates: planTemplates,
+    plan_template_versions: planTemplateVersions,
+    plan_days: allPlanDays,
+    plan_day_exercises: allPlanDayExercises,
     exercise_alternatives: []
   };
 

@@ -1,0 +1,193 @@
+{
+  "plan_template": {
+    "id": "plan_full_body_circuit_2026_v1",
+    "name": "全身高效循环抗阻训练",
+    "source_type": "self_curated",
+    "goal": ["减脂", "形体塑造", "心肺基础"],
+    "level": "beginner",
+    "duration_weeks": 8,
+    "weekly_frequency": 3,
+    "equipment_tags": ["杠铃", "哑铃", "自重", "器械", "罗马椅"],
+    "target_users": ["健身新手", "想要减脂和塑形的人群", "训练时间受限的高效锻炼者"],
+    "status": "published",
+    "version": 1,
+    "summary": "为新手或减脂塑形人群量身定制的全身循环抗阻训练，每次训练覆盖全身大肌群，高效率调动代谢。",
+    "notes": [
+      "由于每次训练都会覆盖全身大肌群，因此训练日之间必须休息 1 天（例如周一、三、五练，二、四、六、日休）。",
+      "以平稳的训练节奏进行，关注动作规范度，不必追求极限重量。",
+      "非常适合结合饮食控制进行，高频次的全身动作有利于提高每日的基础代谢水平。"
+    ],
+    "nutrition": {
+      "dailyCalories": 2000,
+      "protein": 115,
+      "carbs": 220,
+      "fat": 65,
+      "tips": [
+        "减脂期建议每天创造 300-500 大卡的热量赤字，主要通过适度控油和少喝含糖饮料来实现。",
+        "每天保证每公斤体重摄入 1.6g 左右的蛋白质，这能帮助在减脂期间保留肌肉，维持身体代谢。",
+        "多喝水（每天 2.5-3 升），可以提高饱腹感，同时促进代谢废物的排出。"
+      ]
+    }
+  },
+  "plan_days": [
+    {
+      "id": "day_circuit_a",
+      "day_index": 1,
+      "name": "全身循环 A (上肢推拉 & 臀腿辅助)",
+      "focus": "胸肌、背部大肌群、股四头肌/臀大肌单侧稳定性、三角肌中束",
+      "target_muscles": ["胸大肌", "背阔肌", "股四头肌", "臀大肌", "三角肌中束"],
+      "exercises": [
+        {
+          "exercise_id": "barbell_bench_press",
+          "name": "杠铃卧推",
+          "order": 1,
+          "role": "main",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "卧推作为主推项，保持肩膀贴稳凳面，脚踩实地面发力。"
+        },
+        {
+          "exercise_id": "neutral_grip_lat_pulldown",
+          "name": "对握下拉",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "下拉作为主拉项，挺胸并沉肩，将肘部拉到身体两侧。"
+        },
+        {
+          "exercise_id": "bulgarian_split_squat",
+          "name": "保加利亚蹲",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单侧腿部动作，能有效改善核心稳定和臀部侧向发力偏差。"
+        },
+        {
+          "exercise_id": "y_raise_lateral_raise",
+          "name": "Y 字侧平举",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8",
+          "rest_seconds": 90,
+          "notes": "使用极轻重量，重点控制向上飞鸟的轨迹，肩膀避免过早酸胀。"
+        }
+      ]
+    },
+    {
+      "id": "day_circuit_b",
+      "day_index": 2,
+      "name": "全身循环 B (臀腿主项 & 上肢辅助)",
+      "focus": "股四头肌、上背部/肩后束、胸背辅助、后侧链强化",
+      "target_muscles": ["股四头肌", "三角肌后束", "中下斜方肌", "臀大肌", "腘绳肌", "肱三头肌"],
+      "exercises": [
+        {
+          "exercise_id": "front_squat",
+          "name": "颈前深蹲",
+          "order": 1,
+          "role": "main",
+          "sets": 3,
+          "reps": "8-10",
+          "rpe": "8",
+          "rest_seconds": 150,
+          "notes": "前蹲是极好的双侧下肢主项。脊柱中立，下蹲直到大腿接近平行地面。"
+        },
+        {
+          "exercise_id": "seated_elbow_out_row",
+          "name": "坐姿开肘划船",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "主要用于刺激上背部肌群，收紧肩胛，纠正圆肩。"
+        },
+        {
+          "exercise_id": "romanian_deadlift",
+          "name": "罗马尼亚硬拉",
+          "order": 3,
+          "role": "main",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "臀部和大腿后侧的伸展运动，背部拉直，感受腘绳肌的离心拉伸感。"
+        },
+        {
+          "exercise_id": "parallel_bar_dip",
+          "name": "双杠臂屈伸",
+          "order": 4,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "8-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "全身多关节动作。主要锤炼胸肌下沿和肱三头肌，无法完成时可做退阶俯卧撑。"
+        }
+      ]
+    },
+    {
+      "id": "day_circuit_c",
+      "day_index": 3,
+      "name": "全身循环 C (多关节复合强化)",
+      "focus": "后侧链与单侧平衡、胸部上束、背阔肌深度刺激、下背与臀肌",
+      "target_muscles": ["臀大肌", "腘绳肌", "胸大肌", "背阔肌", "竖脊肌", "肱二头肌"],
+      "exercises": [
+        {
+          "exercise_id": "single_leg_deadlift",
+          "name": "单腿硬拉",
+          "order": 1,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单侧硬拉可全面测试和加强您的足弓、踝关节和髋关节稳定度。"
+        },
+        {
+          "exercise_id": "incline_dumbbell_press",
+          "name": "哑铃上斜卧推",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "上斜卧推，刺激上胸，手腕保持中立稳定。"
+        },
+        {
+          "exercise_id": "single_arm_machine_row",
+          "name": "单手器械划船",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "坐直并拉回手肘，躯干不要过度扭转借力。"
+        },
+        {
+          "exercise_id": "back_extension",
+          "name": "山羊挺身",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8",
+          "rest_seconds": 90,
+          "notes": "用于强化下背部竖脊肌和臀大肌，顶部稍微停留，避免骨盆前倾代偿。"
+        }
+      ]
+    }
+  ]
+}

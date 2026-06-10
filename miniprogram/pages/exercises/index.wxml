@@ -2,15 +2,93 @@
   <view class="page-header">
     <view class="eyebrow">EXERCISE LIBRARY</view>
     <view class="page-title">动作库</view>
-    <view class="muted intro">先收录当前计划用到的标准动作，后续继续补肌群筛选和器械筛选。</view>
   </view>
 
-  <view wx:for="{{exercises}}" wx:key="id" class="exercise-card" data-id="{{item.id}}" bindtap="openExercise">
-    <view class="mark"></view>
-    <view class="exercise-main">
-      <view class="exercise-name">{{item.name}}</view>
-      <view class="exercise-sub">主肌群：{{item.primaryMusclesText}}</view>
-      <view class="exercise-sub">器械：{{item.equipmentText}}</view>
+  <!-- 搜索与创建栏 -->
+  <view class="search-bar-row">
+    <view class="search-input-wrap">
+      <icon type="search" size="14" color="#888" class="search-icon" />
+      <input class="search-input" value="{{keyword}}" placeholder="搜索动作、部位、器械或首字母..." placeholder-class="search-placeholder" bindinput="onSearchInput" />
+      <view wx:if="{{keyword}}" class="clear-btn" bindtap="clearSearch">×</view>
+    </view>
+    <view class="create-btn" hover-class="create-btn-hover" bindtap="openCreateModal">
+      新建动作
+    </view>
+  </view>
+
+  <!-- 身体部位横向滑动选择 -->
+  <scroll-view class="filter-scroll region-scroll" scroll-x="true" show-scrollbar="false">
+    <view wx:for="{{regionOptions}}" wx:key="value" class="filter-tab {{selectedRegion === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="switchRegion">
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 器械分类横向滑动选择 -->
+  <scroll-view class="filter-scroll equipment-scroll" scroll-x="true" show-scrollbar="false">
+    <view wx:for="{{equipmentOptions}}" wx:key="value" class="filter-tab equipment-tab {{selectedEquipment === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="switchEquipment">
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 动作列表 -->
+  <view class="exercises-list">
+    <view wx:for="{{filteredExercises}}" wx:key="id" class="exercise-card" data-id="{{item.id}}" bindtap="openExercise" hover-class="card-hover">
+      <view class="mark {{item.sourceType === 'custom' ? 'custom' : ''}}"></view>
+      <view class="exercise-main">
+        <view class="exercise-name">
+          {{item.name}}
+          <text wx:if="{{item.sourceType === 'custom'}}" class="custom-badge">自定义</text>
+        </view>
+        <view class="exercise-meta-row">
+          <text class="meta-tag">部位: {{item.primaryMusclesText}}</text>
+          <text class="meta-tag">器械: {{item.equipmentText}}</text>
+        </view>
+      </view>
+      <view class="arrow-icon">›</view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!filteredExercises.length}}" class="empty-view">
+      <view class="empty-title">未找到匹配的动作</view>
+      <view class="empty-sub">您可以点击上方的“新建动作”直接添加您需要的自定义动作。</view>
+    </view>
+  </view>
+
+  <!-- 新建自定义动作弹窗 -->
+  <view class="modal-backdrop {{showCreateModal ? 'show' : ''}}" bindtap="closeCreateModal">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-header">
+        <view class="modal-title">新建自定义动作</view>
+        <view class="modal-close" bindtap="closeCreateModal">×</view>
+      </view>
+      <view class="modal-content">
+        <view class="form-item">
+          <view class="form-label">动作名称</view>
+          <input class="form-input" placeholder="输入动作名称，例如：龙门架夹胸" value="{{newExerciseName}}" bindinput="onNewNameInput" />
+        </view>
+        
+        <view class="form-item">
+          <view class="form-label">主肌群 (单选)</view>
+          <view class="option-grid">
+            <view wx:for="{{formRegionOptions}}" wx:key="value" class="option-chip {{newExerciseRegion === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="selectFormRegion">
+              {{item.label}}
+            </view>
+          </view>
+        </view>
+        
+        <view class="form-item">
+          <view class="form-label">使用器械 (单选)</view>
+          <view class="option-grid">
+            <view wx:for="{{formEquipmentOptions}}" wx:key="value" class="option-chip {{newExerciseEquipment === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="selectFormEquipment">
+              {{item.label}}
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <view class="ghost-button modal-btn" hover-class="button-hover" bindtap="closeCreateModal">取消</view>
+        <view class="primary-button modal-btn" hover-class="button-hover" bindtap="submitCreate">确认创建</view>
+      </view>
     </view>
   </view>
 </view>

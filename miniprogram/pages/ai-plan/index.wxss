@@ -114,8 +114,14 @@
 }
 
 .generate-button {
-  margin-top: 26rpx;
-  border-radius: 10rpx;
+  width: 90% !important;
+  height: 84rpx;
+  line-height: 84rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+  border-radius: 12rpx;
+  margin: 40rpx auto 20rpx !important;
+  display: block;
 }
 
 .progress-backdrop {
@@ -136,12 +142,13 @@
 .progress-sheet {
   box-sizing: border-box;
   width: 100%;
-  max-height: 78vh;
-  overflow: hidden;
+  height: 600rpx; /* 固定高度，完全防止上下抖动 */
   padding: 30rpx;
   border: 3rpx solid var(--primary);
   border-radius: 12rpx;
-  background: rgba(255, 210, 63, 0.08);
+  background: var(--primary-fade-8);
+  display: flex;
+  flex-direction: column;
 }
 
 .progress-label {
@@ -180,9 +187,9 @@
 }
 
 .progress-preview {
-  max-height: 260rpx;
-  overflow: hidden;
-  margin-top: 18rpx;
+  height: 240rpx; /* 固定预览区域高度 */
+  box-sizing: border-box;
+  margin-top: auto; /* 推到底部 */
   padding: 18rpx;
   border: 2rpx solid var(--border);
   border-radius: 10rpx;
@@ -190,6 +197,8 @@
   background: var(--card-strong);
   font-size: 22rpx;
   line-height: 1.5;
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-label {
@@ -197,4 +206,12 @@
   color: var(--primary);
   font-size: 20rpx;
   font-weight: 900;
+  flex-shrink: 0;
+}
+
+.preview-content {
+  flex: 1;
+  height: 150rpx;
+  overflow-y: auto;
+  word-break: break-all;
 }

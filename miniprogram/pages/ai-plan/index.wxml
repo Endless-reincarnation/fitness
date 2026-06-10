@@ -76,9 +76,9 @@
           <view>{{item}}</view>
         </view>
       </view>
-      <view wx:if="{{generationPreview}}" class="progress-preview">
+      <view class="progress-preview">
         <view class="preview-label">AI 正在输出</view>
-        <view>{{generationPreview}}</view>
+        <scroll-view scroll-y class="preview-content">{{generationPreview || '正在建立安全连接，即将流式输出计划...'}}</scroll-view>
       </view>
     </view>
   </view>

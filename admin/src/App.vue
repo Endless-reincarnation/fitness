@@ -395,11 +395,60 @@ const planForm = reactive({
   target_users: [''],
   summary: '',
   notes: [''],
-  status: 'draft'
+  status: 'draft',
+  nutrition: {
+    dailyCalories: 2000,
+    protein: 120,
+    carbs: 240,
+    fat: 60,
+    tips: ['']
+  }
 });
 
 // 编辑计划时的训练日（内部嵌套包含动作编排列表）响应式数组
 const planDaysForm = ref([]);
+
+// 动态增删列表行函数
+const addPlanFormField = (type) => {
+  if (!planForm[type]) {
+    planForm[type] = [];
+  }
+  planForm[type].push('');
+};
+
+const removePlanFormField = (type, index) => {
+  if (planForm[type] && planForm[type].length > 1) {
+    planForm[type].splice(index, 1);
+  } else if (planForm[type]) {
+    planForm[type][0] = '';
+  }
+};
+
+const addNutritionTip = () => {
+  if (!planForm.nutrition) {
+    planForm.nutrition = {
+      dailyCalories: 2000,
+      protein: 120,
+      carbs: 240,
+      fat: 60,
+      tips: ['']
+    };
+  }
+  if (!planForm.nutrition.tips) {
+    planForm.nutrition.tips = [];
+  }
+  planForm.nutrition.tips.push('');
+};
+
+const removeNutritionTip = (index) => {
+  if (planForm.nutrition && planForm.nutrition.tips) {
+    if (planForm.nutrition.tips.length > 1) {
+      planForm.nutrition.tips.splice(index, 1);
+    } else {
+      planForm.nutrition.tips[0] = '';
+    }
+  }
+};
 
 const openNewPlanModal = () => {
   editingPlan.value = null;
@@ -415,7 +464,14 @@ const openNewPlanModal = () => {
     target_users: [''],
     summary: '',
     notes: [''],
-    status: 'draft'
+    status: 'draft',
+    nutrition: {
+      dailyCalories: 2400,
+      protein: 140,
+      carbs: 280,
+      fat: 80,
+      tips: ['']
+    }
   });
   
   planDaysForm.value = [];
@@ -440,7 +496,20 @@ const openEditPlanModal = (plan) => {
     target_users: plan.target_users && plan.target_users.length ? [...plan.target_users] : [''],
     summary: plan.summary || '',
     notes: plan.notes && plan.notes.length ? [...plan.notes] : [''],
-    status: plan.status || 'draft'
+    status: plan.status || 'draft',
+    nutrition: plan.nutrition ? {
+      dailyCalories: plan.nutrition.dailyCalories || 2000,
+      protein: plan.nutrition.protein || 120,
+      carbs: plan.nutrition.carbs || 240,
+      fat: plan.nutrition.fat || 60,
+      tips: plan.nutrition.tips && plan.nutrition.tips.length ? [...plan.nutrition.tips] : ['']
+    } : {
+      dailyCalories: 2000,
+      protein: 120,
+      carbs: 240,
+      fat: 60,
+      tips: ['']
+    }
   });
 
   const version = plan.current_version || 1;
@@ -601,7 +670,14 @@ const savePlan = async () => {
       target_users: planForm.target_users.map(u => u.trim()).filter(Boolean),
       summary: planForm.summary,
       notes: planForm.notes.map(n => n.trim()).filter(Boolean),
-      status: planForm.status
+      status: planForm.status,
+      nutrition: {
+        dailyCalories: parseInt(planForm.nutrition.dailyCalories) || 2000,
+        protein: parseInt(planForm.nutrition.protein) || 120,
+        carbs: parseInt(planForm.nutrition.carbs) || 240,
+        fat: parseInt(planForm.nutrition.fat) || 60,
+        tips: planForm.nutrition.tips.map(t => t.trim()).filter(Boolean)
+      }
     };
     if (planForm._id) {
       planPayload._id = planForm._id;
@@ -1314,6 +1390,62 @@ onMounted(() => {
                 <option value="draft">存为草稿 (用户不可见)</option>
                 <option value="published">直接发布 (小程序端同步上架)</option>
               </select>
+            </div>
+
+            <!-- 适合人群动态行 -->
+            <div class="form-group full-width" style="border-top: 1px dashed var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+              <label>适合人群列表</label>
+              <div v-for="(user, uIdx) in planForm.target_users" :key="'user_'+uIdx" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <input type="text" v-model="planForm.target_users[uIdx]" class="form-input" style="flex-grow: 1; margin-right: 0.5rem;" placeholder="如: 新手、有一定器械条件的用户" />
+                <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" @click="removePlanFormField('target_users', uIdx)">删除</button>
+              </div>
+              <button type="button" class="btn btn-secondary" style="font-size: 0.8rem;" @click="addPlanFormField('target_users')">
+                ➕ 添加适合人群
+              </button>
+            </div>
+
+            <!-- 执行说明动态行 -->
+            <div class="form-group full-width">
+              <label>计划执行说明 / 注意事项</label>
+              <div v-for="(note, nIdx) in planForm.notes" :key="'note_'+nIdx" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <input type="text" v-model="planForm.notes[nIdx]" class="form-input" style="flex-grow: 1; margin-right: 0.5rem;" placeholder="如: 主项建议保留约 2 次余量，控制在 RPE 8 左右" />
+                <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" @click="removePlanFormField('notes', nIdx)">删除</button>
+              </div>
+              <button type="button" class="btn btn-secondary" style="font-size: 0.8rem;" @click="addPlanFormField('notes')">
+                ➕ 添加执行说明
+              </button>
+            </div>
+
+            <!-- 膳食营养建议配置 -->
+            <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
+              <h3 class="mb-4">🥗 膳食营养建议配置</h3>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>每日建议热量 (kcal)</label>
+                  <input type="number" v-model="planForm.nutrition.dailyCalories" class="form-input" min="0" placeholder="如: 2400" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>蛋白质目标 (g)</label>
+                  <input type="number" v-model="planForm.nutrition.protein" class="form-input" min="0" placeholder="如: 140" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>碳水目标 (g)</label>
+                  <input type="number" v-model="planForm.nutrition.carbs" class="form-input" min="0" placeholder="如: 280" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>脂肪目标 (g)</label>
+                  <input type="number" v-model="planForm.nutrition.fat" class="form-input" min="0" placeholder="如: 80" />
+                </div>
+              </div>
+
+              <label>膳食与补剂指南 tips</label>
+              <div v-for="(tip, tIdx) in planForm.nutrition.tips" :key="'tip_'+tIdx" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                <input type="text" v-model="planForm.nutrition.tips[tIdx]" class="form-input" style="flex-grow: 1; margin-right: 0.5rem;" placeholder="如: 建议按每公斤体重 2.0 克摄入蛋白质，首选蛋类、牛肉等" />
+                <button type="button" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" @click="removeNutritionTip(tIdx)">删除</button>
+              </div>
+              <button type="button" class="btn btn-secondary" style="font-size: 0.8rem; margin-bottom: 1.5rem;" @click="addNutritionTip">
+                ➕ 添加膳食指南建议
+              </button>
             </div>
 
             <!-- ==================== 训练日动作编排区 ==================== -->

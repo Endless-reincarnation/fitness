@@ -38,6 +38,7 @@ function normalizeTemplate(template) {
     version: template.version || template.current_version || 1,
     summary: template.summary || '',
     notes: template.notes || [],
+    nutrition: template.nutrition || null,
     days: []
   }, 'official');
 }
@@ -152,6 +153,7 @@ async function listCustomPlans() {
       overview: item.overview || '',
       generationSteps: item.generation_steps || [],
       tips: item.tips || [],
+      nutrition: item.nutrition || null,
       days: item.days,
       updatedAt: item.updated_at
     }));
@@ -283,9 +285,47 @@ async function buildPlanView(plan) {
   if (!plan) return null;
 
   const days = await Promise.all(plan.days.map(buildDayView));
+  
+  let nutrition = plan.nutrition || null;
+  if (nutrition && plan.planType !== 'custom') {
+    try {
+      // 动态 require 避免循环依赖
+      const { getUserProfile } = require('./userService');
+      const { getBodyWeights } = require('./workoutService');
+      
+      const profile = await getUserProfile();
+      const weights = await getBodyWeights();
+      const latestWeight = weights && weights[0] ? weights[0].weightKg : null;
+      const currentWeight = (profile && profile.current_weight_kg) || latestWeight;
+      
+      if (currentWeight) {
+        const weight = Number(currentWeight);
+        const isBulking = plan.goal && plan.goal.some(g => g.includes('增肌') || g.includes('增重'));
+        
+        const protein = Math.round(weight * (isBulking ? 2.0 : 1.6));
+        const dailyCalories = Math.round(weight * (isBulking ? 38 : 28));
+        const fat = Math.round(weight * 0.9);
+        const carbs = Math.round((dailyCalories - protein * 4 - fat * 9) / 4);
+        
+        nutrition = {
+          ...nutrition,
+          dailyCalories,
+          protein,
+          carbs,
+          fat,
+          isCustomizedByWeight: true,
+          userWeight: weight
+        };
+      }
+    } catch (e) {
+      console.warn('动态估算官方计划饮食失败：', e);
+    }
+  }
+
   return {
     ...plan,
-    days
+    days,
+    nutrition
   };
 }
 
@@ -349,6 +389,7 @@ async function saveUserPlan(plan) {
       overview: plan.overview || '',
       generation_steps: plan.generationSteps || [],
       tips: plan.tips || [],
+      nutrition: plan.nutrition || null,
       days: plan.days.map((day) => ({
         id: day.id,
         name: day.name,

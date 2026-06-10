@@ -1,0 +1,193 @@
+{
+  "plan_template": {
+    "id": "plan_ppl_split_2026_v1",
+    "name": "PPL力量与增肌循环计划",
+    "source_type": "self_curated",
+    "goal": ["增肌", "力量提升", "进阶分割"],
+    "level": "intermediate",
+    "duration_weeks": 12,
+    "weekly_frequency": 3,
+    "equipment_tags": ["杠铃", "哑铃", "龙门架", "器械", "罗马椅"],
+    "target_users": ["进阶训练者", "寻求力量突破的用户", "希望合理规划恢复周期的人群"],
+    "status": "published",
+    "version": 1,
+    "summary": "经典的推拉腿（PPL）训练循环，适合进阶训练者，合理安排推、拉和下肢的肌肉恢复周期。",
+    "notes": [
+      "推拉腿循环的核心是给目标肌群提供 72 小时的超长恢复窗口。",
+      "大重量多关节动作组间休息建议在 2-3 分钟，以保证力量输出和神经系统恢复。",
+      "每次训练完毕后建议配合合理的拉伸，释放深层肌肉张力。"
+    ],
+    "nutrition": {
+      "dailyCalories": 2600,
+      "protein": 150,
+      "carbs": 310,
+      "fat": 80,
+      "tips": [
+        "推拉腿训练消耗极大，请保证主食多摄入复合碳水（如燕麦、红薯、糙米），确保肌糖原充足。",
+        "建议按每公斤体重 2.0 克摄入蛋白质，首选牛肉、鸡胸、鱼类等优质蛋白质来源。",
+        "训练前 1-2 小时适当吃些中等GI碳水，维持训练期间血糖水平的平稳。"
+      ]
+    }
+  },
+  "plan_days": [
+    {
+      "id": "day_ppl_push",
+      "day_index": 1,
+      "name": "推部训练 (胸/肩前中束/三头)",
+      "focus": "胸大肌、三角肌前束/中束、肱三头肌",
+      "target_muscles": ["胸大肌", "三角肌前束", "三角肌中束", "肱三头肌"],
+      "exercises": [
+        {
+          "exercise_id": "barbell_bench_press",
+          "name": "杠铃卧推",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "6-10",
+          "rpe": "8.5",
+          "rest_seconds": 150,
+          "notes": "主项卧推，组间休息充分，保持核心收紧，手腕直立。"
+        },
+        {
+          "exercise_id": "incline_dumbbell_press",
+          "name": "哑铃上斜卧推",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "8-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "重点刺激上胸，控制离心下放过程，下沉肩胛骨。"
+        },
+        {
+          "exercise_id": "y_raise_lateral_raise",
+          "name": "Y 字侧平举",
+          "order": 3,
+          "role": "isolation",
+          "sets": 4,
+          "reps": "12-15",
+          "rpe": "8-9",
+          "rest_seconds": 90,
+          "notes": "使用较轻重量，不要耸肩借力，集中收缩中束肌群。"
+        },
+        {
+          "exercise_id": "lying_barbell_triceps_extension",
+          "name": "仰卧杠铃臂屈伸",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8-9",
+          "rest_seconds": 90,
+          "notes": "额骨处弯曲手肘下放，保持大臂相对垂直地面，避免甩臂借力。"
+        }
+      ]
+    },
+    {
+      "id": "day_ppl_pull",
+      "day_index": 2,
+      "name": "拉部训练 (背/肩后束/二头)",
+      "focus": "背阔肌、斜方肌、三角肌后束、肱二头肌",
+      "target_muscles": ["背阔肌", "三角肌后束", "肱二头肌"],
+      "exercises": [
+        {
+          "exercise_id": "neutral_grip_lat_pulldown",
+          "name": "对握下拉",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "对握有利于更好地激活背阔肌，拉到胸前微微后倾躯干。"
+        },
+        {
+          "exercise_id": "single_arm_machine_row",
+          "name": "单手器械划船",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单侧渐进超负荷，重点关注顶峰收缩感和发力平衡性。"
+        },
+        {
+          "exercise_id": "seated_elbow_out_row",
+          "name": "坐姿开肘划船",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "手肘打开角度约 70 度，主导刺激上背部、菱形肌和后束。"
+        },
+        {
+          "exercise_id": "cable_curl",
+          "name": "钢线弯举",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8-9",
+          "rest_seconds": 90,
+          "notes": "钢线能够提供全行程张力，小臂下放时不要完全松开锁死关节。"
+        }
+      ]
+    },
+    {
+      "id": "day_ppl_legs",
+      "day_index": 3,
+      "name": "腿部训练 (臀腿/后侧链)",
+      "focus": "股四头肌、臀大肌、腘绳肌、竖脊肌",
+      "target_muscles": ["股四头肌", "臀大肌", "腘绳肌", "竖脊肌"],
+      "exercises": [
+        {
+          "exercise_id": "front_squat",
+          "name": "颈前深蹲",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "6-8",
+          "rpe": "8.5",
+          "rest_seconds": 150,
+          "notes": "颈前深蹲对膝伸肌和股四头肌刺激极大，保持手肘高抬和背部中立。"
+        },
+        {
+          "exercise_id": "romanian_deadlift",
+          "name": "罗马尼亚硬拉",
+          "order": 2,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-10",
+          "rpe": "8",
+          "rest_seconds": 150,
+          "notes": "完美的后侧链髋铰链动作。骨盆向后推，小腿尽量保持垂直。"
+        },
+        {
+          "exercise_id": "bulgarian_split_squat",
+          "name": "保加利亚蹲",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "重点刺激单侧臀腿和维持核心骨盆稳定，控制离心慢速下放。"
+        },
+        {
+          "exercise_id": "back_extension",
+          "name": "山羊挺身",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8-9",
+          "rest_seconds": 90,
+          "notes": "在罗马椅上动作顶部夹紧臀肌，避免下背过度反弓受力。"
+        }
+      ]
+    }
+  ]
+}

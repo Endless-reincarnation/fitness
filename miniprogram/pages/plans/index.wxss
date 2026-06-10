@@ -40,6 +40,9 @@
 .create-actions .create-button {
   width: 100% !important;
   margin-bottom: 0;
+  height: 84rpx !important;
+  line-height: 84rpx !important;
+  font-size: 28rpx !important;
 }
 
 .group-title {
@@ -56,7 +59,7 @@
   padding: 30rpx;
   border: 3rpx solid var(--primary);
   border-radius: 14rpx;
-  background: rgba(255, 210, 63, 0.08);
+  background: var(--primary-fade-8);
 }
 
 .active-plan-title {
@@ -76,11 +79,25 @@
 
 .active-plan-button {
   flex: 0 0 128rpx;
-  width: 128rpx !important;
+  width: 128rpx;
   height: 68rpx;
-  line-height: 68rpx;
   border-radius: 10rpx;
   font-size: 26rpx;
+  font-weight: 900;
+  color: var(--button-text);
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.active-plan-button-hover {
+  opacity: 0.8;
+  transform: scale(0.95);
 }
 
 .empty-card {
@@ -215,9 +232,21 @@
 }
 
 .plan-action-button {
-  width: 100% !important;
+  width: 100%;
   height: 76rpx;
-  line-height: 76rpx;
   border-radius: 10rpx;
   font-size: 26rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.plan-action-button-hover {
+  opacity: 0.8;
+  transform: scale(0.96);
 }

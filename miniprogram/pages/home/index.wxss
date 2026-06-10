@@ -29,7 +29,7 @@
   padding: 24rpx;
   border: 4rpx solid var(--primary);
   border-radius: 14rpx;
-  background: rgba(255, 210, 63, 0.06);
+  background: var(--primary-fade-6);
 }
 
 .resume-label {

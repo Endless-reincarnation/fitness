@@ -82,32 +82,30 @@
   margin-top: 24rpx;
 }
 
+.muscle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.muscle-percent {
+  font-size: 22rpx;
+  color: var(--primary);
+  font-weight: 800;
+}
+
 .bar {
   height: 24rpx;
   margin-top: 12rpx;
   border-radius: 6rpx;
-  background: rgba(255, 210, 63, 0.12);
+  background: var(--primary-fade-12);
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
   border-radius: 6rpx;
-  background: var(--primary);
-}
-
-.bar-fill.chest {
-  width: 82%;
-}
-
-.bar-fill.tri {
-  width: 62%;
-  background: var(--primary-strong);
-}
-
-.bar-fill.delt {
-  width: 45%;
-  background: #b45309;
+  transition: width 0.3s ease;
 }
 
 .section-header-row {
@@ -127,13 +125,13 @@
 .bmi-empty {
   border: 2rpx dashed var(--primary);
   color: var(--primary);
-  background: rgba(255, 210, 63, 0.05);
+  background: var(--primary-fade-5);
 }
 
 .bmi-normal {
   border: 2rpx solid var(--primary);
   color: var(--primary);
-  background: rgba(255, 210, 63, 0.08);
+  background: var(--primary-fade-8);
 }
 
 .bmi-underweight {
@@ -271,7 +269,7 @@
 }
 
 .day-cell:not(.blank):active {
-  background: rgba(255, 210, 63, 0.12);
+  background: var(--primary-fade-12);
 }
 
 .day-num {

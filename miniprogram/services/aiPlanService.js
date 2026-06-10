@@ -82,6 +82,24 @@ function buildLocalMockDraft(form) {
     }))
   }));
 
+  const weight = normalizeNumber(form.profile && form.profile.current_weight_kg, 70, 30, 200);
+  const protein = Math.round(weight * (goal === '增肌' ? 2.0 : 1.6));
+  const dailyCalories = Math.round(weight * (goal === '增肌' ? 38 : 28));
+  const fat = Math.round(weight * 0.9);
+  const carbs = Math.round((dailyCalories - protein * 4 - fat * 9) / 4);
+
+  const nutrition = {
+    dailyCalories,
+    protein,
+    carbs,
+    fat,
+    tips: [
+      `建议每日补充热量约 ${dailyCalories} 大卡，其中蛋白质目标为 ${protein} 克以支持肌肉恢复与生长。`,
+      goal === '增肌' ? '建议练后 30 分钟内补充碳水化合物加乳清蛋白，保证体内正能量平衡。' : '建议适当控制高油脂外卖，每餐保证有绿叶蔬菜和足量的优质蛋白质。',
+      '每天饮水至少 2-3 升，保证训练时体液平衡，促进代谢与体能恢复。'
+    ]
+  };
+
   // MVP 阶段只生成可编辑草稿，后续真实模型接入后仍沿用同一数据结构。
   return {
     id: `ai_draft_${Date.now()}`,
@@ -95,6 +113,7 @@ function buildLocalMockDraft(form) {
     overview: `这是一套偏稳妥的 ${goal} 草稿，先保证每个训练日都有清晰主线，再用辅助动作补足训练量。`,
     generationSteps: ['先按目标和训练频率确定训练日数量。', '再把推、拉、下肢和补强内容分配到不同训练日。', '最后控制组数、次数和休息时间，方便你直接进入编辑页微调。'],
     tips: ['第一次执行时不要急着加重量，先确认动作稳定。', '如果某个动作不适合当前器械，可以在编辑页替换。', '训练中有明显不适时，优先降低强度或停止该动作。'],
+    nutrition,
     days
   };
 }
@@ -124,10 +143,11 @@ function buildPrompt(form) {
     `限制或偏好：${form.limitation || '无'}`,
     `计划名称：${form.planName || `AI ${goal}计划`}`,
     `动作库：${JSON.stringify(exerciseCandidates)}`,
-    'JSON 字段顺序必须为：name, goal, level, durationWeeks, weeklyFrequency, equipmentTags, summary, overview, generationSteps, tips, days。',
-    'JSON 结构必须为：{"name":"","goal":[""],"level":"","durationWeeks":4,"weeklyFrequency":3,"equipmentTags":[],"summary":"","overview":"","generationSteps":[""],"tips":[""],"days":[{"name":"","focus":"","exercises":[{"exerciseId":"","sets":3,"reps":"8-12","rpe":"8","restSeconds":120,"role":"main|assistance|isolation","roleLabel":"主项|辅助项|孤立项","weightRule":"","progressionRule":"","notes":""}]}]}',
+    'JSON 字段顺序必须为：name, goal, level, durationWeeks, weeklyFrequency, equipmentTags, summary, overview, generationSteps, tips, nutrition, days。',
+    'JSON 结构必须为：{"name":"","goal":[""],"level":"","durationWeeks":4,"weeklyFrequency":3,"equipmentTags":[],"summary":"","overview":"","generationSteps":[""],"tips":[""],"nutrition":{"dailyCalories":2300,"protein":140,"carbs":260,"fat":75,"tips":[""]},"days":[{"name":"","focus":"","exercises":[{"exerciseId":"","sets":3,"reps":"8-12","rpe":"8","restSeconds":120,"role":"main|assistance|isolation","roleLabel":"主项|辅助项|孤立项","weightRule":"","progressionRule":"","notes":""}]}]}',
     'overview 用亲和、简洁的中文说明这套计划为什么这样安排。',
-    '如果用户提供了性别、年龄、身高、体重或目标体重，请自然代入 overview 和 tips，不要机械罗列。',
+    '如果用户提供了性别、年龄、身高、体重或目标体重，请自然代入 overview、tips 以及 nutrition.tips 中，不要机械罗列。',
+    'nutrition 包含基于用户基本代谢和训练目标估算的每日摄入建议：dailyCalories 为每日推荐总热量（大卡，数字），protein 为蛋白质（克，数字），carbs 为碳水（克，数字），fat 为脂肪（克，数字），tips 为 2-3 条针对该用户和目标的饮食实操小建议。',
     'generationSteps 写给用户看的生成过程，不要写模型内部推理，使用“我先看了...然后...”这种自然表达。',
     'tips 给 3-5 条训练注意事项，语气温和，不制造焦虑。',
     '每个训练日至少 3 个动作；sets 必须是数字；restSeconds 必须是数字；reps 用中文页面可读的范围字符串。'
@@ -180,6 +200,33 @@ function normalizeAiDraft(rawDraft, form) {
     throw new Error('模型返回的训练日为空');
   }
 
+  // Parse and normalize nutrition recommendation
+  const rawNutrition = rawDraft.nutrition || {};
+  const nutrition = {
+    dailyCalories: Number(rawNutrition.dailyCalories || rawNutrition.daily_calories || 0),
+    protein: Number(rawNutrition.protein || 0),
+    carbs: Number(rawNutrition.carbs || 0),
+    fat: Number(rawNutrition.fat || 0),
+    tips: Array.isArray(rawNutrition.tips) ? rawNutrition.tips : []
+  };
+
+  // Fallback formula in case AI returns 0 or invalid nutrition values
+  if (!nutrition.dailyCalories || !nutrition.protein) {
+    const goal = form.goal || '增肌';
+    const weight = normalizeNumber(form.profile && form.profile.current_weight_kg, 70, 30, 200);
+    nutrition.protein = nutrition.protein || Math.round(weight * (goal === '增肌' ? 2.0 : 1.6));
+    nutrition.dailyCalories = nutrition.dailyCalories || Math.round(weight * (goal === '增肌' ? 38 : 28));
+    nutrition.fat = nutrition.fat || Math.round(weight * 0.9);
+    nutrition.carbs = nutrition.carbs || Math.round((nutrition.dailyCalories - nutrition.protein * 4 - nutrition.fat * 9) / 4);
+    if (!nutrition.tips.length) {
+      nutrition.tips = [
+        `建议每日补充热量约 ${nutrition.dailyCalories} 大卡，其中蛋白质目标为 ${nutrition.protein} 克。`,
+        goal === '增肌' ? '建议练后30分钟内补充碳水加乳清蛋白，保证正能量平衡。' : '建议适当控制高油脂外卖，每餐保证有绿叶蔬菜和足量蛋白质。',
+        '每天饮水至少 2-3 升，保证训练时体液平衡与代谢畅通。'
+      ];
+    }
+  }
+
   return {
     id: `ai_draft_${Date.now()}`,
     name: rawDraft.name || form.planName || `AI ${form.goal || '训练'}计划`,
@@ -198,6 +245,7 @@ function normalizeAiDraft(rawDraft, form) {
     tips: Array.isArray(rawDraft.tips) && rawDraft.tips.length
       ? rawDraft.tips
       : ['先用保守重量熟悉动作。', '如果某个动作不舒服，可以在编辑页替换。', '训练记录会帮助后续逐步递进。'],
+    nutrition,
     days
   };
 }

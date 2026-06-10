@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-05T12:50:55.402Z",
+  "generated_at": "2026-06-10T13:52:27.354Z",
   "source_dir": "seed",
   "import_order": [
     "muscles",
@@ -12,11 +12,11 @@
   ],
   "counts": {
     "muscles": 15,
-    "exercises": 15,
-    "plan_templates": 1,
-    "plan_template_versions": 1,
-    "plan_days": 3,
-    "plan_day_exercises": 15,
+    "exercises": 72,
+    "plan_templates": 4,
+    "plan_template_versions": 4,
+    "plan_days": 13,
+    "plan_day_exercises": 55,
     "exercise_alternatives": 0
   }
 }

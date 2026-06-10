@@ -13,7 +13,7 @@ function getCustomExercises() {
   return wx.getStorageSync('customExercises') || [];
 }
 
-function saveCustomExercise(exerciseName) {
+function saveCustomExercise(exerciseName, primaryMuscles = ['自定义'], equipment = ['自定义']) {
   const name = String(exerciseName || '').trim();
   if (!name) return null;
 
@@ -26,9 +26,9 @@ function saveCustomExercise(exerciseName) {
     id: `custom_exercise_${Date.now()}`,
     name,
     sourceType: 'custom',
-    primaryMuscles: ['自定义'],
+    primaryMuscles: Array.isArray(primaryMuscles) ? primaryMuscles : [primaryMuscles],
     secondaryMuscles: [],
-    equipment: ['自定义'],
+    equipment: Array.isArray(equipment) ? equipment : [equipment],
     steps: ['自定义动作暂无标准步骤，训练时按自己的动作习惯执行。'],
     mistakes: ['暂无常见错误记录。'],
     note: '用户自定义动作'

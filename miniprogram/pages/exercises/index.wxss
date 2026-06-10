@@ -1,46 +1,166 @@
 .page {
-  padding: 48rpx 28rpx 32rpx;
+  padding: 48rpx 28rpx 120rpx;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--bg);
 }
 
 .page-header {
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .eyebrow {
   color: var(--primary);
   font-size: 24rpx;
   font-weight: 900;
+  letter-spacing: 2rpx;
 }
 
 .page-title {
-  margin-top: 18rpx;
-  margin-bottom: 18rpx;
+  margin-top: 12rpx;
   color: var(--text);
   font-size: 64rpx;
   font-weight: 900;
   line-height: 1.12;
 }
 
-.intro {
-  line-height: 1.5;
+/* 搜索与新建栏 */
+.search-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+  width: 100%;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 84rpx;
+  background: var(--card-strong);
+  border: 3rpx solid var(--border);
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  margin-right: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 100%;
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.search-placeholder {
+  color: var(--muted);
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.clear-btn {
+  font-size: 36rpx;
+  color: var(--muted);
+  font-weight: 900;
+  padding: 10rpx;
+}
+
+.create-btn {
+  flex: 0 0 160rpx;
+  width: 160rpx;
+  height: 84rpx;
+  border-radius: 12rpx;
+  background: var(--primary);
+  color: var(--button-text);
+  font-size: 26rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.create-btn-hover {
+  opacity: 0.85;
+  transform: scale(0.96);
+}
+
+/* 横向滑动页签 */
+.filter-scroll {
+  white-space: nowrap;
+  margin-bottom: 20rpx;
+  width: 100%;
+}
+
+.filter-tab {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  margin-right: 12rpx;
+  background: var(--card);
+  border: 2rpx solid var(--border);
+  border-radius: 8rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  color: var(--button-text);
+  border-color: var(--primary);
+  font-weight: 900;
+}
+
+.equipment-scroll {
+  margin-bottom: 32rpx;
+}
+
+.equipment-tab {
+  background: var(--card-strong);
+  border-radius: 30rpx;
+  padding: 10rpx 26rpx;
+}
+
+/* 动作列表 */
+.exercises-list {
+  margin-top: 12rpx;
 }
 
 .exercise-card {
   display: flex;
   align-items: center;
   margin-bottom: 22rpx;
-  padding: 24rpx;
+  padding: 28rpx 24rpx;
   border: 3rpx solid var(--border);
-  border-radius: 12rpx;
+  border-radius: 14rpx;
   background: var(--card);
+  transition: all 0.15s ease;
+}
+
+.card-hover {
+  border-color: var(--primary);
+  transform: translateY(-2rpx);
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.2);
 }
 
 .mark {
-  width: 10rpx;
-  height: 72rpx;
-  margin-right: 24rpx;
+  width: 8rpx;
+  height: 64rpx;
+  margin-right: 20rpx;
   border-radius: 999rpx;
   background: var(--primary);
+}
+
+.mark.custom {
+  background: #ff9f1c; /* 自定义动作使用亮橙色区分 */
 }
 
 .exercise-main {
@@ -51,11 +171,198 @@
   color: var(--text);
   font-size: 30rpx;
   font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
-.exercise-sub {
-  margin-top: 8rpx;
+.custom-badge {
+  font-size: 16rpx;
+  color: #fff;
+  background: #ff9f1c;
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  font-weight: bold;
+}
+
+.exercise-meta-row {
+  margin-top: 10rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.meta-tag {
   color: var(--muted);
   font-size: 22rpx;
   font-weight: 700;
+}
+
+.arrow-icon {
+  color: var(--muted);
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-left: 12rpx;
+}
+
+/* 空状态 */
+.empty-view {
+  padding: 80rpx 40rpx;
+  text-align: center;
+  border: 3rpx dashed var(--border);
+  border-radius: 14rpx;
+  background: var(--card-strong);
+  margin-top: 40rpx;
+}
+
+.empty-title {
+  color: var(--text);
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.empty-sub {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+/* 弹出模态框 */
+.modal-backdrop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.78);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 500;
+}
+
+.modal-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 620rpx;
+  padding: 36rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 16rpx;
+  background: var(--card);
+  box-shadow: 0 24rpx 50rpx rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2rpx solid var(--border);
+  padding-bottom: 18rpx;
+}
+
+.modal-title {
+  color: var(--primary);
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.modal-close {
+  color: var(--muted);
+  font-size: 44rpx;
+  font-weight: 900;
+  padding: 10rpx;
+}
+
+.modal-content {
+  padding: 24rpx 0;
+}
+
+.form-item {
+  margin-bottom: 28rpx;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  color: var(--text);
+  font-size: 24rpx;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.form-input {
+  height: 80rpx;
+  background: var(--card-strong);
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  padding: 0 20rpx;
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+/* 网格选择芯片 */
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+}
+
+.option-chip {
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-strong);
+  border: 2rpx solid var(--border);
+  border-radius: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: bold;
+  transition: all 0.15s ease;
+}
+
+.option-chip.active {
+  background: var(--primary-fade-8);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.modal-footer {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 16rpx;
+  border-top: 2rpx solid var(--border);
+  padding-top: 24rpx;
+  margin-top: 12rpx;
+}
+
+.modal-btn {
+  height: 84rpx;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.button-hover {
+  opacity: 0.8;
+  transform: scale(0.96);
 }

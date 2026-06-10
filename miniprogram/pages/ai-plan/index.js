@@ -98,25 +98,16 @@ Page({
         }
       });
       const savedDraft = saveAiPlanDraft(draft);
-      const goEdit = () => wx.navigateTo({ url: `/pages/custom-plan/index?draftId=${savedDraft.id}` });
-
-      if (savedDraft.aiFallback) {
-        wx.showModal({
-          title: '已使用本地草稿',
-          content: `真实 AI 暂不可用，已生成一版本地示例草稿，可继续编辑。${savedDraft.aiFallbackMessage ? '\n原因：' + savedDraft.aiFallbackMessage : ''}`,
-          showCancel: false,
-          confirmText: '去编辑',
-          success: goEdit
+      wx.showToast({
+        title: savedDraft.aiFallback ? '已生成本地草稿' : '生成成功',
+        icon: 'success',
+        duration: 800
+      });
+      setTimeout(() => {
+        wx.navigateTo({
+          url: `/pages/custom-plan/index?draftId=${savedDraft.id}`
         });
-      } else {
-        wx.showModal({
-          title: '计划草稿已生成',
-          content: this.buildDraftBrief(savedDraft),
-          showCancel: false,
-          confirmText: '去编辑',
-          success: goEdit
-        });
-      }
+      }, 800);
     } catch (error) {
       wx.showToast({ title: error.message || '生成失败', icon: 'none' });
     } finally {

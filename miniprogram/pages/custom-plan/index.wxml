@@ -10,6 +10,55 @@
     <input class="input" value="{{planName}}" data-field="planName" bindinput="onInput" placeholder="例如：我的胸肩训练" />
   </view>
 
+  <!-- AI 生成思路与说明（仅在有 AI 数据时展示） -->
+  <view wx:if="{{planMeta.overview || (planMeta.generationSteps && planMeta.generationSteps.length) || (planMeta.tips && planMeta.tips.length)}}" class="card ai-note-card block">
+    <view class="ai-note-label">AI PLAN NOTE</view>
+    <view wx:if="{{planMeta.overview}}" class="ai-note-text">{{planMeta.overview}}</view>
+    <view wx:if="{{planMeta.generationSteps && planMeta.generationSteps.length}}" class="ai-note-section">
+      <view class="ai-note-title">生成思路</view>
+      <view wx:for="{{planMeta.generationSteps}}" wx:key="*this" class="ai-note-line">{{index + 1}}. {{item}}</view>
+    </view>
+    <view wx:if="{{planMeta.tips && planMeta.tips.length}}" class="ai-note-section">
+      <view class="ai-note-title">注意事项</view>
+      <view wx:for="{{planMeta.tips}}" wx:key="*this" class="ai-note-line">- {{item}}</view>
+    </view>
+  </view>
+
+  <!-- AI 膳食营养建议（仅在有饮食建议数据时展示） -->
+  <view wx:if="{{planMeta.nutrition}}" class="card nutrition-card block">
+    <view class="nutrition-label">DIET RECOMMENDATION</view>
+    <view class="nutrition-title">每日推荐摄入估算 <text class="click-hint">(点击数值查看食物换算)</text></view>
+    <view wx:if="{{planMeta.nutrition.isCustomizedByWeight}}" class="nutrition-custom-hint">已根据您的体重 {{planMeta.nutrition.userWeight}}kg 动态调整</view>
+    <view class="nutrition-grid">
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="calories" bindtap="showNutritionDetail">
+        <view class="num">{{planMeta.nutrition.dailyCalories}}</view>
+        <view class="unit">大卡</view>
+        <view class="label">热量目标</view>
+      </view>
+      <view class="nutrition-item highlight" hover-class="nutrition-item-active" data-type="protein" bindtap="showNutritionDetail">
+        <view class="num">{{planMeta.nutrition.protein}}</view>
+        <view class="unit">克</view>
+        <view class="label">蛋白质</view>
+      </view>
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="carbs" bindtap="showNutritionDetail">
+        <view class="num">{{planMeta.nutrition.carbs}}</view>
+        <view class="unit">克</view>
+        <view class="label">碳水</view>
+      </view>
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="fat" bindtap="showNutritionDetail">
+        <view class="num">{{planMeta.nutrition.fat}}</view>
+        <view class="unit">克</view>
+        <view class="label">脂肪</view>
+      </view>
+    </view>
+    <view wx:if="{{planMeta.nutrition.tips && planMeta.nutrition.tips.length}}" class="nutrition-tips">
+      <view class="nutrition-tip-item" wx:for="{{planMeta.nutrition.tips}}" wx:key="*this">
+        <text class="dot">·</text>
+        <text class="tip-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
   <view class="card block">
     <view class="section-title">训练日</view>
     <scroll-view scroll-x class="day-tabs" scroll-into-view="{{dayTabIntoView}}" scroll-with-animation show-scrollbar="false">
@@ -122,6 +171,22 @@
         <view wx:if="{{!pickerExercises.length && !canCreateExercise}}" class="picker-empty">没有匹配动作，试试搜索动作名或切换肌群</view>
         <button wx:if="{{canCreateExercise}}" class="ghost-button create-exercise-button" bindtap="createCustomExercise">新建“{{pickerKeyword}}”</button>
       </scroll-view>
+    </view>
+  </view>
+
+  <!-- 营养估算换算弹窗 -->
+  <view class="nutrition-modal-backdrop {{showNutritionModal ? 'show' : ''}}" bindtap="closeNutritionModal">
+    <view class="nutrition-modal-card" catchtap="noop">
+      <view class="nutrition-modal-header">
+        <view class="nutrition-modal-title">{{nutritionModalTitle}}</view>
+        <view class="nutrition-modal-close" bindtap="closeNutritionModal">×</view>
+      </view>
+      <view class="nutrition-modal-content">
+        <view class="nutrition-modal-eq-title">直观食物分量对比参考：</view>
+        <text class="nutrition-modal-eq-body">{{nutritionModalContent}}</text>
+        <view class="nutrition-modal-eq-hint">* 换算值仅作直观量化参考，请以食品包装及实际烹饪克数为准，确保膳食多样化。</view>
+      </view>
+      <button class="primary-button nutrition-modal-btn" bindtap="closeNutritionModal">我知道了</button>
     </view>
   </view>
 </view>

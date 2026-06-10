@@ -1,5 +1,6 @@
 const { getBodyWeights, getWorkoutHistory, saveBodyWeight, syncPendingCloudWrites } = require('../../services/workoutService');
 const { getUserProfile } = require('../../services/userService');
+const { listExercises } = require('../../services/exerciseService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -154,6 +155,52 @@ Page({
     const calendarGrid = this.generateCalendar(currentYear, currentMonth, history, selectedDateStr, this.data.calendarMode);
     const displaySuggestions = displaySession && displaySession.suggestions ? displaySession.suggestions : [];
 
+    // 计算肌群刺激得分百分比
+    let muscleStimulation = [];
+    if (displaySession && displaySession.records && displaySession.records.length > 0) {
+      try {
+        const exercises = await listExercises();
+        const exerciseMap = exercises.reduce((map, ex) => {
+          map[ex.id] = ex;
+          return map;
+        }, {});
+
+        const muscleScores = {};
+        displaySession.records.forEach((record) => {
+          const ex = exerciseMap[record.exerciseId];
+          if (ex) {
+            const primary = ex.primaryMuscles || [];
+            const secondary = ex.secondaryMuscles || [];
+            primary.forEach((m) => {
+              if (m && m !== '自定义') {
+                muscleScores[m] = (muscleScores[m] || 0) + 1.0;
+              }
+            });
+            secondary.forEach((m) => {
+              if (m && m !== '自定义') {
+                muscleScores[m] = (muscleScores[m] || 0) + 0.5;
+              }
+            });
+          }
+        });
+
+        const totalScore = Object.values(muscleScores).reduce((sum, s) => sum + s, 0);
+        if (totalScore > 0) {
+          muscleStimulation = Object.keys(muscleScores).map((name) => {
+            const score = muscleScores[name];
+            const percentage = Math.round((score / totalScore) * 100);
+            return {
+              name,
+              percentage,
+              color: getMuscleColor(name)
+            };
+          }).sort((a, b) => b.percentage - a.percentage).slice(0, 4);
+        }
+      } catch (err) {
+        console.warn('计算肌群刺激数据失败', err);
+      }
+    }
+
     this.setData({
       history,
       weights,
@@ -162,6 +209,7 @@ Page({
       latestTotalVolume: displaySession ? displaySession.totalVolume : 0,
       nextExerciseName: displaySession && displaySuggestions[0] ? displaySuggestions[0].exerciseName : '',
       latestSuggestions: displaySuggestions,
+      muscleStimulation,
       heightCm,
       chartWeights,
       bmi,
@@ -412,3 +460,24 @@ Page({
     doSave();
   }
 });
+
+function getMuscleColor(name) {
+  const colors = {
+    '胸大肌': 'var(--primary)',
+    '胸部': 'var(--primary)',
+    '背阔肌': '#3b82f6',
+    '背部': '#3b82f6',
+    '股四头肌': '#ef4444',
+    '腿部': '#ef4444',
+    '臀大肌': '#f97316',
+    '三角肌': '#10b981',
+    '三角肌前束': '#10b981',
+    '三角肌中束': '#059669',
+    '三角肌后束': '#047857',
+    '肱二头肌': '#8b5cf6',
+    '肱三头肌': '#a78bfa',
+    '核心肌群': '#ec4899',
+    '腹部': '#ec4899'
+  };
+  return colors[name] || 'var(--primary)';
+}

@@ -46,15 +46,16 @@
       <view class="next-text">本组动作完成质量高，建议在下次训练中微调递进重量。</view>
     </view>
 
-    <view class="card block">
+    <view class="card block" wx:if="{{muscleStimulation && muscleStimulation.length}}">
       <view class="section-title">肌群刺激</view>
-      <view class="muscle-row">
-        <view class="muted">主导肌群</view>
-        <view class="bar"><view class="bar-fill chest"></view></view>
-      </view>
-      <view class="muscle-row">
-        <view class="muted">辅助肌群</view>
-        <view class="bar"><view class="bar-fill tri"></view></view>
+      <view wx:for="{{muscleStimulation}}" wx:key="name" class="muscle-row">
+        <view class="muscle-header">
+          <text class="muted">{{item.name}}</text>
+          <text class="muscle-percent">{{item.percentage}}%</text>
+        </view>
+        <view class="bar">
+          <view class="bar-fill" style="width: {{item.percentage}}%; background: {{item.color || 'var(--primary)'}};"></view>
+        </view>
       </view>
     </view>
 

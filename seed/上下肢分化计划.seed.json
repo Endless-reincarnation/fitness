@@ -1,0 +1,246 @@
+{
+  "plan_template": {
+    "id": "plan_upper_lower_split_2026_v1",
+    "name": "上下肢分化力量与塑形计划",
+    "source_type": "self_curated",
+    "goal": ["力量提升", "增肌", "形体塑造"],
+    "level": "intermediate",
+    "duration_weeks": 10,
+    "weekly_frequency": 4,
+    "equipment_tags": ["杠铃", "哑铃", "龙门架", "器械", "罗马椅"],
+    "target_users": ["有一定训练基础的健身爱好者", "希望提升身体抗阻能力的用户", "寻求上下肢均衡发展的人群"],
+    "status": "published",
+    "version": 1,
+    "summary": "经典的上下肢 4 日分化训练，合理分割上肢和下肢，帮助你实现更快的力量突破与肌肉生长。",
+    "notes": [
+      "上下肢分化每次训练集中攻击一部分大肌群，强度高，能给目标肌群留出充足的 3-4 天恢复期。",
+      "建议训练日安排为：周一上肢A，周二下肢A，周三休息，周四上肢B，周五下肢B，周末休息。",
+      "组间休息要充足，主项 2-3 分钟，辅助项 1.5-2 分钟，孤立项 1 分钟左右。"
+    ],
+    "nutrition": {
+      "dailyCalories": 2500,
+      "protein": 145,
+      "carbs": 295,
+      "fat": 78,
+      "tips": [
+        "力量训练期间，建议每日摄入热量在基础代谢+300大卡左右，保障肌肉生长能量。",
+        "多吃升糖指数较低的复合碳水（如燕麦、糙米、红薯），它们能在训练期间提供平稳持久的动力。",
+        "每天摄入每公斤体重 1.8g-2.0g 的蛋白质，首选肉、蛋、奶以及大豆蛋白。"
+      ]
+    }
+  },
+  "plan_days": [
+    {
+      "id": "day_upper_a",
+      "day_index": 1,
+      "name": "上肢训练 A (力量爆发型)",
+      "focus": "胸背复合推拉力量",
+      "target_muscles": ["胸大肌", "背阔肌", "三角肌前束", "肱三头肌", "肱二头肌"],
+      "exercises": [
+        {
+          "exercise_id": "barbell_bench_press",
+          "name": "杠铃卧推",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "6-8",
+          "rpe": "8.5",
+          "rest_seconds": 150,
+          "notes": "力量爆发项，以较低次数和高强度推起重量，动作离心慢放。"
+        },
+        {
+          "exercise_id": "neutral_grip_lat_pulldown",
+          "name": "对握下拉",
+          "order": 2,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-10",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "上背部宽度主导，下拉到上胸处稍作停顿，充分收缩背阔肌。"
+        },
+        {
+          "exercise_id": "incline_dumbbell_press",
+          "name": "哑铃上斜卧推",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "针对上胸的推项，哑铃保持平稳，肩膀紧贴凳子。"
+        },
+        {
+          "exercise_id": "seated_elbow_out_row",
+          "name": "坐姿开肘划船",
+          "order": 4,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "开肘划船加强上背部和三角肌后束，挺胸并避免耸肩。"
+        }
+      ]
+    },
+    {
+      "id": "day_lower_a",
+      "day_index": 2,
+      "name": "下肢训练 A (双侧蹲推与后链)",
+      "focus": "双侧深蹲与后链拉伸",
+      "target_muscles": ["股四头肌", "臀大肌", "腘绳肌", "竖脊肌", "核心肌群"],
+      "exercises": [
+        {
+          "exercise_id": "front_squat",
+          "name": "颈前深蹲",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "6-8",
+          "rpe": "8.5",
+          "rest_seconds": 150,
+          "notes": "颈前深蹲强调股四头肌主导和核心抗折叠力量，保持肘部抬高。"
+        },
+        {
+          "exercise_id": "romanian_deadlift",
+          "name": "罗马尼亚硬拉",
+          "order": 2,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-10",
+          "rpe": "8",
+          "rest_seconds": 150,
+          "notes": "后侧链主项，髋部向后推，拉长腘绳肌和臀肌，背部拉直。"
+        },
+        {
+          "exercise_id": "bulgarian_split_squat",
+          "name": "保加利亚蹲",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单腿蹲力量，前脚掌均匀受力，后大腿前侧也有拉伸感。"
+        },
+        {
+          "exercise_id": "back_extension",
+          "name": "山羊挺身",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8",
+          "rest_seconds": 90,
+          "notes": "后侧链泵感项，在罗马椅上由臀大肌收缩顶起身体，顶峰收缩。"
+        }
+      ]
+    },
+    {
+      "id": "day_upper_b",
+      "day_index": 3,
+      "name": "上肢训练 B (容量塑形型)",
+      "focus": "肩臂与胸背孤立雕刻",
+      "target_muscles": ["胸大肌上束", "背阔肌", "三角肌中束", "肱二头肌", "肱三头肌"],
+      "exercises": [
+        {
+          "exercise_id": "incline_dumbbell_press",
+          "name": "哑铃上斜卧推",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "上胸容量训练，控制离心下放的拉伸感，平稳推起。"
+        },
+        {
+          "exercise_id": "single_arm_machine_row",
+          "name": "单手器械划船",
+          "order": 2,
+          "role": "main",
+          "sets": 4,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单臂收缩背阔肌，大拇指微松避免小臂过度代偿。"
+        },
+        {
+          "exercise_id": "y_raise_lateral_raise",
+          "name": "Y 字侧平举",
+          "order": 3,
+          "role": "isolation",
+          "sets": 4,
+          "reps": "12-15",
+          "rpe": "8",
+          "rest_seconds": 90,
+          "notes": "侧平举雕刻肩膀中束，斜上方飞起，斜方肌尽量放松。"
+        },
+        {
+          "exercise_id": "cable_curl",
+          "name": "钢线弯举",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8.5",
+          "rest_seconds": 90,
+          "notes": "二头肌弯举，钢线拉力持续且顺畅，肘部固定。"
+        }
+      ]
+    },
+    {
+      "id": "day_lower_b",
+      "day_index": 4,
+      "name": "下肢训练 B (单侧稳定与后链强化)",
+      "focus": "单侧腿部控制与下背防护",
+      "target_muscles": ["股四头肌", "臀大肌", "腘绳肌", "竖脊肌", "核心肌群"],
+      "exercises": [
+        {
+          "exercise_id": "bulgarian_split_squat",
+          "name": "保加利亚蹲",
+          "order": 1,
+          "role": "main",
+          "sets": 4,
+          "reps": "8-10",
+          "rpe": "8.5",
+          "rest_seconds": 120,
+          "notes": "以单腿前脚蹲为主，维持腹腔压力，保持膝盖朝向脚尖。"
+        },
+        {
+          "exercise_id": "single_leg_deadlift",
+          "name": "单腿硬拉",
+          "order": 2,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "单腿站立，控制髋关节回旋，拉伸大腿后侧腘绳肌。"
+        },
+        {
+          "exercise_id": "romanian_deadlift",
+          "name": "罗马尼亚硬拉",
+          "order": 3,
+          "role": "assistance",
+          "sets": 3,
+          "reps": "10-12",
+          "rpe": "8",
+          "rest_seconds": 120,
+          "notes": "中等重量罗马尼亚硬拉，重点关注腘绳肌的受刺激感与控制离心过程。"
+        },
+        {
+          "exercise_id": "back_extension",
+          "name": "山羊挺身",
+          "order": 4,
+          "role": "isolation",
+          "sets": 3,
+          "reps": "12-15",
+          "rpe": "8.5",
+          "rest_seconds": 90,
+          "notes": "强化下背和臀肌收尾，动作平稳顺滑，避免猛冲。"
+        }
+      ]
+    }
+  ]
+}

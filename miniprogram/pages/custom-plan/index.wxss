@@ -136,7 +136,7 @@
 
 .selected-exercise.active {
   border-color: var(--primary);
-  background: rgba(255, 210, 63, 0.08);
+  background: var(--primary-fade-8);
 }
 
 .selected-label {
@@ -425,9 +425,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1rpx solid rgba(255, 212, 59, 0.34);
+  border: 1rpx solid var(--primary-fade-34);
   border-radius: 10rpx;
-  background: rgba(255, 212, 59, 0.08);
+  background: var(--primary-fade-8);
 }
 
 .action-icon {
@@ -447,5 +447,255 @@
 
 .save-button {
   margin-top: 26rpx;
+  border-radius: 10rpx;
+}
+
+/* AI 描述卡片与膳食建议卡片样式 */
+.ai-note-card {
+  margin-bottom: 24rpx;
+  border-radius: 12rpx;
+}
+
+.ai-note-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+  letter-spacing: 2rpx;
+}
+
+.ai-note-text {
+  margin-top: 14rpx;
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.ai-note-section {
+  margin-top: 20rpx;
+}
+
+.ai-note-title {
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.ai-note-line {
+  margin-top: 10rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.nutrition-card {
+  margin-bottom: 24rpx;
+  border-radius: 12rpx;
+}
+
+.nutrition-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+  letter-spacing: 2rpx;
+}
+
+.nutrition-title {
+  margin-top: 6rpx;
+  color: var(--text);
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.nutrition-title .click-hint {
+  font-size: 20rpx;
+  color: var(--muted);
+  font-weight: normal;
+  margin-left: 8rpx;
+}
+
+.nutrition-custom-hint {
+  font-size: 20rpx;
+  color: var(--primary);
+  margin-top: 10rpx;
+  display: inline-block;
+  background: var(--primary-fade-6);
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  border: 1rpx solid var(--primary-fade-15);
+  font-weight: bold;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+  margin-top: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.nutrition-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 8rpx;
+  background: var(--card-strong);
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.nutrition-item-active {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+.nutrition-item.highlight {
+  border-color: var(--primary);
+}
+
+.nutrition-item .num {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.nutrition-item.highlight .num {
+  color: var(--primary);
+}
+
+.nutrition-item .unit {
+  font-size: 18rpx;
+  color: var(--muted);
+  margin-top: 4rpx;
+  font-weight: bold;
+}
+
+.nutrition-item .label {
+  font-size: 18rpx;
+  color: var(--muted);
+  margin-top: 8rpx;
+}
+
+.nutrition-tips {
+  border-top: 2rpx solid var(--border);
+  padding-top: 18rpx;
+}
+
+.nutrition-tip-item {
+  display: flex;
+  margin-bottom: 8rpx;
+}
+
+.nutrition-tip-item:last-child {
+  margin-bottom: 0;
+}
+
+.nutrition-tip-item .dot {
+  color: var(--primary);
+  font-weight: 900;
+  margin-right: 12rpx;
+  font-size: 24rpx;
+}
+
+.nutrition-tip-item .tip-text {
+  flex: 1;
+  color: var(--muted);
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+/* 营养估算弹窗样式 */
+.nutrition-modal-backdrop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.78);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 400;
+}
+
+.nutrition-modal-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nutrition-modal-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 600rpx;
+  padding: 36rpx;
+  border: 3rpx solid var(--border);
+  border-radius: 16rpx;
+  background: var(--card);
+  box-shadow: 0 24rpx 50rpx rgba(0, 0, 0, 0.6);
+}
+
+.nutrition-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  border-bottom: 2rpx solid var(--border);
+  padding-bottom: 18rpx;
+}
+
+.nutrition-modal-title {
+  color: var(--primary);
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.nutrition-modal-close {
+  color: var(--muted);
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.nutrition-modal-content {
+  padding: 24rpx 0;
+}
+
+.nutrition-modal-eq-title {
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: 900;
+  margin-bottom: 16rpx;
+}
+
+.nutrition-modal-eq-body {
+  color: var(--muted);
+  font-size: 26rpx;
+  line-height: 1.5;
+  font-weight: 700;
+  white-space: pre-wrap;
+  display: block;
+}
+
+.nutrition-modal-eq-hint {
+  margin-top: 24rpx;
+  color: var(--muted);
+  font-size: 20rpx;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+.nutrition-modal-btn {
+  width: 100% !important;
+  height: 80rpx;
+  line-height: 80rpx;
+  margin-top: 12rpx;
+  font-size: 28rpx;
   border-radius: 10rpx;
 }

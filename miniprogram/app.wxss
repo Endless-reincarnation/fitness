@@ -10,6 +10,17 @@ page {
   --text: #f8f5e7;
   --muted: #9a927d;
   --button-text: #0b0b09;
+  
+  /* 主题透明渐变与背景微光 */
+  --primary-fade-5: rgba(255, 210, 63, 0.05);
+  --primary-fade-6: rgba(255, 210, 63, 0.06);
+  --primary-fade-8: rgba(255, 210, 63, 0.08);
+  --primary-fade-12: rgba(255, 210, 63, 0.12);
+  --primary-fade-15: rgba(255, 210, 63, 0.15);
+  --primary-fade-34: rgba(255, 212, 59, 0.34);
+  --radial-1: rgba(255, 210, 63, 0.15);
+  --radial-2: rgba(245, 158, 11, 0.12);
+
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -27,6 +38,16 @@ page {
   --text: #f8fafc;
   --muted: #8793a1;
   --button-text: #03110b;
+
+  /* 主题透明渐变与背景微光 */
+  --primary-fade-5: rgba(32, 240, 160, 0.05);
+  --primary-fade-6: rgba(32, 240, 160, 0.06);
+  --primary-fade-8: rgba(32, 240, 160, 0.08);
+  --primary-fade-12: rgba(32, 240, 160, 0.12);
+  --primary-fade-15: rgba(32, 240, 160, 0.15);
+  --primary-fade-34: rgba(32, 240, 160, 0.34);
+  --radial-1: rgba(32, 240, 160, 0.15);
+  --radial-2: rgba(15, 118, 110, 0.12);
 }
 
 .page {
@@ -34,8 +55,8 @@ page {
   padding: 24rpx;
   box-sizing: border-box;
   background:
-    radial-gradient(circle at 12% 0%, rgba(255, 210, 63, 0.15), transparent 28%),
-    radial-gradient(circle at 88% 10%, rgba(245, 158, 11, 0.12), transparent 24%),
+    radial-gradient(circle at 12% 0%, var(--radial-1), transparent 28%),
+    radial-gradient(circle at 88% 10%, var(--radial-2), transparent 24%),
     var(--bg);
 }
 

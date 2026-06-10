@@ -24,6 +24,44 @@
     </view>
   </view>
 
+  <!-- 膳食营养建议卡片 -->
+  <view wx:if="{{plan.nutrition}}" class="card nutrition-card">
+    <view class="nutrition-label">DIET RECOMMENDATION</view>
+    <view class="nutrition-title">每日推荐摄入估算 <text class="click-hint">(点击数值查看食物换算)</text></view>
+    <view wx:if="{{plan.planType !== 'custom'}}" class="nutrition-custom-hint">
+      <text wx:if="{{plan.nutrition.isCustomizedByWeight}}">已根据您的体重 {{plan.nutrition.userWeight}}kg 动态调整</text>
+      <text wx:else>录入体重后系统将自动调整推荐摄入值</text>
+    </view>
+    <view class="nutrition-grid">
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="calories" bindtap="showNutritionDetail">
+        <view class="num">{{plan.nutrition.dailyCalories}}</view>
+        <view class="unit">大卡</view>
+        <view class="label">热量目标</view>
+      </view>
+      <view class="nutrition-item highlight" hover-class="nutrition-item-active" data-type="protein" bindtap="showNutritionDetail">
+        <view class="num">{{plan.nutrition.protein}}</view>
+        <view class="unit">克</view>
+        <view class="label">蛋白质</view>
+      </view>
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="carbs" bindtap="showNutritionDetail">
+        <view class="num">{{plan.nutrition.carbs}}</view>
+        <view class="unit">克</view>
+        <view class="label">碳水</view>
+      </view>
+      <view class="nutrition-item" hover-class="nutrition-item-active" data-type="fat" bindtap="showNutritionDetail">
+        <view class="num">{{plan.nutrition.fat}}</view>
+        <view class="unit">克</view>
+        <view class="label">脂肪</view>
+      </view>
+    </view>
+    <view wx:if="{{plan.nutrition.tips && plan.nutrition.tips.length}}" class="nutrition-tips">
+      <view class="nutrition-tip-item" wx:for="{{plan.nutrition.tips}}" wx:key="*this">
+        <text class="dot">·</text>
+        <text class="tip-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
   <view wx:for="{{plan.days}}" wx:key="id" class="card day-card">
     <view class="day-title">第 {{index + 1}} 天 · {{item.name}}</view>
     <view class="muted">{{item.focus}}</view>
@@ -48,6 +86,22 @@
     <view wx:else class="action-grid">
       <button class="ghost-button fixed-action secondary-action" bindtap="copyToCustomPlan">复制修改</button>
       <button class="primary-button fixed-action" bindtap="enablePlan">启用计划</button>
+    </view>
+  </view>
+
+  <!-- 营养估算换算弹窗 -->
+  <view class="nutrition-modal-backdrop {{showNutritionModal ? 'show' : ''}}" bindtap="closeNutritionModal">
+    <view class="nutrition-modal-card" catchtap="noop">
+      <view class="nutrition-modal-header">
+        <view class="nutrition-modal-title">{{nutritionModalTitle}}</view>
+        <view class="nutrition-modal-close" bindtap="closeNutritionModal">×</view>
+      </view>
+      <view class="nutrition-modal-content">
+        <view class="nutrition-modal-eq-title">直观食物分量对比参考：</view>
+        <text class="nutrition-modal-eq-body">{{nutritionModalContent}}</text>
+        <view class="nutrition-modal-eq-hint">* 换算值仅作直观量化参考，请以食品包装及实际烹饪克数为准，确保膳食多样化。</view>
+      </view>
+      <button class="primary-button nutrition-modal-btn" bindtap="closeNutritionModal">我知道了</button>
     </view>
   </view>
 </view>
