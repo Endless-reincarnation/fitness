@@ -1,4 +1,5 @@
 const { listExercises, saveCustomExercise } = require('../../services/exerciseService');
+const { getAiPlanDraft } = require('../../services/aiPlanService');
 const { buildPlanView, enablePlan, getPlanById, saveUserPlan } = require('../../services/planService');
 const { bodyRegionOptions, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
 const { applyTheme } = require('../../utils/theme');
@@ -46,6 +47,8 @@ Page({
     const editId = query && (query.editId || query.id);
     if (editId) {
       await this.loadEditingPlan(editId);
+    } else if (query && query.draftId) {
+      this.loadDraftPlan(query.draftId);
     } else if (query && query.copyFrom) {
       await this.loadCopiedPlan(query.copyFrom, query.type || 'official');
     }
@@ -125,6 +128,38 @@ Page({
     });
   },
 
+  loadDraftPlan(draftId) {
+    const draft = getAiPlanDraft(draftId);
+    if (!draft) {
+      wx.showToast({ title: 'AI 草稿不存在', icon: 'none' });
+      return;
+    }
+
+    // AI 草稿进入同一套编辑器，用户确认后才保存成正式自定义计划。
+    const days = this.normalizeDraftDays(draft);
+    this.setData({
+      pageTitle: '编辑 AI 草稿',
+      introText: 'AI 已生成计划草稿，请检查训练日、动作、组数、次数和休息后再保存。',
+      editingPlanId: '',
+      planName: draft.name,
+      planMeta: {
+        sourcePlanId: draft.id,
+        goal: draft.goal || ['自定义'],
+        level: draft.level || '自定义',
+        durationWeeks: draft.durationWeeks || 4,
+        equipmentTags: draft.equipmentTags || [],
+        overview: draft.overview || '',
+        generationSteps: draft.generationSteps || [],
+        tips: draft.tips || []
+      },
+      currentDayIndex: 0,
+      dayTabIntoView: 'day-tab-0',
+      currentDayName: days[0] ? days[0].name : '训练日 1',
+      days: days.length ? days : this.data.days,
+      currentDayExercises: days[0] ? days[0].exercises : []
+    });
+  },
+
   normalizePlanDays(planView) {
     // 页面编辑态只保留计划编排需要的字段，动作详情仍通过 exerciseId 统一查询。
     return planView.days.map((day) => ({
@@ -133,6 +168,27 @@ Page({
       exercises: day.exercises.map((item) => ({
         exerciseId: item.exerciseId,
         exerciseName: item.detail ? item.detail.name : item.exerciseName,
+        sets: item.sets,
+        reps: item.reps,
+        rpe: item.rpe || defaultRule.rpe,
+        restSeconds: item.restSeconds,
+        role: item.role || defaultRule.role,
+        roleLabel: item.roleLabel || defaultRule.roleLabel,
+        weightRule: item.weightRule || defaultRule.weightRule,
+        progressionRule: item.progressionRule || defaultRule.progressionRule,
+        notes: item.notes || ''
+      }))
+    }));
+  },
+
+  normalizeDraftDays(draft) {
+    // 草稿已包含 exerciseName，不依赖动作详情预加载，保证 AI 生成后可立即进入编辑态。
+    return (draft.days || []).map((day) => ({
+      name: day.name,
+      focus: day.focus || '自定义训练日',
+      exercises: (day.exercises || []).map((item) => ({
+        exerciseId: item.exerciseId,
+        exerciseName: item.exerciseName,
         sets: item.sets,
         reps: item.reps,
         rpe: item.rpe || defaultRule.rpe,
@@ -445,11 +501,14 @@ Page({
       durationWeeks: meta.durationWeeks || 4,
       weeklyFrequency: this.data.days.length,
       equipmentTags: meta.equipmentTags || [],
+      overview: meta.overview || '',
+      generationSteps: meta.generationSteps || [],
+      tips: meta.tips || [],
       summary: `我的自定义计划 · ${this.data.days.length} 个训练日 · ${totalExerciseCount} 个动作`,
       days: this.buildPlanDays(this.data.days)
     };
 
-    const savedPlan = saveUserPlan(plan);
+    const savedPlan = await saveUserPlan(plan);
     // 保存后直接询问是否启用，减少“保存后还要回列表再启用”的操作成本。
     wx.showModal({
       title: '已保存计划',

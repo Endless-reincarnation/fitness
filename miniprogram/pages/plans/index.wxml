@@ -5,57 +5,87 @@
     <view class="muted intro">选择一套可执行计划，系统会拆成训练日、动作、组数和休息时间。</view>
   </view>
 
-  <button class="primary-button create-button" bindtap="createPlan">新建我的计划</button>
-
-  <view wx:if="{{customPlans.length}}" class="section-title group-title">我的计划</view>
-  <view wx:for="{{customPlans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="custom">
-    <view class="plan-label">自定义计划</view>
-    <view class="plan-title">{{item.name}}</view>
-    <view class="plan-summary">{{item.summary}}</view>
-    <view class="metric-row">
-      <view class="metric-box">
-        <view class="metric-label">难度</view>
-        <view class="metric-value">{{item.level}}</view>
-      </view>
-      <view class="metric-box">
-        <view class="metric-label">频率</view>
-        <view class="metric-value">{{item.weeklyFrequency}}练</view>
-      </view>
-      <view class="metric-box">
-        <view class="metric-label">训练日</view>
-        <view class="metric-value">{{item.days.length}}天</view>
-      </view>
-    </view>
-    <view class="tags">
-      <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
-    </view>
-    <view class="plan-action-row">
-      <button class="ghost-button plan-action-button" data-id="{{item.id}}" catchtap="editPlan">编辑计划</button>
-      <button class="primary-button plan-action-button" data-id="{{item.id}}" data-type="custom" catchtap="openPlan">查看详情</button>
-    </view>
+  <view class="create-actions">
+    <button class="primary-button create-button" bindtap="createAiPlan">AI 生成计划</button>
+    <button class="ghost-button create-button" bindtap="createPlan">手动新建</button>
   </view>
 
-  <view class="section-title group-title">官方计划</view>
-  <view wx:for="{{plans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="official">
-    <view class="plan-label">官方模板</view>
-    <view class="plan-title">{{item.name}}</view>
-    <view class="plan-summary">{{item.summary}}</view>
-    <view class="metric-row">
-      <view class="metric-box">
-        <view class="metric-label">难度</view>
-        <view class="metric-value">{{item.level}}</view>
-      </view>
-      <view class="metric-box">
-        <view class="metric-label">频率</view>
-        <view class="metric-value">{{item.weeklyFrequency}}练</view>
-      </view>
-      <view class="metric-box">
-        <view class="metric-label">周期</view>
-        <view class="metric-value">{{item.durationWeeks}}周</view>
-      </view>
+  <view class="section-title group-title">正在使用</view>
+  <view wx:if="{{activePlan}}" class="active-plan-card" bindtap="openPlan" data-id="{{activePlan.planId}}" data-type="{{activePlan.planType}}">
+    <view>
+      <view class="plan-label">当前启用</view>
+      <view class="active-plan-title">{{activePlan.name}}</view>
+      <view class="active-plan-sub">第 {{activePlan.currentDayIndex + 1}} / {{activePlan.totalDays}} 天 · 已完成 {{activePlan.completedSessions}} 次</view>
     </view>
-    <view class="tags">
-      <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
-    </view>
+    <button class="primary-button active-plan-button" data-id="{{activePlan.planId}}" data-type="{{activePlan.planType}}" catchtap="openPlan">查看</button>
   </view>
+  <view wx:else class="empty-card">
+    <view class="empty-title">还没有启用计划</view>
+    <view class="empty-sub">可以先启用官方模板，或用 AI 生成一套自己的计划。</view>
+  </view>
+
+  <view class="plan-tabs">
+    <view class="plan-tab {{activeTab === 'custom' ? 'active' : ''}}" data-tab="custom" bindtap="switchTab">我的计划 {{customPlans.length}}</view>
+    <view class="plan-tab {{activeTab === 'official' ? 'active' : ''}}" data-tab="official" bindtap="switchTab">官方模板 {{plans.length}}</view>
+  </view>
+
+  <block wx:if="{{activeTab === 'custom'}}">
+    <view wx:if="{{!customPlans.length}}" class="empty-card tab-empty">
+      <view class="empty-title">还没有自己的计划</view>
+      <view class="empty-sub">先从官方模板开始，或用 AI 生成一套可编辑草稿。</view>
+      <button class="primary-button empty-action" bindtap="createAiPlan">AI 生成计划</button>
+    </view>
+    <view wx:for="{{customPlans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="custom">
+      <view class="plan-label">自定义计划</view>
+      <view class="plan-title">{{item.name}}</view>
+      <view class="plan-summary">{{item.summary}}</view>
+      <view class="metric-row">
+        <view class="metric-box">
+          <view class="metric-label">难度</view>
+          <view class="metric-value">{{item.level}}</view>
+        </view>
+        <view class="metric-box">
+          <view class="metric-label">频率</view>
+          <view class="metric-value">{{item.weeklyFrequency}}练</view>
+        </view>
+        <view class="metric-box">
+          <view class="metric-label">训练日</view>
+          <view class="metric-value">{{item.days.length}}天</view>
+        </view>
+      </view>
+      <view class="tags">
+        <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
+      </view>
+      <view class="plan-action-row">
+        <button class="ghost-button plan-action-button" data-id="{{item.id}}" catchtap="editPlan">编辑计划</button>
+        <button class="primary-button plan-action-button" data-id="{{item.id}}" data-type="custom" catchtap="openPlan">查看详情</button>
+      </view>
+    </view>
+  </block>
+
+  <block wx:if="{{activeTab === 'official'}}">
+    <view wx:if="{{!customPlans.length}}" class="tab-hint">还没有自己的计划，可以先启用官方模板，或用 AI 生成一套。</view>
+    <view wx:for="{{plans}}" wx:key="id" class="plan-card" bindtap="openPlan" data-id="{{item.id}}" data-type="official">
+      <view class="plan-label">官方模板</view>
+      <view class="plan-title">{{item.name}}</view>
+      <view class="plan-summary">{{item.summary}}</view>
+      <view class="metric-row">
+        <view class="metric-box">
+          <view class="metric-label">难度</view>
+          <view class="metric-value">{{item.level}}</view>
+        </view>
+        <view class="metric-box">
+          <view class="metric-label">频率</view>
+          <view class="metric-value">{{item.weeklyFrequency}}练</view>
+        </view>
+        <view class="metric-box">
+          <view class="metric-label">周期</view>
+          <view class="metric-value">{{item.durationWeeks}}周</view>
+        </view>
+      </view>
+      <view class="tags">
+        <text wx:for="{{item.goal}}" wx:key="*this" class="tag">{{item}}</text>
+      </view>
+    </view>
+  </block>
 </view>

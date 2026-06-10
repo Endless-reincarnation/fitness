@@ -11,6 +11,19 @@
     </view>
   </view>
 
+  <view wx:if="{{plan.overview || (plan.generationSteps && plan.generationSteps.length) || (plan.tips && plan.tips.length)}}" class="card ai-note-card">
+    <view class="ai-note-label">AI PLAN NOTE</view>
+    <view wx:if="{{plan.overview}}" class="ai-note-text">{{plan.overview}}</view>
+    <view wx:if="{{plan.generationSteps && plan.generationSteps.length}}" class="ai-note-section">
+      <view class="ai-note-title">生成思路</view>
+      <view wx:for="{{plan.generationSteps}}" wx:key="*this" class="ai-note-line">{{index + 1}}. {{item}}</view>
+    </view>
+    <view wx:if="{{plan.tips && plan.tips.length}}" class="ai-note-section">
+      <view class="ai-note-title">注意事项</view>
+      <view wx:for="{{plan.tips}}" wx:key="*this" class="ai-note-line">- {{item}}</view>
+    </view>
+  </view>
+
   <view wx:for="{{plan.days}}" wx:key="id" class="card day-card">
     <view class="day-title">第 {{index + 1}} 天 · {{item.name}}</view>
     <view class="muted">{{item.focus}}</view>

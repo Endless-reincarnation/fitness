@@ -1,19 +1,35 @@
-const { listAllPlans } = require('../../services/planService');
+const { getActivePlanDetail, listAllPlans } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
   data: {
     plans: [],
     customPlans: [],
+    activePlan: null,
+    activeTab: '',
     theme: 'power-yellow'
   },
 
   async onShow() {
     applyTheme(this);
-    const { officialPlans, customPlans } = await listAllPlans();
+    const previousCustomCount = this.data.customPlans.length;
+    const [{ officialPlans, customPlans }, { activePlan }] = await Promise.all([
+      listAllPlans(),
+      getActivePlanDetail()
+    ]);
+    // 没有我的计划时默认给用户看官方模板；创建出第一套自定义计划后再回到我的计划。
+    let activeTab = this.data.activeTab || (customPlans.length ? 'custom' : 'official');
+    if (!customPlans.length && activeTab === 'custom') {
+      activeTab = 'official';
+    } else if (!previousCustomCount && customPlans.length) {
+      activeTab = 'custom';
+    }
+
     this.setData({
       plans: officialPlans,
-      customPlans
+      customPlans,
+      activePlan,
+      activeTab
     });
   },
 
@@ -29,5 +45,14 @@ Page({
 
   createPlan() {
     wx.navigateTo({ url: '/pages/custom-plan/index' });
+  },
+
+  createAiPlan() {
+    wx.navigateTo({ url: '/pages/ai-plan/index' });
+  },
+
+  switchTab(event) {
+    const { tab } = event.currentTarget.dataset;
+    this.setData({ activeTab: tab });
   }
 });

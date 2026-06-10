@@ -34,7 +34,15 @@ Page({
     const nextDayIndex = plan && totalDays ? (Number(activePlan.currentDayIndex || 0) + 1) % totalDays : 0;
     const nextDayName = plan && totalDays ? plan.days[nextDayIndex].name : '';
     const history = await getWorkoutHistory();
-    const workoutDraft = getWorkoutDraft();
+    const rawWorkoutDraft = getWorkoutDraft();
+    // 首页只展示当前计划、当前训练日的草稿，避免切换计划后误续旧训练。
+    const workoutDraft = rawWorkoutDraft &&
+      activePlan &&
+      todayDay &&
+      rawWorkoutDraft.planId === activePlan.planId &&
+      rawWorkoutDraft.dayId === todayDay.id
+      ? rawWorkoutDraft
+      : null;
     const weights = await getBodyWeights();
 
     this.setData({

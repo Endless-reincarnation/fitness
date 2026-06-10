@@ -4,6 +4,7 @@ const { getCollection, isCloudEnabled } = require('./cloudService');
 const { getExerciseById } = require('./exerciseService');
 
 const getActivePlan = () => workoutStore.getActivePlan();
+const clearActivePlan = () => workoutStore.clearActivePlan();
 const getCustomPlans = () => workoutStore.getCustomPlans();
 const saveCustomPlan = (plan) => workoutStore.saveCustomPlan(plan);
 const setActivePlan = (plan) => workoutStore.setActivePlan(plan);
@@ -148,6 +149,9 @@ async function listCustomPlans() {
       durationWeeks: 4,
       weeklyFrequency: item.weekly_frequency || item.days.length,
       summary: `我的自定义计划 · ${item.days.length} 个训练日 · ${item.days.reduce((sum, d) => sum + d.exercises.length, 0)} 个动作`,
+      overview: item.overview || '',
+      generationSteps: item.generation_steps || [],
+      tips: item.tips || [],
       days: item.days,
       updatedAt: item.updated_at
     }));
@@ -213,6 +217,27 @@ async function getActivePlanFromCloud() {
   return null;
 }
 
+async function abandonCloudActivePlan(planId) {
+  if (!isCloudEnabled()) return;
+
+  try {
+    const collection = getCollection('userPlans');
+    if (!collection) return;
+
+    const result = await collection.where({ status: 'active', plan_id: planId }).get();
+    for (const record of result.data || []) {
+      await collection.doc(record._id).update({
+        data: {
+          status: 'abandoned',
+          updated_at: new Date().toISOString()
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('清理云端活跃计划失败', error);
+  }
+}
+
 async function getActivePlanDetail() {
   let activePlan = getActivePlan();
 
@@ -224,6 +249,15 @@ async function getActivePlanDetail() {
   }
 
   const plan = activePlan ? await getPlanById(activePlan.planId, activePlan.planType) : null;
+  if (activePlan && !plan) {
+    // 活跃计划指向的模板或自定义计划已不存在时，立即清理状态，避免页面继续展示悬空计划。
+    clearActivePlan();
+    await abandonCloudActivePlan(activePlan.planId);
+    return {
+      activePlan: null,
+      plan: null
+    };
+  }
 
   return {
     activePlan,
@@ -312,6 +346,9 @@ async function saveUserPlan(plan) {
       name: plan.name,
       goal_tags: plan.goal || ['自定义'],
       weekly_frequency: plan.weeklyFrequency,
+      overview: plan.overview || '',
+      generation_steps: plan.generationSteps || [],
+      tips: plan.tips || [],
       days: plan.days.map((day) => ({
         id: day.id,
         name: day.name,
@@ -359,7 +396,7 @@ async function deleteUserPlan(planId) {
   // 2. 检查并清理当前启用的计划
   const activePlan = getActivePlan();
   if (activePlan && activePlan.planId === planId) {
-    wx.removeStorageSync('activePlan');
+    clearActivePlan();
   }
 
   // 3. 云端删除
@@ -370,6 +407,7 @@ async function deleteUserPlan(planId) {
     if (!collection) return true;
 
     await collection.doc(planId).remove();
+    await abandonCloudActivePlan(planId);
   } catch (error) {
     console.warn('删除云端自定义计划失败', error);
   }

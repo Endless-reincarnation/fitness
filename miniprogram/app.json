@@ -3,6 +3,7 @@
     "pages/home/index",
     "pages/plans/index",
     "pages/plan-detail/index",
+    "pages/ai-plan/index",
     "pages/custom-plan/index",
     "pages/cloud-diagnostics/index",
     "pages/exercises/index",

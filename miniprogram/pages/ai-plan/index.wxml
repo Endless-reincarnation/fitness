@@ -1,0 +1,87 @@
+<view class="page theme-{{theme}}">
+  <view class="page-header">
+    <view class="eyebrow">AI PROGRAM</view>
+    <view class="page-title">AI 生成计划</view>
+    <view class="muted intro">填写训练目标和可用条件，先生成一版草稿，再进入编辑页确认动作和训练日。</view>
+  </view>
+
+  <view class="card block">
+    <view class="field-label">计划名称</view>
+    <input class="input" value="{{planName}}" data-field="planName" bindinput="onInput" placeholder="例如：四周增肌强化" />
+
+    <view class="field-label second">训练目标</view>
+    <view class="option-row">
+      <view wx:for="{{goalOptions}}" wx:key="*this" class="option-pill {{goal === item ? 'active' : ''}}" data-field="goal" data-value="{{item}}" bindtap="selectOption">{{item}}</view>
+    </view>
+
+    <view class="field-label second">训练水平</view>
+    <view class="option-row">
+      <view wx:for="{{levelOptions}}" wx:key="*this" class="option-pill {{level === item ? 'active' : ''}}" data-field="level" data-value="{{item}}" bindtap="selectOption">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="section-title small-title">个人信息</view>
+    <view class="muted profile-hint">选填。已有资料会自动带入，AI 会据此调整说明和注意事项。</view>
+
+    <view class="field-label second">性别</view>
+    <view class="option-row">
+      <view class="option-pill {{gender === 'unknown' ? 'active' : ''}}" data-field="gender" data-value="unknown" bindtap="selectOption">保密</view>
+      <view class="option-pill {{gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="selectOption">男</view>
+      <view class="option-pill {{gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="selectOption">女</view>
+    </view>
+
+    <view class="form-row profile-row">
+      <view class="field-box">
+        <view class="field-label">年龄</view>
+        <input class="mini-input" type="number" value="{{age}}" data-field="age" bindinput="onInput" placeholder="岁" />
+      </view>
+      <view class="field-box">
+        <view class="field-label">身高</view>
+        <input class="mini-input" type="number" value="{{heightCm}}" data-field="heightCm" bindinput="onInput" placeholder="cm" />
+      </view>
+      <view class="field-box">
+        <view class="field-label">体重</view>
+        <input class="mini-input" type="digit" value="{{weightKg}}" data-field="weightKg" bindinput="onInput" placeholder="kg" />
+      </view>
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="form-row">
+      <view class="field-box">
+        <view class="field-label">每周几练</view>
+        <input class="mini-input" type="number" value="{{weeklyFrequency}}" data-field="weeklyFrequency" bindinput="onInput" />
+      </view>
+      <view class="field-box">
+        <view class="field-label">周期周数</view>
+        <input class="mini-input" type="number" value="{{durationWeeks}}" data-field="durationWeeks" bindinput="onInput" />
+      </view>
+    </view>
+
+    <view class="field-label second">可用器械</view>
+    <input class="input" value="{{equipment}}" data-field="equipment" bindinput="onInput" placeholder="例如：杠铃、哑铃、龙门架" />
+
+    <view class="field-label second">限制或偏好</view>
+    <textarea class="textarea" value="{{limitation}}" data-field="limitation" bindinput="onInput" placeholder="例如：膝盖不适，少安排跳跃；每次不超过 60 分钟" />
+  </view>
+
+  <view wx:if="{{generating}}" class="progress-backdrop">
+    <view class="progress-sheet">
+      <view class="progress-label">STREAMING</view>
+      <view class="progress-title">{{generationStatus}}</view>
+      <view class="progress-steps">
+        <view wx:for="{{generationSteps}}" wx:key="*this" class="progress-step">
+          <view class="progress-dot"></view>
+          <view>{{item}}</view>
+        </view>
+      </view>
+      <view wx:if="{{generationPreview}}" class="progress-preview">
+        <view class="preview-label">AI 正在输出</view>
+        <view>{{generationPreview}}</view>
+      </view>
+    </view>
+  </view>
+
+  <button class="primary-button generate-button" loading="{{generating}}" bindtap="generatePlan">生成计划草稿</button>
+</view>

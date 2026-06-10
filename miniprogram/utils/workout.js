@@ -3,7 +3,15 @@ function getActivePlan() {
   return wx.getStorageSync('activePlan') || null;
 }
 
+function clearActivePlan() {
+  wx.removeStorageSync('activePlan');
+  clearWorkoutDraft();
+}
+
 function setActivePlan(plan) {
+  // 启用新计划后旧训练草稿不再有效，避免首页继续显示上一套计划的未完成训练。
+  clearWorkoutDraft();
+
   const activePlan = {
     planId: plan.id,
     planType: plan.planType || 'official',
@@ -115,6 +123,7 @@ function saveBodyWeight(record) {
 
 module.exports = {
   getActivePlan,
+  clearActivePlan,
   setActivePlan,
   advanceActivePlan,
   setActivePlanDay,

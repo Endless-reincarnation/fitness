@@ -1,4 +1,4 @@
-const { buildPlanView, enablePlan, getPlanById, listOfficialPlans, deleteUserPlan } = require('../../services/planService');
+const { buildPlanView, enablePlan, getActivePlanDetail, getPlanById, listOfficialPlans, deleteUserPlan } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
 
 Page({
@@ -42,10 +42,16 @@ Page({
     });
   },
 
-  deletePlan() {
+  async deletePlan() {
+    const { activePlan } = await getActivePlanDetail();
+    const isActivePlan = activePlan && this.data.plan && activePlan.planId === this.data.plan.id;
+
+    // 删除当前启用计划会连带清理启用状态和训练草稿，弹窗里提前说明影响范围。
     wx.showModal({
       title: '删除计划',
-      content: '确定要删除这个自定义计划吗？删除后将无法恢复。',
+      content: isActivePlan
+        ? '这个计划正在使用，删除后会清除当前启用状态和未完成训练草稿。确定删除吗？'
+        : '确定要删除这个自定义计划吗？删除后将无法恢复。',
       confirmColor: '#ff5148',
       success: async (res) => {
         if (res.confirm) {
