@@ -119,13 +119,8 @@ exports.main = async (event, context) => {
           return { code: 404, message: '动作不存在' };
         }
 
-        // 软删除：动作只下架不物理删除
-        await db.collection('exercises').doc(id).update({
-          data: {
-            status: 'disabled',
-            updated_at: now
-          }
-        });
+        // 物理彻底删除动作
+        await db.collection('exercises').doc(id).remove();
 
         // 记操作日志
         await db.collection('admin_logs').add({
@@ -135,12 +130,12 @@ exports.main = async (event, context) => {
             target_collection: 'exercises',
             target_id: id,
             before: existing.data,
-            after: { ...existing.data, status: 'disabled', updated_at: now },
+            after: null,
             created_at: now
           }
         });
 
-        return { code: 200, message: '动作已下架停用' };
+        return { code: 200, message: '动作已彻底删除' };
       }
 
       // ==================== 4. 计划模板管理 ====================
@@ -296,22 +291,21 @@ exports.main = async (event, context) => {
           return { code: 404, message: '计划模板不存在' };
         }
 
-        // 软删除，下架归档
-        await db.collection('plan_templates').doc(id).update({
-          data: {
-            status: 'archived',
-            updated_at: now
-          }
-        });
+        // 物理彻底删除计划模板
+        await db.collection('plan_templates').doc(id).remove();
 
-        // 下架版本快照
+        // 同时彻底删除关联的版本快照与训练日/动作绑定
         await db.collection('plan_template_versions').where({
           plan_template_id: id
-        }).update({
-          data: {
-            status: 'archived'
-          }
-        });
+        }).remove().catch(() => {});
+
+        await db.collection('plan_days').where({
+          plan_template_id: id
+        }).remove().catch(() => {});
+
+        await db.collection('plan_day_exercises').where({
+          plan_template_id: id
+        }).remove().catch(() => {});
 
         // 记日志
         await db.collection('admin_logs').add({
@@ -321,12 +315,12 @@ exports.main = async (event, context) => {
             target_collection: 'plan_templates',
             target_id: id,
             before: existing.data,
-            after: { ...existing.data, status: 'archived', updated_at: now },
+            after: null,
             created_at: now
           }
         });
 
-        return { code: 200, message: '计划已下架归档' };
+        return { code: 200, message: '计划及全部关联数据已彻底删除' };
       }
 
       case 'publish_plan_new_version': {

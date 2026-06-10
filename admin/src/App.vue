@@ -381,17 +381,16 @@ const toggleSelectAllExercises = () => {
 
 const deleteSelectedExercises = async () => {
   if (!selectedExerciseIds.value.length) return;
-  if (!confirm(`确定要批量下架选中的 ${selectedExerciseIds.value.length} 个动作吗？`)) return;
+  if (!confirm(`确定要批量彻底删除选中的 ${selectedExerciseIds.value.length} 个动作吗？物理删除后动作将无法恢复，且会影响已引用此动作的计划数据，请谨慎操作。`)) return;
   
   loading.value = true;
   try {
     const promises = selectedExerciseIds.value.map(id => callCloudApi('delete_exercise', { id }));
     await Promise.all(promises);
     
-    // 更新本地列表，过滤掉已下架的动作
+    // 从本地列表中彻底过滤移除
     exercisesList.value = exercisesList.value.filter(e => {
       if (selectedExerciseIds.value.includes(e._id)) {
-        e.status = 'disabled';
         stats.value.exercises -= 1;
         return false;
       }
@@ -399,10 +398,10 @@ const deleteSelectedExercises = async () => {
     });
     
     selectedExerciseIds.value = [];
-    alert('批量下架动作成功！');
+    alert('批量彻底删除动作成功！');
   } catch (e) {
     console.error(e);
-    alert('批量下架动作失败：' + e.message);
+    alert('批量删除动作失败：' + e.message);
   } finally {
     loading.value = false;
   }
@@ -419,26 +418,22 @@ const toggleSelectAllPlans = () => {
 
 const deleteSelectedPlans = async () => {
   if (!selectedPlanIds.value.length) return;
-  if (!confirm(`确定要批量下架并归档选中的 ${selectedPlanIds.value.length} 个计划吗？`)) return;
+  if (!confirm(`确定要批量彻底删除选中的 ${selectedPlanIds.value.length} 个计划吗？这将会从数据库物理清除所选的计划模板、关联的所有版本快照和训练日绑定数据！`)) return;
   
   loading.value = true;
   try {
     const promises = selectedPlanIds.value.map(id => callCloudApi('delete_plan', { id }));
     await Promise.all(promises);
     
-    // 更新本地列表状态为已下架
-    plansList.value.forEach(p => {
-      if (selectedPlanIds.value.includes(p._id)) {
-        p.status = 'archived';
-      }
-    });
+    // 从本地列表中移除
+    plansList.value = plansList.value.filter(p => !selectedPlanIds.value.includes(p._id));
     
     selectedPlanIds.value = [];
-    alert('批量下架归档计划成功！');
+    alert('批量彻底删除计划成功！');
     await fetchData();
   } catch (e) {
     console.error(e);
-    alert('批量下架计划失败：' + e.message);
+    alert('批量删除计划失败：' + e.message);
   } finally {
     loading.value = false;
   }
@@ -481,17 +476,16 @@ const batchUpdateFeedbackStatus = async (status) => {
 };
 
 const deleteExercise = async (ex) => {
-  if (!confirm(`确认要将动作“${ex.name}”下架停用吗？下架后，已发布的计划中仍会保留它的历史数据，但新计划将无法选择。`)) {
+  if (!confirm(`确认要彻底删除动作“${ex.name}”吗？这将会从数据库物理清除该动作，已发布的计划可能将无法显示该动作的数据，请确认！`)) {
     return;
   }
   try {
     await callCloudApi('delete_exercise', { id: ex._id });
-    ex.status = 'disabled';
     exercisesList.value = exercisesList.value.filter(e => e._id !== ex._id);
     stats.value.exercises -= 1;
-    alert('动作下架成功！');
+    alert('动作彻底删除成功！');
   } catch (err) {
-    alert('动作下架失败: ' + err.message);
+    alert('动作删除失败: ' + err.message);
   }
 };
 
@@ -839,15 +833,15 @@ const savePlan = async () => {
 };
 
 const deletePlan = async (plan) => {
-  if (!confirm(`确认要将计划“${plan.name}”下架并归档吗？下架后，正在执行此计划的用户仍可照常训练，但新用户将无法检索到该计划。`)) {
+  if (!confirm(`确认要彻底删除计划“${plan.name}”吗？这将会从数据库物理清除该计划模板及关联的版本和训练日数据，且删除后将不可恢复！`)) {
     return;
   }
   try {
     await callCloudApi('delete_plan', { id: plan._id });
-    alert('计划下架成功！');
+    alert('计划彻底删除成功！');
     await fetchData();
   } catch (err) {
-    alert('计划下架失败: ' + err.message);
+    alert('计划删除失败: ' + err.message);
   }
 };
 
@@ -1084,7 +1078,7 @@ onMounted(() => {
           </select>
 
           <button v-if="selectedExerciseIds.length" class="btn btn-danger btn-batch" style="margin-left: auto;" @click="deleteSelectedExercises">
-            🗑️ 批量下架 ({{ selectedExerciseIds.length }})
+            🗑️ 批量删除 ({{ selectedExerciseIds.length }})
           </button>
         </div>
 
@@ -1142,7 +1136,7 @@ onMounted(() => {
                     编辑
                   </button>
                   <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="deleteExercise(ex)">
-                    下架
+                    彻底删除
                   </button>
                 </td>
               </tr>
@@ -1165,7 +1159,7 @@ onMounted(() => {
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
             <button v-if="selectedPlanIds.length" class="btn btn-danger" @click="deleteSelectedPlans">
-              🗑️ 批量下架 ({{ selectedPlanIds.length }})
+              🗑️ 批量删除 ({{ selectedPlanIds.length }})
             </button>
             <button class="btn btn-primary" @click="openNewPlanModal">
               ➕ 创建新计划模板
@@ -1217,7 +1211,7 @@ onMounted(() => {
                     发布新版本
                   </button>
                   <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="deletePlan(plan)">
-                    归档下架
+                    彻底删除
                   </button>
                 </td>
               </tr>
