@@ -21,6 +21,7 @@ const equipmentOptions = [
 ];
 
 const muscleRegionMap = {
+  // 中文对照
   胸大肌: 'chest',
   胸大肌上束: 'chest',
   三角肌前束: 'shoulders',
@@ -36,16 +37,34 @@ const muscleRegionMap = {
   股四头肌: 'legs',
   腘绳肌: 'legs',
   核心肌群: 'core',
-  自定义: 'custom'
+  自定义: 'custom',
+
+  // 英文 ID 对照，防止云数据异步映射异常或 fallback 时无法分类
+  pectoralis_major: 'chest',
+  upper_pectoralis: 'chest',
+  anterior_deltoid: 'shoulders',
+  middle_deltoid: 'shoulders',
+  posterior_deltoid: 'shoulders',
+  triceps_brachii: 'arms',
+  biceps_brachii: 'arms',
+  latissimus_dorsi: 'back',
+  middle_lower_trapezius: 'back',
+  rhomboids: 'back',
+  gluteus_maximus: 'legs',
+  quadriceps: 'legs',
+  hamstrings: 'legs',
+  erector_spinae: 'back',
+  core: 'core',
+  custom: 'custom'
 };
 
 const equipmentKeywordMap = {
-  bodyweight: ['自重', '徒手'],
-  dumbbell: ['哑铃'],
-  barbell: ['杠铃', '易弯杠'],
-  cable: ['拉索', '绳索', '龙门架', '钢线'],
-  machine: ['器械', '高位下拉器', '罗马椅'],
-  smith: ['史密斯']
+  bodyweight: ['自重', '徒手', 'bodyweight'],
+  dumbbell: ['哑铃', 'dumbbell'],
+  barbell: ['杠铃', '易弯杠', 'barbell'],
+  cable: ['拉索', '绳索', '龙门架', '钢线', 'cable'],
+  machine: ['器械', '高位下拉器', '罗马椅', 'machine'],
+  smith: ['史密斯', 'smith']
 };
 
 const pinyinInitialMap = {

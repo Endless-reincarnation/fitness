@@ -19,6 +19,11 @@ const planDaysList = ref([]);
 const planDayExercisesList = ref([]);
 const feedbackList = ref([]);
 
+// 批量选择状态
+const selectedExerciseIds = ref([]);
+const selectedPlanIds = ref([]);
+const selectedFeedbackIds = ref([]);
+
 // 预设选项字典
 const bodyRegions = {
   chest: '胸部',
@@ -118,6 +123,9 @@ const handleLogout = () => {
 
 const fetchData = async () => {
   loading.value = true;
+  selectedExerciseIds.value = [];
+  selectedPlanIds.value = [];
+  selectedFeedbackIds.value = [];
   try {
     // 1. 获取统计数据
     const statsData = await callCloudApi('get_stats');
@@ -177,11 +185,11 @@ const filterExerciseDifficulty = ref('');
 const filteredExercises = computed(() => {
   return exercisesList.value.filter(ex => {
     const matchesSearch = searchExerciseQuery.value
-      ? ex.name.toLowerCase().includes(searchExerciseQuery.value.toLowerCase()) || 
-        (ex.aliases && ex.aliases.some(a => a.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())))
+      ? (ex.name && ex.name.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())) || 
+        (ex.aliases && ex.aliases.some(a => a && a.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())))
       : true;
     const matchesMuscle = filterExerciseMuscle.value
-      ? ex.primary_muscles.includes(filterExerciseMuscle.value) || (ex.secondary_muscles && ex.secondary_muscles.includes(filterExerciseMuscle.value))
+      ? (ex.primary_muscles && ex.primary_muscles.includes(filterExerciseMuscle.value)) || (ex.secondary_muscles && ex.secondary_muscles.includes(filterExerciseMuscle.value))
       : true;
     const matchesDifficulty = filterExerciseDifficulty.value
       ? ex.difficulty === filterExerciseDifficulty.value
@@ -360,6 +368,115 @@ const saveExercise = async () => {
     alert('动作保存失败: ' + err.message);
   } finally {
     isSaving.value = false;
+  }
+};
+
+const toggleSelectAllExercises = () => {
+  if (selectedExerciseIds.value.length === filteredExercises.value.length) {
+    selectedExerciseIds.value = [];
+  } else {
+    selectedExerciseIds.value = filteredExercises.value.map(ex => ex._id);
+  }
+};
+
+const deleteSelectedExercises = async () => {
+  if (!selectedExerciseIds.value.length) return;
+  if (!confirm(`确定要批量下架选中的 ${selectedExerciseIds.value.length} 个动作吗？`)) return;
+  
+  loading.value = true;
+  try {
+    const promises = selectedExerciseIds.value.map(id => callCloudApi('delete_exercise', { id }));
+    await Promise.all(promises);
+    
+    // 更新本地列表，过滤掉已下架的动作
+    exercisesList.value = exercisesList.value.filter(e => {
+      if (selectedExerciseIds.value.includes(e._id)) {
+        e.status = 'disabled';
+        stats.value.exercises -= 1;
+        return false;
+      }
+      return true;
+    });
+    
+    selectedExerciseIds.value = [];
+    alert('批量下架动作成功！');
+  } catch (e) {
+    console.error(e);
+    alert('批量下架动作失败：' + e.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const toggleSelectAllPlans = () => {
+  const activePlans = plansList.value.filter(p => p.status !== 'archived');
+  if (selectedPlanIds.value.length === activePlans.length) {
+    selectedPlanIds.value = [];
+  } else {
+    selectedPlanIds.value = activePlans.map(p => p._id);
+  }
+};
+
+const deleteSelectedPlans = async () => {
+  if (!selectedPlanIds.value.length) return;
+  if (!confirm(`确定要批量下架并归档选中的 ${selectedPlanIds.value.length} 个计划吗？`)) return;
+  
+  loading.value = true;
+  try {
+    const promises = selectedPlanIds.value.map(id => callCloudApi('delete_plan', { id }));
+    await Promise.all(promises);
+    
+    // 更新本地列表状态为已下架
+    plansList.value.forEach(p => {
+      if (selectedPlanIds.value.includes(p._id)) {
+        p.status = 'archived';
+      }
+    });
+    
+    selectedPlanIds.value = [];
+    alert('批量下架归档计划成功！');
+    await fetchData();
+  } catch (e) {
+    console.error(e);
+    alert('批量下架计划失败：' + e.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const toggleSelectAllFeedback = () => {
+  if (selectedFeedbackIds.value.length === feedbackList.value.length) {
+    selectedFeedbackIds.value = [];
+  } else {
+    selectedFeedbackIds.value = feedbackList.value.map(f => f._id);
+  }
+};
+
+const batchUpdateFeedbackStatus = async (status) => {
+  if (!selectedFeedbackIds.value.length) return;
+  const label = status === 'done' ? '已处理完成' : '处理中';
+  if (!confirm(`确定要把选中的 ${selectedFeedbackIds.value.length} 条留言标记为“${label}”吗？`)) return;
+  
+  loading.value = true;
+  try {
+    const promises = selectedFeedbackIds.value.map(id => callCloudApi('update_feedback_status', { id, status }));
+    await Promise.all(promises);
+    
+    // 更新本地状态
+    feedbackList.value.forEach(f => {
+      if (selectedFeedbackIds.value.includes(f._id)) {
+        f.status = status;
+      }
+    });
+    
+    stats.value.feedback = feedbackList.value.filter(entry => entry.status !== 'done').length;
+    selectedFeedbackIds.value = [];
+    alert('批量更新留言状态成功！');
+  } catch (e) {
+    console.error(e);
+    alert('批量处理留言失败：' + e.message);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -965,6 +1082,10 @@ onMounted(() => {
             <option value="intermediate">初中级</option>
             <option value="advanced">进阶</option>
           </select>
+
+          <button v-if="selectedExerciseIds.length" class="btn btn-danger btn-batch" style="margin-left: auto;" @click="deleteSelectedExercises">
+            🗑️ 批量下架 ({{ selectedExerciseIds.length }})
+          </button>
         </div>
 
         <!-- 动作数据表格 -->
@@ -972,6 +1093,9 @@ onMounted(() => {
           <table class="data-table">
             <thead>
               <tr>
+                <th style="width: 40px; text-align: center;">
+                  <input type="checkbox" :checked="selectedExerciseIds.length === filteredExercises.length && filteredExercises.length > 0" @change="toggleSelectAllExercises" />
+                </th>
                 <th>动作 ID</th>
                 <th>动作名称</th>
                 <th>主要肌群</th>
@@ -984,6 +1108,9 @@ onMounted(() => {
             </thead>
             <tbody>
               <tr v-for="ex in filteredExercises" :key="ex._id">
+                <td style="text-align: center;">
+                  <input type="checkbox" :value="ex._id" v-model="selectedExerciseIds" />
+                </td>
                 <td style="font-family: monospace; font-size: 0.8rem;">{{ ex._id }}</td>
                 <td style="font-weight: 600;">{{ ex.name }}</td>
                 <td>
@@ -1020,7 +1147,7 @@ onMounted(() => {
                 </td>
               </tr>
               <tr v-if="!filteredExercises.length">
-                <td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                <td colspan="9" class="text-center" style="padding: 3rem; color: var(--text-muted);">
                   没有找到符合条件的动作数据。
                 </td>
               </tr>
@@ -1036,9 +1163,14 @@ onMounted(() => {
             <h2 class="page-title">官方计划库</h2>
             <p class="page-subtitle">配置训练计划，用户启用后生成个人训练日和动作流程</p>
           </div>
-          <button class="btn btn-primary" @click="openNewPlanModal">
-            ➕ 创建新计划模板
-          </button>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button v-if="selectedPlanIds.length" class="btn btn-danger" @click="deleteSelectedPlans">
+              🗑️ 批量下架 ({{ selectedPlanIds.length }})
+            </button>
+            <button class="btn btn-primary" @click="openNewPlanModal">
+              ➕ 创建新计划模板
+            </button>
+          </div>
         </div>
 
         <!-- 计划列表 -->
@@ -1046,6 +1178,9 @@ onMounted(() => {
           <table class="data-table">
             <thead>
               <tr>
+                <th style="width: 40px; text-align: center;">
+                  <input type="checkbox" :checked="selectedPlanIds.length === plansList.filter(p => p.status !== 'archived').length && plansList.filter(p => p.status !== 'archived').length > 0" @change="toggleSelectAllPlans" />
+                </th>
                 <th>计划名称</th>
                 <th>难度</th>
                 <th>训练频次</th>
@@ -1057,6 +1192,9 @@ onMounted(() => {
             </thead>
             <tbody>
               <tr v-for="plan in plansList.filter(p => p.status !== 'archived')" :key="plan._id">
+                <td style="text-align: center;">
+                  <input type="checkbox" :value="plan._id" v-model="selectedPlanIds" />
+                </td>
                 <td style="font-weight: 600; font-size: 0.95rem;">{{ plan.name }}</td>
                 <td>
                   <span class="badge" :class="plan.level === 'advanced' ? 'badge-danger' : plan.level === 'intermediate' ? 'badge-primary' : 'badge-success'">
@@ -1084,7 +1222,7 @@ onMounted(() => {
                 </td>
               </tr>
               <tr v-if="!plansList.filter(p => p.status !== 'archived').length">
-                <td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                <td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);">
                   暂无已保存的官方计划模板。
                 </td>
               </tr>
@@ -1100,15 +1238,26 @@ onMounted(() => {
             <h2 class="page-title">建议留言</h2>
             <p class="page-subtitle">查看小程序用户提交的问题反馈和功能建议</p>
           </div>
-          <button class="btn btn-secondary" @click="fetchData" :disabled="loading">
-            🔄 刷新留言
-          </button>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button v-if="selectedFeedbackIds.length" class="btn btn-primary" @click="batchUpdateFeedbackStatus('done')">
+              ✅ 批量已处理 ({{ selectedFeedbackIds.length }})
+            </button>
+            <button v-if="selectedFeedbackIds.length" class="btn btn-secondary" @click="batchUpdateFeedbackStatus('processing')">
+              ⚙️ 批量处理中 ({{ selectedFeedbackIds.length }})
+            </button>
+            <button class="btn btn-secondary" @click="fetchData" :disabled="loading">
+              🔄 刷新留言
+            </button>
+          </div>
         </div>
 
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
+                <th style="width: 40px; text-align: center;">
+                  <input type="checkbox" :checked="selectedFeedbackIds.length === feedbackList.length && feedbackList.length > 0" @change="toggleSelectAllFeedback" />
+                </th>
                 <th>提交时间</th>
                 <th>状态</th>
                 <th>建议内容</th>
@@ -1119,6 +1268,9 @@ onMounted(() => {
             </thead>
             <tbody>
               <tr v-for="item in feedbackList" :key="item._id">
+                <td style="text-align: center;">
+                  <input type="checkbox" :value="item._id" v-model="selectedFeedbackIds" />
+                </td>
                 <td style="white-space: nowrap;">{{ formatDateTime(item.created_at) }}</td>
                 <td>
                   <span class="badge" :class="item.status === 'done' ? 'badge-success' : item.status === 'processing' ? 'badge-primary' : 'badge-danger'">
@@ -1138,7 +1290,7 @@ onMounted(() => {
                 </td>
               </tr>
               <tr v-if="!feedbackList.length">
-                <td colspan="6" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                <td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);">
                   暂无用户建议留言。
                 </td>
               </tr>
@@ -1543,7 +1695,7 @@ onMounted(() => {
                               <!-- 右列：动作列表 -->
                               <div class="cascader-menu exercises-menu">
                                 <div 
-                                  v-for="stdEx in exercisesList.filter(s => !ex.temp_muscle_id || s.primary_muscles.includes(ex.temp_muscle_id))"
+                                  v-for="stdEx in exercisesList.filter(s => !ex.temp_muscle_id || (s.primary_muscles && s.primary_muscles.includes(ex.temp_muscle_id)))"
                                   :key="stdEx._id"
                                   class="cascader-item"
                                   :class="{ selected: ex.exercise_id === stdEx._id }"
@@ -1554,7 +1706,7 @@ onMounted(() => {
                                     {{ stdEx.difficulty === 'advanced' ? '难' : stdEx.difficulty === 'intermediate' ? '中' : '易' }}
                                   </span>
                                 </div>
-                                <div v-if="!exercisesList.filter(s => !ex.temp_muscle_id || s.primary_muscles.includes(ex.temp_muscle_id)).length" class="cascader-empty">
+                                <div v-if="!exercisesList.filter(s => !ex.temp_muscle_id || (s.primary_muscles && s.primary_muscles.includes(ex.temp_muscle_id))).length" class="cascader-empty">
                                   ⚠️ 暂无动作
                                 </div>
                               </div>
