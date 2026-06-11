@@ -160,7 +160,7 @@
         </view>
       </scroll-view>
 
-      <scroll-view scroll-y class="picker-list">
+      <scroll-view scroll-y class="picker-list" scroll-top="{{pickerScrollTop}}" bindscrolltolower="loadMorePickerExercises">
         <view wx:for="{{pickerExercises}}" wx:key="id" class="picker-exercise-option" data-id="{{item.id}}" bindtap="selectExercise">
           <view>
             <view class="picker-exercise-name">{{item.name}}</view>
@@ -168,6 +168,7 @@
           </view>
           <view class="picker-check">{{selectedExercise && selectedExercise.id === item.id ? '✓' : ''}}</view>
         </view>
+        <view wx:if="{{pickerExercises.length < matchedPickerExercises.length}}" class="picker-load-more" bindtap="loadMorePickerExercises">继续加载 {{pickerExercises.length}} / {{matchedPickerExercises.length}}</view>
         <view wx:if="{{!pickerExercises.length && !canCreateExercise}}" class="picker-empty">没有匹配动作，试试搜索动作名或切换肌群</view>
         <button wx:if="{{canCreateExercise}}" class="ghost-button create-exercise-button" bindtap="createCustomExercise">新建“{{pickerKeyword}}”</button>
       </scroll-view>

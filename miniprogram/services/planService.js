@@ -75,8 +75,15 @@ async function listCloudCollection(collectionKey) {
   const collection = getCollection(collectionKey);
   if (!collection) return [];
 
-  const result = await collection.limit(100).get();
-  return result.data || [];
+  const all = [];
+  const pageSize = 20;
+  while (true) {
+    const result = await collection.skip(all.length).limit(pageSize).get();
+    const rows = result.data || [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
 }
 
 function listLocalOfficialPlans() {
@@ -140,8 +147,8 @@ async function listCustomPlans() {
     const collection = getCollection('customPlans');
     if (!collection) return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
 
-    const result = await collection.limit(100).get();
-    let cloudCustomPlans = (result.data || []).map((item) => ({
+    const cloudCustomPlansRaw = await listCloudCollection('customPlans');
+    let cloudCustomPlans = cloudCustomPlansRaw.map((item) => ({
       id: item._id,
       planType: 'custom',
       name: item.name,

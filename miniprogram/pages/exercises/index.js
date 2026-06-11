@@ -1,10 +1,14 @@
 const { listExercises, saveCustomExercise } = require('../../services/exerciseService');
-const { bodyRegionOptions, equipmentOptions, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
+const { bodyRegionOptions, equipmentOptions, getExerciseRegionRank, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
 const { applyTheme } = require('../../utils/theme');
+const pageSize = 12;
 
 Page({
   data: {
     theme: 'power-yellow',
+    matchedExercises: [],
+    visibleCount: pageSize,
+    includeSecondaryMuscles: false,
     exercises: [],           // 完整的原始动作列表
     filteredExercises: [],   // 经过筛选后的动作列表
     keyword: '',             // 搜索关键字
@@ -69,23 +73,62 @@ Page({
    * 执行综合过滤逻辑（关键字、肌群部位、器械类型）
    */
   filterExercises() {
-    const { exercises, keyword, selectedRegion, selectedEquipment } = this.data;
+    const { exercises, keyword, selectedRegion, selectedEquipment, includeSecondaryMuscles } = this.data;
     
-    const filtered = exercises.filter((item) => {
+    const matched = exercises.filter((item) => {
       // 1. 关键字（支持名称、拼音首字母、别名等匹配）
       const matchesKeyword = matchExerciseKeyword(item, keyword);
 
       // 2. 身体部位肌群过滤
-      const matchesRegion = matchExerciseRegion(item, selectedRegion);
+      const matchesRegion = matchExerciseRegion(item, selectedRegion, includeSecondaryMuscles);
 
       // 3. 器械类型分类过滤
       const matchesEquipment = selectedEquipment === 'all' || 
         (item.equipmentCategories && item.equipmentCategories.indexOf(selectedEquipment) !== -1);
 
       return matchesKeyword && matchesRegion && matchesEquipment;
-    });
+    }).sort((a, b) => getExerciseRegionRank(a, selectedRegion) - getExerciseRegionRank(b, selectedRegion));
 
-    this.setData({ filteredExercises: filtered });
+    this.setData({
+      matchedExercises: matched,
+      visibleCount: pageSize,
+      filteredExercises: matched.slice(0, pageSize)
+    });
+  },
+
+  resetExercisePageScroll() {
+    // 切换筛选条件后回到列表顶部，避免停留在旧结果的底部位置。
+    wx.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
+    });
+  },
+
+  refreshFilteredExercises() {
+    this.filterExercises();
+    this.resetExercisePageScroll();
+  },
+
+  loadMoreExercises() {
+    const nextCount = this.data.visibleCount + pageSize;
+    this.setData({
+      visibleCount: nextCount,
+      filteredExercises: this.data.matchedExercises.slice(0, nextCount)
+    });
+  },
+
+  onReachBottom() {
+    if (this.data.filteredExercises.length < this.data.matchedExercises.length) {
+      this.loadMoreExercises();
+    }
+  },
+
+  toggleSecondaryMuscles() {
+    this.setData({
+      includeSecondaryMuscles: !this.data.includeSecondaryMuscles
+    }, () => {
+      this.refreshFilteredExercises();
+    });
   },
 
   /**
@@ -94,7 +137,7 @@ Page({
   onSearchInput(event) {
     const val = event.detail.value;
     this.setData({ keyword: val }, () => {
-      this.filterExercises();
+      this.refreshFilteredExercises();
     });
   },
 
@@ -103,7 +146,7 @@ Page({
    */
   clearSearch() {
     this.setData({ keyword: '' }, () => {
-      this.filterExercises();
+      this.refreshFilteredExercises();
     });
   },
 
@@ -113,7 +156,7 @@ Page({
   switchRegion(event) {
     const { value } = event.currentTarget.dataset;
     this.setData({ selectedRegion: value }, () => {
-      this.filterExercises();
+      this.refreshFilteredExercises();
     });
   },
 
@@ -123,7 +166,7 @@ Page({
   switchEquipment(event) {
     const { value } = event.currentTarget.dataset;
     this.setData({ selectedEquipment: value }, () => {
-      this.filterExercises();
+      this.refreshFilteredExercises();
     });
   },
 

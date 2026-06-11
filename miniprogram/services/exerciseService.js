@@ -41,33 +41,59 @@ async function listCloudCollection(collectionKey) {
   const collection = getCollection(collectionKey);
   if (!collection) return [];
 
-  const result = await collection.limit(100).get();
-  return result.data || [];
+  const all = [];
+  // 小程序端数据库单页上限较低，固定按 20 条分页避免误判“已经取完”。
+  const pageSize = 20;
+  while (true) {
+    const result = await collection.skip(all.length).limit(pageSize).get();
+    const rows = result.data || [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
 }
 
-async function getCloudMuscleNameMap() {
+async function getCloudMuscleMetaMap() {
   if (cloudMusclesCache) return cloudMusclesCache;
 
   const muscles = await listCloudCollection('muscles');
   cloudMusclesCache = muscles.reduce((map, item) => {
-    map[item._id || item.id] = item.name;
+    map[item._id || item.id] = item;
     return map;
   }, {});
   return cloudMusclesCache;
 }
 
-function formatExercise(exercise, muscleNameMap = {}) {
+function getMuscleName(muscleMetaMap, id) {
+  const meta = muscleMetaMap[id];
+  return (meta && meta.name) || meta || id;
+}
+
+function getMuscleRegion(muscleMetaMap, id) {
+  const meta = muscleMetaMap[id];
+  return meta && meta.body_region ? meta.body_region : '';
+}
+
+function formatExercise(exercise, muscleMetaMap = {}) {
   if (!exercise) return null;
 
   const primaryMuscleIds = exercise.primary_muscles || exercise.primaryMuscles || [];
   const secondaryMuscleIds = exercise.secondary_muscles || exercise.secondaryMuscles || [];
-  const primaryMuscles = primaryMuscleIds.map((id) => muscleNameMap[id] || id);
-  const secondaryMuscles = secondaryMuscleIds.map((id) => muscleNameMap[id] || id);
+  const primaryMuscles = primaryMuscleIds.map((id) => getMuscleName(muscleMetaMap, id));
+  const secondaryMuscles = secondaryMuscleIds.map((id) => getMuscleName(muscleMetaMap, id));
+  const primaryBodyRegionIds = primaryMuscleIds.map((id) => getMuscleRegion(muscleMetaMap, id)).filter(Boolean);
+  const secondaryBodyRegionIds = secondaryMuscleIds.map((id) => getMuscleRegion(muscleMetaMap, id)).filter(Boolean);
+  const bodyRegionIds = primaryBodyRegionIds.concat(secondaryBodyRegionIds);
   const equipment = exercise.equipment_tags || exercise.equipment || [];
 
   const formattedExercise = {
     ...exercise,
     id: exercise.id || exercise._id,
+    primaryMuscleIds,
+    secondaryMuscleIds,
+    primaryBodyRegionIds,
+    secondaryBodyRegionIds,
+    bodyRegionIds,
     primaryMuscles,
     secondaryMuscles,
     equipment,
@@ -95,13 +121,13 @@ async function listExercises() {
   if (!isCloudEnabled()) return listLocalExercises();
 
   try {
-    const [cloudExercises, muscleNameMap] = await Promise.all([
+    const [cloudExercises, muscleMetaMap] = await Promise.all([
       listCloudCollection('exercises'),
-      getCloudMuscleNameMap()
+      getCloudMuscleMetaMap()
     ]);
     if (!cloudExercises.length) return listLocalExercises();
     cloudExercisesCache = cloudExercises;
-    return cloudExercises.map((exercise) => formatExercise(exercise, muscleNameMap)).concat(getCustomExercises().map((exercise) => formatExercise(exercise)));
+    return cloudExercises.map((exercise) => formatExercise(exercise, muscleMetaMap)).concat(getCustomExercises().map((exercise) => formatExercise(exercise)));
   } catch (error) {
     console.warn('读取云端动作库失败，已回落本地数据', error);
     return listLocalExercises();
@@ -115,16 +141,16 @@ async function getExerciseById(exerciseId) {
   if (!isCloudEnabled()) return formatExercise(getExercise(exerciseId));
 
   try {
-    const muscleNameMap = await getCloudMuscleNameMap();
+    const muscleMetaMap = await getCloudMuscleMetaMap();
     if (!cloudExercisesCache) {
       cloudExercisesCache = await listCloudCollection('exercises');
     }
     const cachedExercise = cloudExercisesCache.find((item) => (item._id || item.id) === exerciseId);
-    if (cachedExercise) return formatExercise(cachedExercise, muscleNameMap);
+    if (cachedExercise) return formatExercise(cachedExercise, muscleMetaMap);
 
     const collection = getCollection('exercises');
     const result = collection ? await collection.doc(exerciseId).get() : null;
-    return formatExercise(result && result.data ? result.data : getExercise(exerciseId), muscleNameMap);
+    return formatExercise(result && result.data ? result.data : getExercise(exerciseId), muscleMetaMap);
   } catch (error) {
     console.warn('读取云端动作详情失败，已回落本地数据', error);
     return formatExercise(getExercise(exerciseId));

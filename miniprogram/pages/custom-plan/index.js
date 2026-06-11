@@ -3,6 +3,7 @@ const { getAiPlanDraft } = require('../../services/aiPlanService');
 const { buildPlanView, enablePlan, getPlanById, saveUserPlan } = require('../../services/planService');
 const { bodyRegionOptions, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
 const { applyTheme } = require('../../utils/theme');
+const pickerPageSize = 12;
 
 const defaultRule = {
   role: 'assistance',
@@ -34,7 +35,10 @@ Page({
     ],
     currentDayExercises: [],
     exerciseList: [],
+    matchedPickerExercises: [],
     pickerExercises: [],
+    pickerVisibleCount: pickerPageSize,
+    pickerScrollTop: 0,
     bodyRegionOptions,
     selectedBodyRegion: 'all',
     showExercisePicker: false,
@@ -65,7 +69,8 @@ Page({
       exerciseList = await listExercises();
       this.setData({
         exerciseList,
-        pickerExercises: exerciseList.slice(0, 8)
+        matchedPickerExercises: exerciseList,
+        pickerExercises: exerciseList.slice(0, pickerPageSize)
       });
     }
 
@@ -249,18 +254,33 @@ Page({
 
   refreshExercisePicker(keyword = this.data.pickerKeyword, region = this.data.selectedBodyRegion) {
     const text = String(keyword || '').trim();
-    const pickerExercises = this.data.exerciseList.filter((item) => {
+    const matchedPickerExercises = this.data.exerciseList.filter((item) => {
       const matchesKeyword = text ? matchExerciseKeyword(item, text) : true;
       const matchesRegion = text ? true : matchExerciseRegion(item, region);
       return matchesKeyword && matchesRegion;
-    }).slice(0, 8);
+    });
     const hasSameName = this.data.exerciseList.some((item) => item.name === text);
+
+    this.setData({
+      pickerScrollTop: 1
+    });
 
     this.setData({
       pickerKeyword: keyword,
       selectedBodyRegion: region,
-      pickerExercises,
+      matchedPickerExercises,
+      pickerVisibleCount: pickerPageSize,
+      pickerExercises: matchedPickerExercises.slice(0, pickerPageSize),
+      pickerScrollTop: 0,
       canCreateExercise: Boolean(text && !hasSameName)
+    });
+  },
+
+  loadMorePickerExercises() {
+    const nextCount = this.data.pickerVisibleCount + pickerPageSize;
+    this.setData({
+      pickerVisibleCount: nextCount,
+      pickerExercises: this.data.matchedPickerExercises.slice(0, nextCount)
     });
   },
 

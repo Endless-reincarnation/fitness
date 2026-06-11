@@ -30,6 +30,13 @@
     </view>
   </scroll-view>
 
+  <view class="filter-extra-row">
+    <view class="filter-count">已显示 {{filteredExercises.length}} / {{matchedExercises.length}}</view>
+    <view class="secondary-toggle {{includeSecondaryMuscles ? 'active' : ''}}" bindtap="toggleSecondaryMuscles">
+      {{includeSecondaryMuscles ? '包含辅助' : '仅主肌群'}}
+    </view>
+  </view>
+
   <!-- 动作列表 -->
   <view class="exercises-list">
     <view wx:for="{{filteredExercises}}" wx:key="id" class="exercise-card" data-id="{{item.id}}" bindtap="openExercise" hover-class="card-hover">
@@ -52,6 +59,7 @@
       <view class="empty-title">未找到匹配的动作</view>
       <view class="empty-sub">您可以点击上方的“新建动作”直接添加您需要的自定义动作。</view>
     </view>
+    <view wx:if="{{filteredExercises.length < matchedExercises.length}}" class="load-more" bindtap="loadMoreExercises">上拉或点击加载更多</view>
   </view>
 
   <!-- 新建自定义动作弹窗 -->

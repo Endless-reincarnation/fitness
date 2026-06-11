@@ -320,6 +320,14 @@
   font-weight: 800;
 }
 
+.picker-load-more {
+  padding: 18rpx 0 8rpx;
+  color: var(--muted);
+  text-align: center;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
 .list-title {
   margin: 30rpx 0 18rpx;
 }

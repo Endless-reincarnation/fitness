@@ -1,0 +1,14 @@
+{
+  "name": "fitness-debug-tools",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local debug tools for the fitness mini program",
+  "scripts": {
+    "db": "node tools/db-debug.js",
+    "db:count": "node tools/db-debug.js count",
+    "db:reset-seed": "node tools/reset-cloud-seed.js"
+  },
+  "devDependencies": {
+    "@cloudbase/node-sdk": "^2.9.1"
+  }
+}

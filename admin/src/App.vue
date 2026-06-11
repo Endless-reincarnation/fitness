@@ -23,6 +23,7 @@ const feedbackList = ref([]);
 const selectedExerciseIds = ref([]);
 const selectedPlanIds = ref([]);
 const selectedFeedbackIds = ref([]);
+const isMuscleDictionaryEditing = ref(false);
 
 // 预设选项字典
 const bodyRegions = {
@@ -177,13 +178,67 @@ const formatDateTime = (value) => {
   return date.toLocaleString('zh-CN', { hour12: false });
 };
 
+const saveMuscle = async (muscle) => {
+  if (!muscle._id || !muscle.name) {
+    alert('肌群 ID 和名称不能为空。');
+    return;
+  }
+  if (!isMuscleDictionaryEditing.value) {
+    alert('请先进入肌群字典维护模式。');
+    return;
+  }
+  if (!confirm(`确定保存肌群“${muscle.name}”吗？名称、部位和排序会影响所有已关联动作的展示、筛选和 AI 候选分类。`)) {
+    return;
+  }
+
+  try {
+    const saved = await callCloudApi('save_muscle', {
+      ...muscle,
+      sort_order: Number(muscle.sort_order || 0)
+    });
+    Object.assign(muscle, saved);
+    musclesList.value = [...musclesList.value].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    alert('肌群分类已保存。');
+  } catch (err) {
+    alert('保存肌群分类失败：' + err.message);
+  }
+};
+
 // ==================== 4. 动作管理模块逻辑 ====================
 const searchExerciseQuery = ref('');
 const filterExerciseMuscle = ref('');
 const filterExerciseDifficulty = ref('');
+const exerciseSortKey = ref('name');
+const exerciseSortOrder = ref('asc');
+const planSortKey = ref('updated_at');
+const planSortOrder = ref('desc');
+
+const compareValue = (a, b) => {
+  const left = a ?? '';
+  const right = b ?? '';
+  if (typeof left === 'number' && typeof right === 'number') return left - right;
+  return String(left).localeCompare(String(right), 'zh-CN', { numeric: true });
+};
+
+const toggleSort = (type, key) => {
+  const sortKey = type === 'plan' ? planSortKey : exerciseSortKey;
+  const sortOrder = type === 'plan' ? planSortOrder : exerciseSortOrder;
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = key === 'updated_at' ? 'desc' : 'asc';
+  }
+};
+
+const getExerciseSortValue = (ex, key) => {
+  if (key === 'primary_muscles') return ex.primary_muscles && ex.primary_muscles[0] ? ex.primary_muscles[0] : '';
+  if (key === 'equipment_tags') return (ex.equipment_tags || []).join(',');
+  return ex[key];
+};
 
 const filteredExercises = computed(() => {
-  return exercisesList.value.filter(ex => {
+  const rows = exercisesList.value.filter(ex => {
     const matchesSearch = searchExerciseQuery.value
       ? (ex.name && ex.name.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())) || 
         (ex.aliases && ex.aliases.some(a => a && a.toLowerCase().includes(searchExerciseQuery.value.toLowerCase())))
@@ -195,6 +250,18 @@ const filteredExercises = computed(() => {
       ? ex.difficulty === filterExerciseDifficulty.value
       : true;
     return matchesSearch && matchesMuscle && matchesDifficulty && ex.status !== 'disabled';
+  });
+  return [...rows].sort((a, b) => {
+    const result = compareValue(getExerciseSortValue(a, exerciseSortKey.value), getExerciseSortValue(b, exerciseSortKey.value));
+    return exerciseSortOrder.value === 'asc' ? result : -result;
+  });
+});
+
+const activePlans = computed(() => {
+  const rows = plansList.value.filter(p => p.status !== 'archived');
+  return [...rows].sort((a, b) => {
+    const result = compareValue(a[planSortKey.value], b[planSortKey.value]);
+    return planSortOrder.value === 'asc' ? result : -result;
   });
 });
 
@@ -407,12 +474,37 @@ const deleteSelectedExercises = async () => {
   }
 };
 
+const batchUpdateExerciseStatus = async (status) => {
+  if (!selectedExerciseIds.value.length) return;
+  const label = status === 'published' ? '发布' : '草稿';
+  if (!confirm(`确定要把选中的 ${selectedExerciseIds.value.length} 个动作批量设为“${label}”吗？`)) return;
+
+  loading.value = true;
+  try {
+    const selected = exercisesList.value.filter(ex => selectedExerciseIds.value.includes(ex._id));
+    await Promise.all(selected.map(ex => callCloudApi('save_exercise', {
+      ...ex,
+      status
+    })));
+    selected.forEach(ex => {
+      ex.status = status;
+      ex.updated_at = new Date().toISOString();
+    });
+    selectedExerciseIds.value = [];
+    alert('批量更新动作状态成功。');
+  } catch (e) {
+    console.error(e);
+    alert('批量更新动作状态失败：' + e.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
 const toggleSelectAllPlans = () => {
-  const activePlans = plansList.value.filter(p => p.status !== 'archived');
-  if (selectedPlanIds.value.length === activePlans.length) {
+  if (selectedPlanIds.value.length === activePlans.value.length) {
     selectedPlanIds.value = [];
   } else {
-    selectedPlanIds.value = activePlans.map(p => p._id);
+    selectedPlanIds.value = activePlans.value.map(p => p._id);
   }
 };
 
@@ -434,6 +526,37 @@ const deleteSelectedPlans = async () => {
   } catch (e) {
     console.error(e);
     alert('批量删除计划失败：' + e.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const batchUpdatePlanStatus = async (status) => {
+  if (!selectedPlanIds.value.length) return;
+  const label = status === 'published' ? '发布' : '草稿';
+  if (!confirm(`确定要把选中的 ${selectedPlanIds.value.length} 个计划批量设为“${label}”吗？`)) return;
+
+  loading.value = true;
+  try {
+    const selected = plansList.value.filter(plan => selectedPlanIds.value.includes(plan._id));
+    await Promise.all(selected.map(plan => callCloudApi('save_plan', {
+      plan_template: {
+        ...plan,
+        status
+      },
+      plan_days: planDaysList.value.filter(day => day.plan_template_id === plan._id),
+      plan_day_exercises: planDayExercisesList.value.filter(ex => ex.plan_template_id === plan._id)
+    })));
+    selected.forEach(plan => {
+      plan.status = status;
+      plan.updated_at = new Date().toISOString();
+    });
+    selectedPlanIds.value = [];
+    alert('批量更新计划状态成功。');
+    await fetchData();
+  } catch (e) {
+    console.error(e);
+    alert('批量更新计划状态失败：' + e.message);
   } finally {
     loading.value = false;
   }
@@ -1077,9 +1200,39 @@ onMounted(() => {
             <option value="advanced">进阶</option>
           </select>
 
-          <button v-if="selectedExerciseIds.length" class="btn btn-danger btn-batch" style="margin-left: auto;" @click="deleteSelectedExercises">
-            🗑️ 批量删除 ({{ selectedExerciseIds.length }})
-          </button>
+          <div v-if="selectedExerciseIds.length" style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary btn-batch" @click="batchUpdateExerciseStatus('published')">批量发布 ({{ selectedExerciseIds.length }})</button>
+            <button class="btn btn-secondary btn-batch" @click="batchUpdateExerciseStatus('draft')">批量草稿</button>
+            <button class="btn btn-danger btn-batch" @click="deleteSelectedExercises">批量删除</button>
+          </div>
+        </div>
+
+        <div class="dictionary-panel">
+          <div class="dictionary-header">
+            <div>
+              <div class="dictionary-title">肌群分类字典</div>
+              <div class="dictionary-warning">基础字典已被动作库、筛选和 AI 候选引用，默认只读；维护前请确认不会破坏已关联数据。</div>
+            </div>
+            <button
+              class="btn btn-secondary"
+              :class="{ 'btn-danger': isMuscleDictionaryEditing }"
+              @click="isMuscleDictionaryEditing = !isMuscleDictionaryEditing"
+            >
+              {{ isMuscleDictionaryEditing ? '退出维护' : '进入维护' }}
+            </button>
+          </div>
+          <div class="dictionary-grid">
+            <div v-for="m in musclesList" :key="m._id" class="dictionary-row">
+              <input class="form-input mono-input" v-model="m._id" disabled />
+              <input class="form-input" v-model="m.name" :disabled="!isMuscleDictionaryEditing" />
+              <select class="form-input" v-model="m.body_region" :disabled="!isMuscleDictionaryEditing">
+                <option v-for="(label, key) in bodyRegions" :key="key" :value="key">{{ label }}</option>
+              </select>
+              <input class="form-input sort-input" type="number" v-model.number="m.sort_order" :disabled="!isMuscleDictionaryEditing" />
+              <input class="form-input color-input" type="color" v-model="m.color" :disabled="!isMuscleDictionaryEditing" />
+              <button class="btn btn-secondary" :disabled="!isMuscleDictionaryEditing" @click="saveMuscle(m)">保存</button>
+            </div>
+          </div>
         </div>
 
         <!-- 动作数据表格 -->
@@ -1090,13 +1243,13 @@ onMounted(() => {
                 <th style="width: 40px; text-align: center;">
                   <input type="checkbox" :checked="selectedExerciseIds.length === filteredExercises.length && filteredExercises.length > 0" @change="toggleSelectAllExercises" />
                 </th>
-                <th>动作 ID</th>
-                <th>动作名称</th>
-                <th>主要肌群</th>
+                <th class="sortable" @click="toggleSort('exercise', '_id')">动作 ID</th>
+                <th class="sortable" @click="toggleSort('exercise', 'name')">动作名称</th>
+                <th class="sortable" @click="toggleSort('exercise', 'primary_muscles')">主要肌群</th>
                 <th>辅助肌群</th>
-                <th>使用器械</th>
-                <th>难度</th>
-                <th>状态</th>
+                <th class="sortable" @click="toggleSort('exercise', 'equipment_tags')">使用器械</th>
+                <th class="sortable" @click="toggleSort('exercise', 'difficulty')">难度</th>
+                <th class="sortable" @click="toggleSort('exercise', 'status')">状态</th>
                 <th class="text-right">操作</th>
               </tr>
             </thead>
@@ -1158,8 +1311,14 @@ onMounted(() => {
             <p class="page-subtitle">配置训练计划，用户启用后生成个人训练日和动作流程</p>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
+            <button v-if="selectedPlanIds.length" class="btn btn-primary" @click="batchUpdatePlanStatus('published')">
+              批量发布 ({{ selectedPlanIds.length }})
+            </button>
+            <button v-if="selectedPlanIds.length" class="btn btn-secondary" @click="batchUpdatePlanStatus('draft')">
+              批量草稿
+            </button>
             <button v-if="selectedPlanIds.length" class="btn btn-danger" @click="deleteSelectedPlans">
-              🗑️ 批量删除 ({{ selectedPlanIds.length }})
+              🗑️ 批量删除
             </button>
             <button class="btn btn-primary" @click="openNewPlanModal">
               ➕ 创建新计划模板
@@ -1173,19 +1332,19 @@ onMounted(() => {
             <thead>
               <tr>
                 <th style="width: 40px; text-align: center;">
-                  <input type="checkbox" :checked="selectedPlanIds.length === plansList.filter(p => p.status !== 'archived').length && plansList.filter(p => p.status !== 'archived').length > 0" @change="toggleSelectAllPlans" />
+                  <input type="checkbox" :checked="selectedPlanIds.length === activePlans.length && activePlans.length > 0" @change="toggleSelectAllPlans" />
                 </th>
-                <th>计划名称</th>
-                <th>难度</th>
-                <th>训练频次</th>
-                <th>周期</th>
-                <th>状态</th>
-                <th>当前版本</th>
+                <th class="sortable" @click="toggleSort('plan', 'name')">计划名称</th>
+                <th class="sortable" @click="toggleSort('plan', 'level')">难度</th>
+                <th class="sortable" @click="toggleSort('plan', 'weekly_frequency')">训练频次</th>
+                <th class="sortable" @click="toggleSort('plan', 'duration_weeks')">周期</th>
+                <th class="sortable" @click="toggleSort('plan', 'status')">状态</th>
+                <th class="sortable" @click="toggleSort('plan', 'current_version')">当前版本</th>
                 <th class="text-right">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="plan in plansList.filter(p => p.status !== 'archived')" :key="plan._id">
+              <tr v-for="plan in activePlans" :key="plan._id">
                 <td style="text-align: center;">
                   <input type="checkbox" :value="plan._id" v-model="selectedPlanIds" />
                 </td>
@@ -1215,7 +1374,7 @@ onMounted(() => {
                   </button>
                 </td>
               </tr>
-              <tr v-if="!plansList.filter(p => p.status !== 'archived').length">
+              <tr v-if="!activePlans.length">
                 <td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);">
                   暂无已保存的官方计划模板。
                 </td>

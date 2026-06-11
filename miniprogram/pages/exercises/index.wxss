@@ -123,6 +123,35 @@
   margin-bottom: 32rpx;
 }
 
+.filter-extra-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -12rpx 0 24rpx;
+}
+
+.filter-count {
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.secondary-toggle {
+  padding: 10rpx 18rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 999rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+  background: var(--card-strong);
+}
+
+.secondary-toggle.active {
+  color: var(--button-text);
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
 .equipment-tab {
   background: var(--card-strong);
   border-radius: 30rpx;
@@ -226,6 +255,14 @@
   color: var(--muted);
   font-size: 24rpx;
   line-height: 1.5;
+}
+
+.load-more {
+  padding: 24rpx 0 8rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: 800;
+  text-align: center;
 }
 
 /* 弹出模态框 */

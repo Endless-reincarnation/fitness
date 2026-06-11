@@ -1,6 +1,8 @@
 const DRAFT_STORAGE_KEY = 'aiPlanDrafts';
 const AI_PROVIDER = 'hunyuan-v3';
 const AI_MODEL = 'hy3-preview';
+const { exercises: localExercises } = require('../data/mock');
+const { listExercises } = require('./exerciseService');
 
 const defaultRule = {
   role: 'assistance',
@@ -50,6 +52,22 @@ const exerciseCandidates = [
   { exerciseId: 'romanian_deadlift', exerciseName: '罗马尼亚硬拉', muscles: '腘绳肌/臀部', equipment: '杠铃/哑铃' },
   { exerciseId: 'back_extension', exerciseName: '山羊挺身', muscles: '竖脊肌/臀部', equipment: '罗马椅/自重' }
 ];
+
+function buildCandidateFromExercise(item) {
+  return {
+    exerciseId: item.id || item._id,
+    exerciseName: item.name,
+    primaryMuscleIds: item.primaryMuscleIds || item.primary_muscles || [],
+    secondaryMuscleIds: item.secondaryMuscleIds || item.secondary_muscles || [],
+    bodyRegions: item.bodyRegions || [],
+    equipmentCategories: item.equipmentCategories || []
+  };
+}
+
+function buildLocalExerciseCandidates() {
+  const candidates = localExercises.map(buildCandidateFromExercise).filter((item) => item.exerciseId && item.exerciseName);
+  return candidates.length ? candidates : exerciseCandidates;
+}
 
 function readDrafts() {
   return wx.getStorageSync(DRAFT_STORAGE_KEY) || [];
@@ -118,7 +136,21 @@ function buildLocalMockDraft(form) {
   };
 }
 
-function buildPrompt(form) {
+async function buildAiExerciseCandidates() {
+  try {
+    const exercises = await listExercises();
+    const officialExercises = exercises.filter((item) => item && item.id && item.sourceType !== 'custom');
+    if (!officialExercises.length) return buildLocalExerciseCandidates();
+
+    // AI 使用结构化动作索引；中文名称只负责展示，不负责分类判断。
+    return officialExercises.map(buildCandidateFromExercise);
+  } catch (error) {
+    console.warn('构建 AI 动作候选失败，使用本地动作库兜底', error);
+    return buildLocalExerciseCandidates();
+  }
+}
+
+function buildPrompt(form, candidates) {
   const weeklyFrequency = normalizeNumber(form.weeklyFrequency, 3);
   const durationWeeks = normalizeNumber(form.durationWeeks, 4, 1, 24);
   const goal = form.goal || '增肌';
@@ -142,7 +174,7 @@ function buildPrompt(form) {
     `可用器械：${form.equipment || '不限'}`,
     `限制或偏好：${form.limitation || '无'}`,
     `计划名称：${form.planName || `AI ${goal}计划`}`,
-    `动作库：${JSON.stringify(exerciseCandidates)}`,
+    `动作库：${JSON.stringify(candidates)}`,
     'JSON 字段顺序必须为：name, goal, level, durationWeeks, weeklyFrequency, equipmentTags, summary, overview, generationSteps, tips, nutrition, days。',
     'JSON 结构必须为：{"name":"","goal":[""],"level":"","durationWeeks":4,"weeklyFrequency":3,"equipmentTags":[],"summary":"","overview":"","generationSteps":[""],"tips":[""],"nutrition":{"dailyCalories":2300,"protein":140,"carbs":260,"fat":75,"tips":[""]},"days":[{"name":"","focus":"","exercises":[{"exerciseId":"","sets":3,"reps":"8-12","rpe":"8","restSeconds":120,"role":"main|assistance|isolation","roleLabel":"主项|辅助项|孤立项","weightRule":"","progressionRule":"","notes":""}]}]}',
     'overview 用亲和、简洁的中文说明这套计划为什么这样安排。',
@@ -166,8 +198,8 @@ function parseJsonText(text) {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
-function normalizeExercise(item) {
-  const candidate = exerciseCandidates.find((exercise) => exercise.exerciseId === item.exerciseId);
+function normalizeExercise(item, candidates) {
+  const candidate = candidates.find((exercise) => exercise.exerciseId === item.exerciseId);
   if (!candidate) return null;
 
   return {
@@ -186,14 +218,14 @@ function normalizeExercise(item) {
   };
 }
 
-function normalizeAiDraft(rawDraft, form) {
+function normalizeAiDraft(rawDraft, form, candidates) {
   const weeklyFrequency = normalizeNumber(rawDraft.weeklyFrequency || form.weeklyFrequency, 3);
   const durationWeeks = normalizeNumber(rawDraft.durationWeeks || form.durationWeeks, 4, 1, 24);
   const days = (rawDraft.days || []).slice(0, weeklyFrequency).map((day, index) => ({
     id: `ai_day_${Date.now()}_${index}`,
     name: day.name || `训练日 ${index + 1}`,
     focus: day.focus || '综合训练',
-    exercises: (day.exercises || []).map(normalizeExercise).filter(Boolean)
+    exercises: (day.exercises || []).map((item) => normalizeExercise(item, candidates)).filter(Boolean)
   })).filter((day) => day.exercises.length);
 
   if (!days.length) {
@@ -279,10 +311,11 @@ async function callMiniProgramAi(form, options = {}) {
 
   // 个人版云函数容易 3 秒超时，前端直连 CloudBase AI 作为真实模型通道。
   const onProgress = options.onProgress;
+  const candidates = await buildAiExerciseCandidates();
   const model = wx.cloud.extend.AI.createModel(AI_PROVIDER);
   const messages = [
     { role: 'system', content: '你只输出严格 JSON，所有字段必须适合微信小程序健身计划编辑器直接使用。' },
-    { role: 'user', content: buildPrompt(form) }
+    { role: 'user', content: buildPrompt(form, candidates) }
   ];
 
   if (model.streamText) {
@@ -293,7 +326,7 @@ async function callMiniProgramAi(form, options = {}) {
         messages
       }
     });
-    return normalizeAiDraft(parseJsonText(await collectStreamText(streamResult, onProgress)), form);
+    return normalizeAiDraft(parseJsonText(await collectStreamText(streamResult, onProgress)), form, candidates);
   }
 
   onProgress && onProgress({ status: '正在生成计划草稿...' });
@@ -304,7 +337,7 @@ async function callMiniProgramAi(form, options = {}) {
   const text = result && result.choices && result.choices[0] && result.choices[0].message
     ? result.choices[0].message.content
     : '';
-  return normalizeAiDraft(parseJsonText(text), form);
+  return normalizeAiDraft(parseJsonText(text), form, candidates);
 }
 
 async function generateAiPlanDraft(form, options = {}) {

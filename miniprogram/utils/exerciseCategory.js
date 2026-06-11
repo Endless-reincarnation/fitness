@@ -125,8 +125,14 @@ function getPinyinInitials(text) {
 }
 
 function getExerciseBodyRegions(exercise) {
-  const muscles = exercise.primaryMuscles || [];
-  const regions = muscles.map((name) => muscleRegionMap[name]).filter(Boolean);
+  // 云端动作优先使用 muscles.body_region，避免依赖中文名称判断分类。
+  const regionIds = exercise.bodyRegionIds || [];
+  const muscles = []
+    .concat(exercise.primaryMuscleIds || [])
+    .concat(exercise.secondaryMuscleIds || [])
+    .concat(exercise.primaryMuscles || [])
+    .concat(exercise.secondaryMuscles || []);
+  const regions = regionIds.concat(muscles.map((name) => muscleRegionMap[name]).filter(Boolean));
   return Array.from(new Set(regions.length ? regions : ['custom']));
 }
 
@@ -158,10 +164,33 @@ function buildExerciseSearchText(exercise) {
   return fields.filter(Boolean).join(' ').toLowerCase();
 }
 
-function matchExerciseRegion(exercise, region) {
+function matchExerciseRegion(exercise, region, includeSecondary = true) {
   if (!region || region === 'all') return true;
   if (region === 'recent') return false;
-  return (exercise.bodyRegions || []).indexOf(region) !== -1;
+  if (includeSecondary) return (exercise.bodyRegions || []).indexOf(region) !== -1;
+  return getExerciseRegionRank(exercise, region) === 0;
+}
+
+function getExerciseRegionRank(exercise, region) {
+  if (!region || region === 'all') return 0;
+
+  // 排序也按结构化 body_region 判断，展示名称只作为旧数据兜底。
+  if ((exercise.primaryBodyRegionIds || []).indexOf(region) !== -1) return 0;
+  if ((exercise.secondaryBodyRegionIds || []).indexOf(region) !== -1) return 1;
+
+  const primaryRegions = (exercise.primaryMuscleIds || [])
+    .concat(exercise.primaryMuscles || [])
+    .map((name) => muscleRegionMap[name])
+    .filter(Boolean);
+  if (primaryRegions.indexOf(region) !== -1) return 0;
+
+  const secondaryRegions = (exercise.secondaryMuscleIds || [])
+    .concat(exercise.secondaryMuscles || [])
+    .map((name) => muscleRegionMap[name])
+    .filter(Boolean);
+  if (secondaryRegions.indexOf(region) !== -1) return 1;
+
+  return 2;
 }
 
 function matchExerciseKeyword(exercise, keyword) {
@@ -176,6 +205,7 @@ module.exports = {
   buildExerciseSearchText,
   getExerciseBodyRegions,
   getExerciseEquipmentCategories,
+  getExerciseRegionRank,
   matchExerciseKeyword,
   matchExerciseRegion
 };

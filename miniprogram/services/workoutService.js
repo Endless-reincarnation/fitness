@@ -150,9 +150,17 @@ async function getBodyWeights() {
 
   try {
     const collection = getCollection('bodyWeights');
-    const result = await collection.orderBy('recorded_date', 'desc').limit(100).get();
-    if (!result.data.length) return workoutStore.getBodyWeights();
-    return result.data.map(fromCloudWeight);
+    const all = [];
+    const pageSize = 20;
+    while (true) {
+      // 小程序端按 20 条分页拉取，避免历史体重记录超过单页后显示不全。
+      const result = await collection.orderBy('recorded_date', 'desc').skip(all.length).limit(pageSize).get();
+      const rows = result.data || [];
+      all.push(...rows);
+      if (rows.length < pageSize) break;
+    }
+    if (!all.length) return workoutStore.getBodyWeights();
+    return all.map(fromCloudWeight);
   } catch (error) {
     console.warn('读取云端体重记录失败，已回落本地数据', error);
     return workoutStore.getBodyWeights();

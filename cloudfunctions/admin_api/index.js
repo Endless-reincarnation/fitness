@@ -6,6 +6,26 @@ cloud.init({
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
+async function getAll(collection, options = {}) {
+  const pageSize = options.pageSize || 100;
+  let skip = 0;
+  const data = [];
+
+  while (true) {
+    let query = collection.skip(skip).limit(pageSize);
+    if (options.orderBy) {
+      query = query.orderBy(options.orderBy.field, options.orderBy.direction);
+    }
+    const res = await query.get();
+    const rows = res.data || [];
+    data.push(...rows);
+    if (rows.length < pageSize) break;
+    skip += rows.length;
+  }
+
+  return data;
+}
+
 exports.main = async (event, context) => {
   const { token, action, payload } = event;
   const now = new Date().toISOString();
@@ -43,19 +63,59 @@ exports.main = async (event, context) => {
 
       // ==================== 2. 肌群字典获取 ====================
       case 'get_muscles': {
-        const res = await db.collection('muscles').limit(100).get();
+        const data = await getAll(db.collection('muscles'), {
+          orderBy: { field: 'sort_order', direction: 'asc' }
+        });
         return {
           code: 200,
-          data: res.data
+          data
         };
+      }
+
+      case 'save_muscle': {
+        const muscle = { ...(payload || {}) };
+        const id = muscle._id;
+        if (!id) {
+          return { code: 400, message: '肌群 ID 不能为空' };
+        }
+
+        delete muscle._id;
+        muscle.updated_at = now;
+        if (!muscle.created_at) {
+          muscle.created_at = now;
+        }
+
+        const existing = await db.collection('muscles').doc(id).get().catch(() => null);
+        if (existing && existing.data) {
+          await db.collection('muscles').doc(id).update({ data: muscle });
+        } else {
+          await db.collection('muscles').add({ data: { _id: id, ...muscle } });
+        }
+
+        const result = { _id: id, ...muscle };
+        await db.collection('admin_logs').add({
+          data: {
+            admin_id: 'web_admin',
+            action: existing && existing.data ? 'update_muscle' : 'create_muscle',
+            target_collection: 'muscles',
+            target_id: id,
+            before: existing && existing.data ? existing.data : null,
+            after: result,
+            created_at: now
+          }
+        });
+
+        return { code: 200, data: result };
       }
 
       // ==================== 3. 动作库管理 ====================
       case 'get_exercises': {
-        const res = await db.collection('exercises').limit(200).get();
+        const data = await getAll(db.collection('exercises'), {
+          orderBy: { field: 'updated_at', direction: 'desc' }
+        });
         return {
           code: 200,
-          data: res.data
+          data
         };
       }
 
@@ -140,22 +200,28 @@ exports.main = async (event, context) => {
 
       // ==================== 4. 计划模板管理 ====================
       case 'get_plans': {
-        const plans = await db.collection('plan_templates').limit(100).get();
-        const days = await db.collection('plan_days').limit(500).get();
-        const dayExercises = await db.collection('plan_day_exercises').limit(2000).get();
+        const plans = await getAll(db.collection('plan_templates'), {
+          orderBy: { field: 'updated_at', direction: 'desc' }
+        });
+        const days = await getAll(db.collection('plan_days'));
+        const dayExercises = await getAll(db.collection('plan_day_exercises'));
 
         return {
           code: 200,
           data: {
-            plans: plans.data,
-            days: days.data,
-            dayExercises: dayExercises.data
+            plans,
+            days,
+            dayExercises
           }
         };
       }
 
       case 'save_plan': {
         const { plan_template, plan_days, plan_day_exercises } = payload;
+        if (!plan_template || !Array.isArray(plan_days) || !Array.isArray(plan_day_exercises)) {
+          return { code: 400, message: '计划模板、训练日和动作编排不能为空' };
+        }
+
         const planId = plan_template._id;
         let isNew = !planId;
         let finalPlanId = planId;
