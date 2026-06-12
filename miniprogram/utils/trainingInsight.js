@@ -228,6 +228,7 @@ function buildExercisePerformance(exerciseId, history) {
       completedAt: session.completedAt,
       planName: session.planName,
       dayName: session.dayName,
+      records,
       bestSet,
       setCount: records.length,
       volume: records.reduce((sum, record) => sum + Number(record.weightKg || 0) * Number(record.reps || 0), 0),
@@ -239,7 +240,7 @@ function buildExercisePerformance(exerciseId, history) {
 
   const sortedSessions = matchedSessions.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
   const latest = sortedSessions[0];
-  const allSets = matchedSessions.reduce((list, session) => list.concat(session.bestSet), []);
+  const allSets = matchedSessions.reduce((list, session) => list.concat(session.records), []);
   const bestWeight = Math.max(...allSets.map((set) => Number(set.weightKg || 0)));
   const bestReps = Math.max(...allSets.map((set) => Number(set.reps || 0)));
   const bestStrengthSet = allSets
