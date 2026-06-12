@@ -7,7 +7,7 @@
     "level": "beginner",
     "duration_weeks": 8,
     "weekly_frequency": 3,
-    "equipment_tags": ["杠铃", "哑铃", "自重", "器械", "罗马椅"],
+    "equipment_tags": ["自重", "哑铃", "杠铃", "绳索/龙门架", "固定器械", "训练凳", "双杠", "罗马椅"],
     "target_users": ["健身新手", "想要减脂和塑形的人群", "训练时间受限的高效锻炼者"],
     "status": "published",
     "version": 1,

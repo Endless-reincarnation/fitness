@@ -1,7 +1,23 @@
 const { generateAiPlanDraft, saveAiPlanDraft } = require('../../services/aiPlanService');
 const { getUserProfile } = require('../../services/userService');
 const { getBodyWeights } = require('../../services/workoutService');
+const { listEquipmentOptions } = require('../../services/dictionaryService');
+const { standardEquipmentOptions, getEquipmentLabels } = require('../../data/dictionaries');
 const { applyTheme } = require('../../utils/theme');
+
+function buildEquipmentText(values, options = standardEquipmentOptions) {
+  return getEquipmentLabels(values, options).join(', ');
+}
+
+function buildAiEquipmentOptions(selectedValues, options = standardEquipmentOptions) {
+  const selected = selectedValues || [];
+  return options.map((item) => ({
+    ...item,
+    selected: selected.indexOf(item.value) !== -1
+  }));
+}
+
+const defaultEquipmentValues = ['bodyweight', 'dumbbell', 'barbell', 'machine'];
 
 Page({
   data: {
@@ -15,7 +31,10 @@ Page({
     weightKg: '',
     weeklyFrequency: '3',
     durationWeeks: '4',
-    equipment: '杠铃, 哑铃, 器械',
+    selectedEquipmentValues: defaultEquipmentValues,
+    equipment: buildEquipmentText(defaultEquipmentValues),
+    rawEquipmentOptions: standardEquipmentOptions,
+    equipmentOptions: buildAiEquipmentOptions(defaultEquipmentValues),
     limitation: '',
     generating: false,
     userProfile: null,
@@ -28,7 +47,8 @@ Page({
 
   async onShow() {
     applyTheme(this);
-    const [userProfile, weights] = await Promise.all([
+    const [equipmentOptions, userProfile, weights] = await Promise.all([
+      listEquipmentOptions(),
       getUserProfile(),
       getBodyWeights()
     ]);
@@ -36,6 +56,9 @@ Page({
     const profile = userProfile || {};
     const currentWeight = profile.current_weight_kg || latestWeight || '';
     this.setData({
+      rawEquipmentOptions: equipmentOptions,
+      equipment: buildEquipmentText(this.data.selectedEquipmentValues, equipmentOptions),
+      equipmentOptions: buildAiEquipmentOptions(this.data.selectedEquipmentValues, equipmentOptions),
       userProfile: userProfile ? {
         ...userProfile,
         current_weight_kg: currentWeight || null
@@ -57,11 +80,31 @@ Page({
     this.setData({ [field]: value });
   },
 
+  toggleEquipment(event) {
+    const { value } = event.currentTarget.dataset;
+    const selected = this.data.selectedEquipmentValues || [];
+    const nextSelected = selected.indexOf(value) === -1
+      ? selected.concat(value)
+      : selected.filter((item) => item !== value);
+
+    // AI 服务仍接收中文器械描述，页面内部用标准 value 保持选择稳定。
+    this.setData({
+      selectedEquipmentValues: nextSelected,
+      equipment: buildEquipmentText(nextSelected, this.data.rawEquipmentOptions),
+      equipmentOptions: buildAiEquipmentOptions(nextSelected, this.data.rawEquipmentOptions)
+    });
+  },
+
   async generatePlan() {
     if (this.data.generating) return;
 
     if (!this.data.weeklyFrequency) {
       wx.showToast({ title: '请填写每周训练次数', icon: 'none' });
+      return;
+    }
+
+    if (!this.data.equipment) {
+      wx.showToast({ title: '请选择可用器械', icon: 'none' });
       return;
     }
 

@@ -1,3 +1,5 @@
+const { equipmentFilterOptions, equipmentKeywordMap } = require('../data/dictionaries');
+
 const bodyRegionOptions = [
   { value: 'all', label: '全部' },
   { value: 'recent', label: '最近' },
@@ -10,15 +12,7 @@ const bodyRegionOptions = [
   { value: 'custom', label: '自定义' }
 ];
 
-const equipmentOptions = [
-  { value: 'all', label: '全部器械' },
-  { value: 'bodyweight', label: '自重' },
-  { value: 'dumbbell', label: '哑铃' },
-  { value: 'barbell', label: '杠铃' },
-  { value: 'cable', label: '拉索' },
-  { value: 'machine', label: '器械' },
-  { value: 'smith', label: '史密斯' }
-];
+const equipmentOptions = equipmentFilterOptions;
 
 const muscleRegionMap = {
   // 中文对照
@@ -56,15 +50,6 @@ const muscleRegionMap = {
   erector_spinae: 'back',
   core: 'core',
   custom: 'custom'
-};
-
-const equipmentKeywordMap = {
-  bodyweight: ['自重', '徒手', 'bodyweight'],
-  dumbbell: ['哑铃', 'dumbbell'],
-  barbell: ['杠铃', '易弯杠', 'barbell'],
-  cable: ['拉索', '绳索', '龙门架', '钢线', 'cable'],
-  machine: ['器械', '高位下拉器', '罗马椅', 'machine'],
-  smith: ['史密斯', 'smith']
 };
 
 const pinyinInitialMap = {

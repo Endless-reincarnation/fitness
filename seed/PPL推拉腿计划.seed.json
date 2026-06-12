@@ -7,7 +7,7 @@
     "level": "intermediate",
     "duration_weeks": 12,
     "weekly_frequency": 3,
-    "equipment_tags": ["杠铃", "哑铃", "龙门架", "器械", "罗马椅"],
+    "equipment_tags": ["自重", "哑铃", "杠铃", "绳索/龙门架", "固定器械", "训练凳", "罗马椅"],
     "target_users": ["进阶训练者", "寻求力量突破的用户", "希望合理规划恢复周期的人群"],
     "status": "published",
     "version": 1,

@@ -7,7 +7,7 @@
     "level": "intermediate",
     "duration_weeks": 10,
     "weekly_frequency": 4,
-    "equipment_tags": ["杠铃", "哑铃", "龙门架", "器械", "罗马椅"],
+    "equipment_tags": ["自重", "哑铃", "杠铃", "绳索/龙门架", "固定器械", "训练凳", "罗马椅"],
     "target_users": ["有一定训练基础的健身爱好者", "希望提升身体抗阻能力的用户", "寻求上下肢均衡发展的人群"],
     "status": "published",
     "version": 1,

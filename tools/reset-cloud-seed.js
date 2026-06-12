@@ -7,6 +7,7 @@ const rootDir = path.join(__dirname, '..');
 const seedDir = path.join(rootDir, 'seed', 'cloud-import');
 const seedCollections = [
   'muscles',
+  'dictionaries',
   'exercises',
   'plan_templates',
   'plan_template_versions',

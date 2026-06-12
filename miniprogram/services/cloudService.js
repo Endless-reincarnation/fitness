@@ -1,7 +1,7 @@
 const cloudConfig = require('../config/cloud');
 
 function isCloudEnabled() {
-  return Boolean(cloudConfig.enabled && cloudConfig.envId && wx.cloud);
+  return Boolean(cloudConfig.enabled && cloudConfig.envId && typeof wx !== 'undefined' && wx.cloud);
 }
 
 function initCloud() {

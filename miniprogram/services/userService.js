@@ -21,8 +21,11 @@ async function getUserProfile() {
     const collection = getCollection('users');
     if (!collection) return null;
 
-    // 因为 users 集合权限是“仅创建者可读写”，所以直接 get() 就能拉取且仅拉取当前用户的数据
-    const res = await collection.limit(1).get();
+    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
+    let res = await collection.where({ _openid: '{openid}' }).limit(1).get();
+    if (!res.data || !res.data.length) {
+      res = await collection.limit(1).get();
+    }
     if (res.data && res.data.length > 0) {
       return res.data[0];
     }

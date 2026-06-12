@@ -369,8 +369,13 @@ function getAiPlanDraft(draftId) {
   return readDrafts().find((item) => item.id === draftId) || null;
 }
 
+function listAiPlanDrafts() {
+  return readDrafts();
+}
+
 module.exports = {
   generateAiPlanDraft,
   getAiPlanDraft,
+  listAiPlanDrafts,
   saveAiPlanDraft
 };

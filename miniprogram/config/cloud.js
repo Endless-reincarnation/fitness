@@ -6,6 +6,7 @@ const cloudConfig = {
   adminOpenids: [],
   collections: {
     users: 'users',
+    dictionaries: 'dictionaries',
     exercises: 'exercises',
     muscles: 'muscles',
     exerciseAlternatives: 'exercise_alternatives',

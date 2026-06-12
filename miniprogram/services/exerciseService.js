@@ -1,5 +1,5 @@
 const { exercises, getExercise } = require('../data/mock');
-const { getCollection, isCloudEnabled } = require('./cloudService');
+const { getCollection, getDb, isCloudEnabled } = require('./cloudService');
 const {
   buildExerciseSearchText,
   getExerciseBodyRegions,
@@ -53,10 +53,36 @@ async function listCloudCollection(collectionKey) {
   return all;
 }
 
+async function listPublishedCloudExercises() {
+  const collection = getCollection('exercises');
+  if (!collection) return [];
+
+  const all = [];
+  const pageSize = 20;
+  while (true) {
+    const result = await collection
+      .where({ status: 'published' })
+      .orderBy('updated_at', 'desc')
+      .skip(all.length)
+      .limit(pageSize)
+      .get();
+    const rows = result.data || [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 async function getCloudMuscleMetaMap() {
   if (cloudMusclesCache) return cloudMusclesCache;
 
-  const muscles = await listCloudCollection('muscles');
+  const collection = getCollection('muscles');
+  const db = getDb();
+  const _ = db && db.command;
+  const bodyRegions = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core'];
+  const muscles = collection && _
+    ? (await collection.where({ body_region: _.in(bodyRegions) }).orderBy('sort_order', 'asc').get()).data || []
+    : await listCloudCollection('muscles');
   cloudMusclesCache = muscles.reduce((map, item) => {
     map[item._id || item.id] = item;
     return map;
@@ -122,7 +148,7 @@ async function listExercises() {
 
   try {
     const [cloudExercises, muscleMetaMap] = await Promise.all([
-      listCloudCollection('exercises'),
+      listPublishedCloudExercises(),
       getCloudMuscleMetaMap()
     ]);
     if (!cloudExercises.length) return listLocalExercises();
@@ -143,7 +169,7 @@ async function getExerciseById(exerciseId) {
   try {
     const muscleMetaMap = await getCloudMuscleMetaMap();
     if (!cloudExercisesCache) {
-      cloudExercisesCache = await listCloudCollection('exercises');
+      cloudExercisesCache = await listPublishedCloudExercises();
     }
     const cachedExercise = cloudExercisesCache.find((item) => (item._id || item.id) === exerciseId);
     if (cachedExercise) return formatExercise(cachedExercise, muscleMetaMap);

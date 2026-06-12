@@ -61,6 +61,71 @@ exports.main = async (event, context) => {
         };
       }
 
+      case 'get_dictionaries': {
+        const data = await getAll(db.collection('dictionaries'), {
+          orderBy: { field: 'updated_at', direction: 'desc' }
+        });
+        return {
+          code: 200,
+          data
+        };
+      }
+
+      case 'save_dictionary': {
+        const dictionary = { ...(payload || {}) };
+        const id = dictionary._id;
+        if (!id) {
+          return { code: 400, message: '字典 ID 不能为空' };
+        }
+        if (!Array.isArray(dictionary.items) || !dictionary.items.length) {
+          return { code: 400, message: '字典项不能为空' };
+        }
+
+        const items = dictionary.items
+          .map((item) => ({
+            value: String(item.value || '').trim(),
+            label: String(item.label || '').trim(),
+            sort_order: Number(item.sort_order || 0),
+            enabled: item.enabled !== false
+          }))
+          .filter((item) => item.value && item.label)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+        const values = items.map((item) => item.value);
+        if (!items.length || new Set(values).size !== values.length) {
+          return { code: 400, message: '字典项不完整或 value 重复' };
+        }
+
+        const data = {
+          name: dictionary.name || id,
+          items,
+          updated_at: now
+        };
+
+        const existing = await db.collection('dictionaries').doc(id).get().catch(() => null);
+        if (existing && existing.data) {
+          await db.collection('dictionaries').doc(id).update({ data });
+        } else {
+          data.created_at = now;
+          await db.collection('dictionaries').add({ data: { _id: id, ...data } });
+        }
+
+        const result = { _id: id, ...data, created_at: (existing && existing.data && existing.data.created_at) || data.created_at };
+        await db.collection('admin_logs').add({
+          data: {
+            admin_id: 'web_admin',
+            action: existing && existing.data ? 'update_dictionary' : 'create_dictionary',
+            target_collection: 'dictionaries',
+            target_id: id,
+            before: existing && existing.data ? existing.data : null,
+            after: result,
+            created_at: now
+          }
+        });
+
+        return { code: 200, data: result };
+      }
+
       // ==================== 2. 肌群字典获取 ====================
       case 'get_muscles': {
         const data = await getAll(db.collection('muscles'), {

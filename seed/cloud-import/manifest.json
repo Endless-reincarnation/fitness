@@ -1,8 +1,9 @@
 {
-  "generated_at": "2026-06-10T13:52:27.354Z",
+  "generated_at": "2026-06-12T07:09:13.822Z",
   "source_dir": "seed",
   "import_order": [
     "muscles",
+    "dictionaries",
     "exercises",
     "plan_templates",
     "plan_template_versions",
@@ -12,6 +13,7 @@
   ],
   "counts": {
     "muscles": 15,
+    "dictionaries": 1,
     "exercises": 72,
     "plan_templates": 4,
     "plan_template_versions": 4,

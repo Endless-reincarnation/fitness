@@ -117,7 +117,15 @@ async function getWorkoutHistory() {
 
   try {
     const collection = getCollection('workoutSessions');
-    const result = await collection.orderBy('completed_at', 'desc').limit(50).get();
+    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
+    let result = await collection
+      .where({ _openid: '{openid}' })
+      .orderBy('completed_at', 'desc')
+      .limit(50)
+      .get();
+    if (!result.data || !result.data.length) {
+      result = await collection.orderBy('completed_at', 'desc').limit(50).get();
+    }
     if (!result.data.length) return workoutStore.getWorkoutHistory();
     return result.data.map(fromCloudSession);
   } catch (error) {
@@ -150,14 +158,27 @@ async function getBodyWeights() {
 
   try {
     const collection = getCollection('bodyWeights');
-    const all = [];
     const pageSize = 20;
-    while (true) {
-      // 小程序端按 20 条分页拉取，避免历史体重记录超过单页后显示不全。
-      const result = await collection.orderBy('recorded_date', 'desc').skip(all.length).limit(pageSize).get();
-      const rows = result.data || [];
-      all.push(...rows);
-      if (rows.length < pageSize) break;
+    const readPages = async (useOpenid) => {
+      const all = [];
+      while (true) {
+        // 体重记录分页读取；兼容 _openid 占位符不可用的开发环境。
+        let query = collection;
+        if (useOpenid) query = query.where({ _openid: '{openid}' });
+        const result = await query
+          .orderBy('recorded_date', 'desc')
+          .skip(all.length)
+          .limit(pageSize)
+          .get();
+        const rows = result.data || [];
+        all.push(...rows);
+        if (rows.length < pageSize) break;
+      }
+      return all;
+    };
+    let all = await readPages(true);
+    if (!all.length) {
+      all = await readPages(false);
     }
     if (!all.length) return workoutStore.getBodyWeights();
     return all.map(fromCloudWeight);
@@ -241,12 +262,19 @@ async function getLastWorkoutRecord(exerciseId) {
     const collection = getCollection('workoutSets');
     if (!collection) return null;
 
-    // 查询当前用户该动作在云端按时间倒序的第一组记录
-    const res = await collection
-      .where({ exercise_id: exerciseId })
+    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
+    let res = await collection
+      .where({ _openid: '{openid}', exercise_id: exerciseId })
       .orderBy('created_at', 'desc')
       .limit(1)
       .get();
+    if (!res.data || !res.data.length) {
+      res = await collection
+        .where({ exercise_id: exerciseId })
+        .orderBy('created_at', 'desc')
+        .limit(1)
+        .get();
+    }
 
     if (res.data && res.data.length > 0) {
       const cloudSet = res.data[0];

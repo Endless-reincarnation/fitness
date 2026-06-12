@@ -99,10 +99,11 @@ function buildCloudSeed() {
   fs.mkdirSync(outputDir, { recursive: true });
 
   const muscles = readJsonBySuffix('肌群.seed.json').map((item) => withTimestamps(item));
+  const dictionaries = readJsonBySuffix('器械字典.seed.json').map((item) => withTimestamps(item));
   const exercises = readJsonBySuffix('动作库.seed.json').map((item) => withTimestamps(item));
 
   // 动态扫描并编译所有的计划种子文件（排除动作库和肌群）
-  const planFiles = fs.readdirSync(seedDir).filter((name) => name.endsWith('.seed.json') && name !== '动作库.seed.json' && name !== '肌群.seed.json');
+  const planFiles = fs.readdirSync(seedDir).filter((name) => name.endsWith('.seed.json') && name !== '动作库.seed.json' && name !== '肌群.seed.json' && name !== '器械字典.seed.json');
 
   const planTemplates = [];
   const planTemplateVersions = [];
@@ -140,6 +141,7 @@ function buildCloudSeed() {
 
   const collections = {
     muscles,
+    dictionaries,
     exercises,
     plan_templates: planTemplates,
     plan_template_versions: planTemplateVersions,

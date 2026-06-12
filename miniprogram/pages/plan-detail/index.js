@@ -11,8 +11,13 @@ Page({
   },
 
   async onLoad(query) {
-    const plan = await getPlanById(query.id, query.type) || (await listOfficialPlans())[0];
-    this.setData({ plan: await buildPlanView(plan) });
+    const plan = await getPlanById(query.id, query.type);
+    if (!plan && query.type === 'custom') {
+      wx.showToast({ title: '自定义计划不存在', icon: 'none' });
+      return;
+    }
+    const nextPlan = plan || (await listOfficialPlans())[0];
+    this.setData({ plan: await buildPlanView(nextPlan) });
   },
 
   onShow() {

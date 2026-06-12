@@ -13,10 +13,9 @@ Page({
   async onShow() {
     applyTheme(this);
     const previousCustomCount = this.data.customPlans.length;
-    const [{ officialPlans, customPlans }, { activePlan }] = await Promise.all([
-      listAllPlans(),
-      getActivePlanDetail()
-    ]);
+    // 先恢复当前计划，再加载列表，避免 AI 计划详情恢复与列表读取并发导致首屏缺失。
+    const { activePlan } = await getActivePlanDetail();
+    const { officialPlans, customPlans } = await listAllPlans();
     // 没有我的计划时默认给用户看官方模板；创建出第一套自定义计划后再回到我的计划。
     let activeTab = this.data.activeTab || (customPlans.length ? 'custom' : 'official');
     if (!customPlans.length && activeTab === 'custom') {

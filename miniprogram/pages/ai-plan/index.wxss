@@ -94,6 +94,18 @@
   background: var(--primary);
 }
 
+.equipment-row {
+  margin-top: 14rpx;
+}
+
+.selected-equipment {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -1,4 +1,5 @@
 const { listExercises, saveCustomExercise } = require('../../services/exerciseService');
+const { standardEquipmentOptions, customEquipmentOption } = require('../../data/dictionaries');
 const { bodyRegionOptions, equipmentOptions, getExerciseRegionRank, matchExerciseKeyword, matchExerciseRegion } = require('../../utils/exerciseCategory');
 const { applyTheme } = require('../../utils/theme');
 const pageSize = 12;
@@ -35,15 +36,10 @@ Page({
       { value: '核心肌群', label: '核心' },
       { value: '自定义', label: '自定义' }
     ],
-    formEquipmentOptions: [
-      { value: '自重', label: '自重' },
-      { value: '哑铃', label: '哑铃' },
-      { value: '杠铃', label: '杠铃' },
-      { value: '拉索', label: '拉索' },
-      { value: '器械', label: '器械' },
-      { value: '史密斯', label: '史密斯' },
-      { value: '自定义', label: '自定义' }
-    ]
+    formEquipmentOptions: standardEquipmentOptions.map((item) => ({
+      value: item.label,
+      label: item.label
+    })).concat(customEquipmentOption)
   },
 
   async onShow() {

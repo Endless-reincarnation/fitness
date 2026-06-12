@@ -71,14 +71,83 @@ function normalizeDayExercise(item) {
   };
 }
 
-async function listCloudCollection(collectionKey) {
-  const collection = getCollection(collectionKey);
-  if (!collection) return [];
+function buildCustomPlanFromAiDraft(draft, activePlan) {
+  const days = (draft.days || []).map((day, index) => ({
+    id: day.id || `custom_day_${Date.now()}_${index}`,
+    name: day.name || `训练日 ${index + 1}`,
+    focus: day.focus || '自定义训练日',
+    exercises: (day.exercises || []).map((item) => ({
+      exerciseId: item.exerciseId,
+      exerciseName: item.exerciseName,
+      sets: item.sets,
+      reps: item.reps,
+      rpe: item.rpe,
+      restSeconds: item.restSeconds,
+      role: item.role,
+      roleLabel: item.roleLabel,
+      weightRule: item.weightRule,
+      progressionRule: item.progressionRule,
+      notes: item.notes || ''
+    }))
+  })).filter((day) => day.exercises.length);
 
+  return {
+    id: activePlan.planId,
+    planType: 'custom',
+    name: activePlan.name || draft.name,
+    sourcePlanId: draft.id,
+    goal: draft.goal || ['自定义'],
+    level: draft.level || '自定义',
+    durationWeeks: draft.durationWeeks || 4,
+    weeklyFrequency: days.length || draft.weeklyFrequency || 1,
+    equipmentTags: draft.equipmentTags || [],
+    overview: draft.overview || '',
+    generationSteps: draft.generationSteps || [],
+    tips: draft.tips || [],
+    nutrition: draft.nutrition || null,
+    summary: draft.summary || `我的自定义计划 · ${days.length} 个训练日`,
+    days
+  };
+}
+
+function findRecoverableAiDraft(drafts, activePlan) {
+  const activePlanTime = Number(String(activePlan.planId || '').replace('custom_plan_', '')) || Number(activePlan.startedAt || 0);
+  const matchedByName = drafts.find((draft) => draft.name === activePlan.name);
+  if (matchedByName) return matchedByName;
+
+  return drafts.find((draft) => {
+    const draftTime = Date.parse(draft.updatedAt || '') || Number(String(draft.id || '').replace('ai_draft_', '')) || 0;
+    return activePlanTime && draftTime && Math.abs(draftTime - activePlanTime) < 10 * 60 * 1000;
+  }) || null;
+}
+
+async function recoverCustomPlanFromAiDraft(activePlan) {
+  if (!activePlan || activePlan.planType !== 'custom') return null;
+
+  try {
+    const { listAiPlanDrafts } = require('./aiPlanService');
+    const drafts = listAiPlanDrafts();
+    const matchedDraft = findRecoverableAiDraft(drafts, activePlan);
+    if (!matchedDraft || !matchedDraft.days || !matchedDraft.days.length) return null;
+
+    // AI 计划详情缺失时，优先用本地 AI 草稿恢复正式自定义计划，避免只剩启用状态。
+    const recoveredPlan = buildCustomPlanFromAiDraft(matchedDraft, activePlan);
+    await saveUserPlan(recoveredPlan);
+    return recoveredPlan;
+  } catch (error) {
+    console.warn('从 AI 草稿恢复自定义计划失败', error);
+    return null;
+  }
+}
+
+async function listCloudQuery(buildQuery) {
   const all = [];
   const pageSize = 20;
   while (true) {
-    const result = await collection.skip(all.length).limit(pageSize).get();
+    const result = await buildQuery()
+      .skip(all.length)
+      .limit(pageSize)
+      .get();
     const rows = result.data || [];
     all.push(...rows);
     if (rows.length < pageSize) break;
@@ -91,37 +160,45 @@ function listLocalOfficialPlans() {
 }
 
 async function listCloudOfficialPlans() {
-  const [templates, days, dayExercises] = await Promise.all([
-    listCloudCollection('planTemplates'),
-    listCloudCollection('planDays'),
-    listCloudCollection('planDayExercises')
-  ]);
+  const templateCollection = getCollection('planTemplates');
+  const dayCollection = getCollection('planDays');
+  const exerciseCollection = getCollection('planDayExercises');
+  if (!templateCollection || !dayCollection || !exerciseCollection) return [];
+
+  const templates = await listCloudQuery(() => templateCollection
+    .where({ status: 'published' })
+    .orderBy('updated_at', 'desc'));
 
   if (!templates.length) return [];
 
-  const dayMap = days.reduce((map, item) => {
-    const planTemplateId = item.plan_template_id;
-    if (!map[planTemplateId]) map[planTemplateId] = [];
-    map[planTemplateId].push(normalizeDay(item));
-    return map;
-  }, {});
-
-  const exerciseMap = dayExercises.reduce((map, item) => {
-    const planDayId = item.plan_day_id;
-    if (!map[planDayId]) map[planDayId] = [];
-    map[planDayId].push(normalizeDayExercise(item));
-    return map;
-  }, {});
-
-  return templates.map((template) => {
+  const plansWithChildren = await Promise.all(templates.map(async (template) => {
     const plan = normalizeTemplate(template);
-    const planDays = (dayMap[plan.id] || []).sort((a, b) => a.dayIndex - b.dayIndex);
+    const version = template.current_version || template.version || 1;
+    const [daysResult, exercisesResult] = await Promise.all([
+      dayCollection
+        .where({ plan_template_id: plan.id, plan_version: version })
+        .orderBy('day_index', 'asc')
+        .get(),
+      exerciseCollection
+        .where({ plan_template_id: plan.id, plan_version: version })
+        .orderBy('order', 'asc')
+        .get()
+    ]);
+    const exerciseMap = (exercisesResult.data || []).reduce((map, item) => {
+      const planDayId = item.plan_day_id;
+      if (!map[planDayId]) map[planDayId] = [];
+      map[planDayId].push(normalizeDayExercise(item));
+      return map;
+    }, {});
+    const planDays = (daysResult.data || []).map(normalizeDay).sort((a, b) => a.dayIndex - b.dayIndex);
     plan.days = planDays.map((day) => ({
       ...day,
       exercises: (exerciseMap[day.id] || []).sort((a, b) => a.order - b.order)
     }));
     return plan;
-  });
+  }));
+
+  return plansWithChildren;
 }
 
 async function listOfficialPlans() {
@@ -147,7 +224,13 @@ async function listCustomPlans() {
     const collection = getCollection('customPlans');
     if (!collection) return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
 
-    const cloudCustomPlansRaw = await listCloudCollection('customPlans');
+    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
+    let cloudCustomPlansRaw = await listCloudQuery(() => collection
+      .where({ _openid: '{openid}' })
+      .orderBy('updated_at', 'desc'));
+    if (!cloudCustomPlansRaw.length) {
+      cloudCustomPlansRaw = await listCloudQuery(() => collection.orderBy('updated_at', 'desc'));
+    }
     let cloudCustomPlans = cloudCustomPlansRaw.map((item) => ({
       id: item._id,
       planType: 'custom',
@@ -155,13 +238,13 @@ async function listCustomPlans() {
       goal: item.goal_tags || ['自定义'],
       level: '自定义',
       durationWeeks: 4,
-      weeklyFrequency: item.weekly_frequency || item.days.length,
-      summary: `我的自定义计划 · ${item.days.length} 个训练日 · ${item.days.reduce((sum, d) => sum + d.exercises.length, 0)} 个动作`,
+      weeklyFrequency: item.weekly_frequency || (item.days || []).length,
+      summary: `我的自定义计划 · ${(item.days || []).length} 个训练日 · ${(item.days || []).reduce((sum, d) => sum + ((d.exercises || []).length), 0)} 个动作`,
       overview: item.overview || '',
       generationSteps: item.generation_steps || [],
       tips: item.tips || [],
       nutrition: item.nutrition || null,
-      days: item.days,
+      days: item.days || [],
       updatedAt: item.updated_at
     }));
 
@@ -175,6 +258,12 @@ async function listCustomPlans() {
         allPlans.push(localPlan);
       }
     });
+
+    const activePlan = getActivePlan();
+    if (activePlan && activePlan.planType === 'custom' && !allPlans.some((plan) => plan.id === activePlan.planId)) {
+      const recoveredPlan = await recoverCustomPlanFromAiDraft(activePlan);
+      if (recoveredPlan) allPlans.unshift(recoveredPlan);
+    }
 
     return allPlans;
   } catch (error) {
@@ -202,11 +291,19 @@ async function getActivePlanFromCloud() {
     const collection = getCollection('userPlans');
     if (!collection) return null;
 
-    const res = await collection
-      .where({ status: 'active' })
+    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
+    let res = await collection
+      .where({ _openid: '{openid}', status: 'active' })
       .orderBy('updated_at', 'desc')
       .limit(1)
       .get();
+    if (!res.data || !res.data.length) {
+      res = await collection
+        .where({ status: 'active' })
+        .orderBy('updated_at', 'desc')
+        .limit(1)
+        .get();
+    }
 
     if (res.data && res.data.length > 0) {
       const cloudRecord = res.data[0];
@@ -233,7 +330,10 @@ async function abandonCloudActivePlan(planId) {
     const collection = getCollection('userPlans');
     if (!collection) return;
 
-    const result = await collection.where({ status: 'active', plan_id: planId }).get();
+    let result = await collection.where({ _openid: '{openid}', status: 'active', plan_id: planId }).get();
+    if (!result.data || !result.data.length) {
+      result = await collection.where({ status: 'active', plan_id: planId }).get();
+    }
     for (const record of result.data || []) {
       await collection.doc(record._id).update({
         data: {
@@ -257,13 +357,15 @@ async function getActivePlanDetail() {
     }
   }
 
-  const plan = activePlan ? await getPlanById(activePlan.planId, activePlan.planType) : null;
+  let plan = activePlan ? await getPlanById(activePlan.planId, activePlan.planType) : null;
   if (activePlan && !plan) {
-    // 活跃计划指向的模板或自定义计划已不存在时，立即清理状态，避免页面继续展示悬空计划。
-    clearActivePlan();
-    await abandonCloudActivePlan(activePlan.planId);
+    plan = await recoverCustomPlanFromAiDraft(activePlan);
+  }
+  if (activePlan && !plan) {
+    // 计划详情可能因云端权限、网络或本地缓存未恢复而暂时查不到，不能直接清除用户当前计划。
+    console.warn('当前计划详情暂时不可用，已保留启用状态', activePlan);
     return {
-      activePlan: null,
+      activePlan,
       plan: null
     };
   }
@@ -344,7 +446,10 @@ async function enablePlan(plan) {
       const collection = getCollection('userPlans');
       if (collection) {
         // 1. 将该用户在云端所有活跃的计划状态修改为 abandoned (已放弃)
-        const activeRecords = await collection.where({ status: 'active' }).get();
+        let activeRecords = await collection.where({ _openid: '{openid}', status: 'active' }).get();
+        if (!activeRecords.data || !activeRecords.data.length) {
+          activeRecords = await collection.where({ status: 'active' }).get();
+        }
         if (activeRecords.data && activeRecords.data.length > 0) {
           for (const record of activeRecords.data) {
             await collection.doc(record._id).update({
@@ -389,6 +494,7 @@ async function saveUserPlan(plan) {
     const collection = getCollection('customPlans');
     if (!collection) return plan;
 
+    const now = new Date().toISOString();
     const dataToSave = {
       name: plan.name,
       goal_tags: plan.goal || ['自定义'],
@@ -414,21 +520,16 @@ async function saveUserPlan(plan) {
         }))
       })),
       status: 'active',
-      updated_at: new Date().toISOString()
+      updated_at: now
     };
 
-    try {
-      await collection.doc(plan.id).update({
-        data: dataToSave
-      });
-    } catch (err) {
-      await collection.doc(plan.id).set({
-        data: {
-          ...dataToSave,
-          created_at: new Date().toISOString()
-        }
-      });
-    }
+    // 自定义计划使用稳定 ID 保存；直接 set 可避免 update 不存在文档时静默 updated=0。
+    await collection.doc(plan.id).set({
+      data: {
+        ...dataToSave,
+        created_at: plan.createdAt || plan.created_at || now
+      }
+    });
   } catch (error) {
     console.warn('保存云端自定义计划失败', error);
   }
@@ -468,11 +569,18 @@ async function advanceActivePlan(totalDays) {
     try {
       const collection = getCollection('userPlans');
       if (collection) {
-        const res = await collection
-          .where({ status: 'active' })
+        let res = await collection
+          .where({ _openid: '{openid}', status: 'active' })
           .orderBy('updated_at', 'desc')
           .limit(1)
           .get();
+        if (!res.data || !res.data.length) {
+          res = await collection
+            .where({ status: 'active' })
+            .orderBy('updated_at', 'desc')
+            .limit(1)
+            .get();
+        }
 
         if (res.data && res.data.length > 0) {
           await collection.doc(res.data[0]._id).update({
@@ -497,11 +605,18 @@ async function setActivePlanDay(dayIndex) {
     try {
       const collection = getCollection('userPlans');
       if (collection) {
-        const res = await collection
-          .where({ status: 'active' })
+        let res = await collection
+          .where({ _openid: '{openid}', status: 'active' })
           .orderBy('updated_at', 'desc')
           .limit(1)
           .get();
+        if (!res.data || !res.data.length) {
+          res = await collection
+            .where({ status: 'active' })
+            .orderBy('updated_at', 'desc')
+            .limit(1)
+            .get();
+        }
 
         if (res.data && res.data.length > 0) {
           await collection.doc(res.data[0]._id).update({

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
 import draggable from 'vuedraggable';
+import { equipmentLabels, normalizeEquipmentOptions, standardEquipmentOptions } from './dictionaries';
 
 // ==================== 1. 基础状态变量 ====================
 const isAuthenticated = ref(false);
@@ -8,7 +9,7 @@ const loginTokenInput = ref('');
 const loginError = ref('');
 const loading = ref(false);
 const isSaving = ref(false);
-const currentTab = ref('dashboard'); // dashboard, exercises, plans, feedback
+const currentTab = ref('dashboard'); // dashboard, exercises, plans, dictionaries, feedback
 
 // 云数据库拉取的数据缓存
 const stats = ref({ users: 0, exercises: 0, plans: 0, workouts: 0, feedback: 0 });
@@ -24,6 +25,8 @@ const selectedExerciseIds = ref([]);
 const selectedPlanIds = ref([]);
 const selectedFeedbackIds = ref([]);
 const isMuscleDictionaryEditing = ref(false);
+const equipmentDictionaryItems = ref([]);
+const isEquipmentDictionaryEditing = ref(false);
 
 // 预设选项字典
 const bodyRegions = {
@@ -41,9 +44,7 @@ const difficulties = {
   advanced: '进阶'
 };
 
-const equipmentOptions = [
-  '自重', '徒手', '哑铃', '杠铃', '拉索', '器械', '史密斯机', '易弯杠'
-];
+const equipmentOptions = ref(equipmentLabels);
 
 const goalOptions = [
   { value: 'muscle_gain', label: '增肌' },
@@ -132,21 +133,33 @@ const fetchData = async () => {
     const statsData = await callCloudApi('get_stats');
     stats.value = statsData;
 
-    // 2. 获取肌群列表
+    // 2. 获取云端字典，失败时保留本地默认选项。
+    const dictionariesData = await callCloudApi('get_dictionaries').catch((err) => {
+      console.warn('读取云端字典失败，使用本地默认字典：', err);
+      return [];
+    });
+    const equipmentDictionary = dictionariesData.find(item => item._id === 'equipment');
+    const cloudEquipmentOptions = normalizeEquipmentOptions(equipmentDictionary && equipmentDictionary.items);
+    equipmentOptions.value = cloudEquipmentOptions.length ? cloudEquipmentOptions.map(item => item.label) : equipmentLabels;
+    equipmentDictionaryItems.value = cloudEquipmentOptions.length
+      ? cloudEquipmentOptions.map(item => ({ ...item }))
+      : normalizeEquipmentOptions(standardEquipmentOptions);
+
+    // 3. 获取肌群列表
     const musclesData = await callCloudApi('get_muscles');
     musclesList.value = musclesData.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    // 3. 获取动作库列表
+    // 4. 获取动作库列表
     const exercisesData = await callCloudApi('get_exercises');
     exercisesList.value = exercisesData;
 
-    // 4. 获取计划数据
+    // 5. 获取计划数据
     const plansData = await callCloudApi('get_plans');
     plansList.value = plansData.plans;
     planDaysList.value = plansData.days;
     planDayExercisesList.value = plansData.dayExercises;
 
-    // 5. 获取用户建议留言
+    // 6. 获取用户建议留言
     const feedbackData = await callCloudApi('get_feedback_messages');
     feedbackList.value = feedbackData;
     stats.value.feedback = feedbackData.filter(item => item.status !== 'done').length;
@@ -201,6 +214,71 @@ const saveMuscle = async (muscle) => {
     alert('肌群分类已保存。');
   } catch (err) {
     alert('保存肌群分类失败：' + err.message);
+  }
+};
+
+const addEquipmentDictionaryItem = () => {
+  const nextOrder = equipmentDictionaryItems.value.reduce((max, item) => Math.max(max, Number(item.sort_order || 0)), 0) + 10;
+  equipmentDictionaryItems.value.push({
+    value: '',
+    label: '',
+    sort_order: nextOrder,
+    enabled: true
+  });
+};
+
+const removeEquipmentDictionaryItem = (index) => {
+  if (!isEquipmentDictionaryEditing.value) {
+    alert('请先进入器械字典维护模式。');
+    return;
+  }
+  const item = equipmentDictionaryItems.value[index];
+  if (!item) return;
+  if (!confirm(`确定删除器械选项“${item.label || item.value || '未命名'}”吗？`)) return;
+  equipmentDictionaryItems.value.splice(index, 1);
+};
+
+const saveEquipmentDictionary = async () => {
+  if (!isEquipmentDictionaryEditing.value) {
+    alert('请先进入器械字典维护模式。');
+    return;
+  }
+
+  const items = equipmentDictionaryItems.value
+    .map(item => ({
+      value: String(item.value || '').trim(),
+      label: String(item.label || '').trim(),
+      sort_order: Number(item.sort_order || 0),
+      enabled: item.enabled !== false
+    }))
+    .filter(item => item.value && item.label)
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+  const values = items.map(item => item.value);
+  if (new Set(values).size !== values.length) {
+    alert('器械 value 不能重复。');
+    return;
+  }
+  if (!items.length) {
+    alert('器械字典至少保留一项。');
+    return;
+  }
+  if (!confirm('确定保存器械字典吗？这会影响后台表单和小程序 AI 计划页的可选器械。')) {
+    return;
+  }
+
+  try {
+    const saved = await callCloudApi('save_dictionary', {
+      _id: 'equipment',
+      name: '器械字典',
+      items
+    });
+    const normalized = normalizeEquipmentOptions(saved.items);
+    equipmentDictionaryItems.value = normalized.map(item => ({ ...item }));
+    equipmentOptions.value = normalized.map(item => item.label);
+    alert('器械字典已保存。');
+  } catch (err) {
+    alert('保存器械字典失败：' + err.message);
   }
 };
 
@@ -984,6 +1062,29 @@ const publishNewVersion = async (plan) => {
   }
 };
 
+const publishDraftPlan = async (plan) => {
+  if (!confirm(`确定发布草稿计划“${plan.name}”吗？发布后小程序端用户即可选择启用。`)) {
+    return;
+  }
+  loading.value = true;
+  try {
+    await callCloudApi('save_plan', {
+      plan_template: {
+        ...plan,
+        status: 'published'
+      },
+      plan_days: planDaysList.value.filter(day => day.plan_template_id === plan._id),
+      plan_day_exercises: planDayExercisesList.value.filter(ex => ex.plan_template_id === plan._id)
+    });
+    alert('计划发布成功！');
+    await fetchData();
+  } catch (err) {
+    alert('计划发布失败: ' + err.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
 // 级联动作面板状态与交互
 const activeCascaderRowId = ref(null);
 
@@ -1079,15 +1180,22 @@ onMounted(() => {
         >
           <span class="icon">🏋️</span> 标准动作库
         </li>
-        <li 
-          class="nav-item" 
+        <li
+          class="nav-item"
           :class="{ active: currentTab === 'plans' }"
           @click="currentTab = 'plans'"
         >
           <span class="icon">📅</span> 官方计划库
         </li>
-        <li 
-          class="nav-item" 
+        <li
+          class="nav-item"
+          :class="{ active: currentTab === 'dictionaries' }"
+          @click="currentTab = 'dictionaries'"
+        >
+          <span class="icon">🧩</span> 标准字典
+        </li>
+        <li
+          class="nav-item"
           :class="{ active: currentTab === 'feedback' }"
           @click="currentTab = 'feedback'"
         >
@@ -1366,7 +1474,10 @@ onMounted(() => {
                   <button class="btn btn-secondary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="openEditPlanModal(plan)">
                     编排与修改
                   </button>
-                  <button v-if="plan.status === 'published'" class="btn btn-primary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="publishNewVersion(plan)">
+                  <button v-if="plan.status !== 'published'" class="btn btn-primary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="publishDraftPlan(plan)">
+                    发布
+                  </button>
+                  <button v-else class="btn btn-primary mr-2" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="publishNewVersion(plan)">
                     发布新版本
                   </button>
                   <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" @click="deletePlan(plan)">
@@ -1384,7 +1495,86 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- 渲染4：建议留言管理 -->
+      <!-- 渲染4：标准字典维护 -->
+      <section v-else-if="currentTab === 'dictionaries'">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">标准字典</h2>
+            <p class="page-subtitle">维护小程序和后台共用的标准选项，当前先开放器械字典</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button
+              class="btn"
+              :class="{ 'btn-danger': isEquipmentDictionaryEditing, 'btn-secondary': !isEquipmentDictionaryEditing }"
+              @click="isEquipmentDictionaryEditing = !isEquipmentDictionaryEditing"
+            >
+              {{ isEquipmentDictionaryEditing ? '退出维护' : '进入维护' }}
+            </button>
+            <button class="btn btn-secondary" @click="fetchData" :disabled="loading">
+              🔄 刷新字典
+            </button>
+            <button class="btn btn-primary" :disabled="!isEquipmentDictionaryEditing" @click="saveEquipmentDictionary">
+              保存器械字典
+            </button>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="equipment-dictionary-header">
+            <div>
+              <h3>器械字典</h3>
+              <p>value 是稳定标识，label 是展示名称；排序越小越靠前。</p>
+            </div>
+            <button class="btn btn-secondary" :disabled="!isEquipmentDictionaryEditing" @click="addEquipmentDictionaryItem">
+              ➕ 添加器械
+            </button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>稳定值 value</th>
+                  <th>展示名称 label</th>
+                  <th style="width: 140px;">排序</th>
+                  <th style="width: 120px;">启用</th>
+                  <th class="text-right" style="width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in equipmentDictionaryItems" :key="`${item.value}_${index}`">
+                  <td>
+                    <input class="form-input" v-model="item.value" :disabled="!isEquipmentDictionaryEditing" placeholder="如 dumbbell" />
+                  </td>
+                  <td>
+                    <input class="form-input" v-model="item.label" :disabled="!isEquipmentDictionaryEditing" placeholder="如 哑铃" />
+                  </td>
+                  <td>
+                    <input class="form-input" type="number" v-model.number="item.sort_order" :disabled="!isEquipmentDictionaryEditing" />
+                  </td>
+                  <td>
+                    <label class="inline-checkbox">
+                      <input type="checkbox" v-model="item.enabled" :disabled="!isEquipmentDictionaryEditing" />
+                      {{ item.enabled ? '启用' : '停用' }}
+                    </label>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" :disabled="!isEquipmentDictionaryEditing" @click="removeEquipmentDictionaryItem(index)">
+                      删除
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!equipmentDictionaryItems.length">
+                  <td colspan="5" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                    暂无器械字典数据，请刷新或添加器械项。
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 渲染5：建议留言管理 -->
       <section v-else-if="currentTab === 'feedback'">
         <div class="page-header">
           <div>
@@ -1680,6 +1870,15 @@ onMounted(() => {
               <div style="display: flex; gap: 1.5rem;">
                 <label v-for="g in goalOptions" :key="g.value" style="font-weight: normal; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
                   <input type="checkbox" :value="g.value" v-model="planForm.goal_tags"> {{ g.label }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group full-width">
+              <label>计划器械条件 (支持复选)</label>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <label v-for="eq in equipmentOptions" :key="eq" style="font-weight: normal; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+                  <input type="checkbox" :value="eq" v-model="planForm.equipment_tags"> {{ eq }}
                 </label>
               </div>
             </div>

@@ -794,6 +794,32 @@ h1, h2, h3, h4 {
   margin-bottom: 0.5rem;
 }
 
+.equipment-dictionary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.equipment-dictionary-header h3 {
+  margin-bottom: 0.35rem;
+}
+
+.equipment-dictionary-header p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.inline-checkbox {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0 !important;
+  color: var(--text-main) !important;
+  font-size: 0.9rem !important;
+}
+
 /* Day Plan Builder (for plan creation) */
 .day-builder-card {
   border: 1px solid var(--border-color);
