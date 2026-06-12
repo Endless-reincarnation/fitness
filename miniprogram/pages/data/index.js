@@ -1,7 +1,9 @@
 const { getBodyWeights, getWorkoutHistory, saveBodyWeight, syncPendingCloudWrites } = require('../../services/workoutService');
 const { getUserProfile } = require('../../services/userService');
 const { listExercises } = require('../../services/exerciseService');
+const { getActivePlanDetail } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
+const { buildExerciseProgressList, buildWeeklyInsight } = require('../../utils/trainingInsight');
 
 Page({
   data: {
@@ -12,7 +14,10 @@ Page({
     latestSetCount: 0,
     latestTotalVolume: 0,
     nextExerciseName: '',
+    nextAdviceText: '',
     latestSuggestions: [],
+    weeklyInsight: null,
+    exerciseProgressList: [],
     theme: 'power-yellow',
 
     // BMI 与动态柱状图状态
@@ -41,6 +46,8 @@ Page({
     const history = await getWorkoutHistory();
     const latestSession = history[0] || null;
     const weights = await getBodyWeights();
+    const activePlanDetail = await getActivePlanDetail();
+    const weeklyTargetDays = this.getWeeklyTargetDays(activePlanDetail);
 
     // 1. 获取身高 (云端优先，本地缓存 fallback)
     let heightCm = 0;
@@ -154,6 +161,8 @@ Page({
     // 5. 生成日历网格数据 (传入当前折叠模式)
     const calendarGrid = this.generateCalendar(currentYear, currentMonth, history, selectedDateStr, this.data.calendarMode);
     const displaySuggestions = displaySession && displaySession.suggestions ? displaySession.suggestions : [];
+    const weeklyInsight = buildWeeklyInsight(history, weeklyTargetDays);
+    const exerciseProgressList = buildExerciseProgressList(history);
 
     // 计算肌群刺激得分百分比
     let muscleStimulation = [];
@@ -208,7 +217,10 @@ Page({
       latestSetCount: displaySession ? displaySession.setCount : 0,
       latestTotalVolume: displaySession ? displaySession.totalVolume : 0,
       nextExerciseName: displaySession && displaySuggestions[0] ? displaySuggestions[0].exerciseName : '',
+      nextAdviceText: displaySession && displaySuggestions[0] ? displaySuggestions[0].advice : '',
       latestSuggestions: displaySuggestions,
+      weeklyInsight,
+      exerciseProgressList,
       muscleStimulation,
       heightCm,
       chartWeights,
@@ -221,6 +233,18 @@ Page({
       currentYear,
       currentMonth
     });
+  },
+
+  getWeeklyTargetDays(activePlanDetail) {
+    const plan = activePlanDetail && activePlanDetail.plan;
+    const activePlan = activePlanDetail && activePlanDetail.activePlan;
+    const fromPlan = Number(plan && plan.weeklyFrequency);
+    const fromActivePlan = Number(activePlan && activePlan.totalDays);
+    const fromDays = Number(plan && plan.days && plan.days.length);
+
+    // 优先使用计划频率；缺失时用训练日数量兜底，避免周进度长期固定为 4 天。
+    const targetDays = fromPlan || fromActivePlan || fromDays || 4;
+    return Math.max(1, Math.min(7, Math.round(targetDays)));
   },
 
   generateCalendar(year, month, history, selectedDateStr, calendarMode) {

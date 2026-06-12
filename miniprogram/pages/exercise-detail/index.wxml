@@ -11,6 +11,40 @@
     <view class="lift-meta">辅助：{{secondaryText}}</view>
   </view>
 
+  <view class="card block performance-card" wx:if="{{performance}}">
+    <view class="section-title">训练表现</view>
+    <view class="performance-top">
+      <view>
+        <view class="performance-label">最近一次</view>
+        <view class="performance-main">{{performance.latestText}}</view>
+      </view>
+      <view class="performance-date">{{performance.latestDate}}</view>
+    </view>
+    <view class="performance-grid">
+      <view class="performance-item">
+        <view class="performance-value">{{performance.sessionCount}}</view>
+        <view class="performance-label">训练次数</view>
+      </view>
+      <view class="performance-item">
+        <view class="performance-value">{{performance.bestWeight}}</view>
+        <view class="performance-label">最高重量 KG</view>
+      </view>
+      <view class="performance-item">
+        <view class="performance-value">{{performance.bestReps}}</view>
+        <view class="performance-label">最高次数</view>
+      </view>
+      <view class="performance-item">
+        <view class="performance-value">{{performance.estimatedMax}}</view>
+        <view class="performance-label">估算 1RM</view>
+      </view>
+    </view>
+    <view class="performance-suggestion" wx:if="{{performance.suggestion}}">
+      <view class="suggestion-title">{{performance.suggestion.actionLabel || '下次建议'}}</view>
+      <view class="suggestion-target" wx:if="{{performance.suggestion.targetText}}">目标：{{performance.suggestion.targetText}}</view>
+      <view class="suggestion-text">{{performance.suggestion.advice}}</view>
+    </view>
+  </view>
+
   <view class="card block">
     <view class="section-title">动作步骤</view>
     <view wx:for="{{exercise.steps}}" wx:key="*this" class="step-row">

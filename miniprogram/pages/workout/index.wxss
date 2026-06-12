@@ -207,6 +207,209 @@
   font-weight: 700;
 }
 
+.completion-page {
+  min-height: calc(100vh - 80rpx);
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.completion-hero {
+  padding: 24rpx 4rpx 8rpx;
+}
+
+.completion-title {
+  margin-top: 18rpx;
+  color: var(--text);
+  font-size: 70rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.completion-subtitle {
+  margin-top: 16rpx;
+  color: var(--muted);
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.completion-score {
+  border: 4rpx solid var(--primary);
+  background:
+    linear-gradient(135deg, var(--primary-fade-15), transparent 56%),
+    var(--card);
+}
+
+.score-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 14rpx;
+}
+
+.score-number {
+  color: var(--primary);
+  font-size: 88rpx;
+  font-weight: 900;
+  line-height: 0.92;
+}
+
+.score-unit {
+  padding-bottom: 8rpx;
+  color: var(--text);
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.score-label {
+  margin-top: 14rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin-top: 28rpx;
+}
+
+.score-item {
+  padding: 18rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+}
+
+.score-item-value {
+  color: var(--text);
+  font-size: 42rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.score-item-label {
+  margin-top: 10rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.completion-panel {
+  border-radius: 14rpx;
+}
+
+.panel-label {
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+  margin-bottom: 18rpx;
+}
+
+.highlight-name {
+  color: var(--text);
+  font-size: 36rpx;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.highlight-meta {
+  margin-top: 14rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.suggestion-card-row {
+  display: block;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid var(--border);
+  margin-bottom: 18rpx;
+}
+
+.suggestion-card-row:last-of-type {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.suggestion-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.suggestion-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.suggestion-action {
+  flex-shrink: 0;
+  max-width: 180rpx;
+  padding: 8rpx 12rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 8rpx;
+  color: var(--muted);
+  background: var(--card-strong);
+  font-size: 20rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.suggestion-action.increase,
+.suggestion-action.add_reps {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-fade-8);
+}
+
+.suggestion-action.reduce {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgba(255, 81, 72, 0.08);
+}
+
+.suggestion-target,
+.suggestion-reason {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.suggestion-text {
+  margin-top: 14rpx;
+  color: var(--text);
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.next-day {
+  margin-top: 24rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 10rpx;
+  background: var(--primary-fade-12);
+  color: var(--primary);
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.completion-button {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 16rpx;
+}
+
 .exercise-guide-panel {
   margin-top: 40rpx;
   background: var(--card);

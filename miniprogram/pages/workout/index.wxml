@@ -1,117 +1,168 @@
 <view class="page theme-{{theme}}" wx:if="{{day}}">
-  <view class="workout-header">
-    <view class="eyebrow">LIVE SET</view>
-    <view class="day-title">{{currentExercise.detail.name}}</view>
-    <view class="muted">{{currentExercise.roleLabel}} · {{currentExerciseMusclesText}}</view>
+  <view wx:if="{{completionSummary}}" class="completion-page">
+    <view class="completion-hero">
+      <view class="eyebrow">SESSION REPORT</view>
+      <view class="completion-title">训练完成</view>
+      <view class="completion-subtitle">{{completionSummary.dayName}} · {{completionSummary.planName}}</view>
+    </view>
+
+    <view class="completion-score card">
+      <view class="score-main">
+        <view class="score-number">{{completionSummary.totalVolume}}</view>
+        <view class="score-unit">KG</view>
+      </view>
+      <view class="score-label">本次总容量</view>
+      <view class="score-grid">
+        <view class="score-item">
+          <view class="score-item-value">{{completionSummary.setCount}}</view>
+          <view class="score-item-label">完成组数</view>
+        </view>
+        <view class="score-item">
+          <view class="score-item-value">{{completionSummary.exerciseCount}}</view>
+          <view class="score-item-label">训练动作</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="completion-panel card" wx:if="{{completionSummary.highlight}}">
+      <view class="panel-label">本次高光动作</view>
+      <view class="highlight-name">{{completionSummary.highlight.exerciseName}}</view>
+      <view class="highlight-meta">
+        {{completionSummary.highlight.sets}} 组 · 容量 {{completionSummary.highlight.volume}}kg · 最高 {{completionSummary.highlight.bestWeight}}kg × {{completionSummary.highlight.bestReps}} 次
+      </view>
+    </view>
+
+    <view class="completion-panel card">
+      <view class="panel-label">下次怎么练</view>
+      <view wx:for="{{completionSummary.suggestions}}" wx:key="exerciseId" class="suggestion-row suggestion-card-row">
+        <view class="suggestion-head">
+          <view class="suggestion-name">{{item.exerciseName}}</view>
+          <view class="suggestion-action {{item.action}}">{{item.actionLabel || '训练建议'}}</view>
+        </view>
+        <view wx:if="{{item.targetText}}" class="suggestion-target">下次目标：{{item.targetText}}</view>
+        <view wx:if="{{item.reason}}" class="suggestion-reason">依据：{{item.reason}}</view>
+        <view class="suggestion-text">{{item.advice}}</view>
+      </view>
+      <view wx:if="{{completionSummary.nextDayName}}" class="next-day">下次训练：{{completionSummary.nextDayName}}</view>
+    </view>
+
+    <button class="primary-button completion-button" bindtap="goDataPage">查看训练数据</button>
   </view>
 
-  <view class="card workout-card">
-    <view class="set-label">第 {{currentSetIndex + 1}} 组 / {{currentExercise.sets}} 组</view>
-    <view class="live-number-row">
-      <view class="live-number">{{weightKg || 0}}</view>
-      <view class="unit">KG</view>
-      <view class="live-number">{{reps || currentExerciseMinReps}}</view>
-      <view class="unit">次</view>
+  <block wx:else>
+    <view class="workout-header">
+      <view class="eyebrow">LIVE SET</view>
+      <view class="day-title">{{currentExercise.detail.name}}</view>
+      <view class="muted">{{currentExercise.roleLabel}} · {{currentExerciseMusclesText}}</view>
     </view>
-    <view class="live-meta">REST {{currentRestSeconds}}s · {{currentExercise.reps}} 次目标</view>
-  </view>
 
-  <view class="form-row">
-    <view class="field-box">
-      <view class="field-label">重量</view>
-      <input class="input" type="digit" value="{{weightKg}}" data-field="weightKg" bindinput="onInput" placeholder="0" />
-      <view class="quick-adjust-row">
-        <view class="adjust-btn" bindtap="adjustValue" data-field="weightKg" data-delta="-2.5">-2.5</view>
-        <view class="adjust-btn" bindtap="adjustValue" data-field="weightKg" data-delta="2.5">+2.5</view>
+    <view class="card workout-card">
+      <view class="set-label">第 {{currentSetIndex + 1}} 组 / {{currentExercise.sets}} 组</view>
+      <view class="live-number-row">
+        <view class="live-number">{{weightKg || 0}}</view>
+        <view class="unit">KG</view>
+        <view class="live-number">{{reps || currentExerciseMinReps}}</view>
+        <view class="unit">次</view>
       </view>
+      <view class="live-meta">REST {{currentRestSeconds}}s · {{currentExercise.reps}} 次目标</view>
     </view>
-    <view class="field-box">
-      <view class="field-label">次数</view>
-      <input class="input" type="number" value="{{reps}}" data-field="reps" bindinput="onInput" placeholder="{{currentExerciseMinReps}}" />
-      <view class="quick-adjust-row">
-        <view class="adjust-btn" bindtap="adjustValue" data-field="reps" data-delta="-1">-1</view>
-        <view class="adjust-btn" bindtap="adjustValue" data-field="reps" data-delta="1">+1</view>
+
+    <view class="form-row">
+      <view class="field-box">
+        <view class="field-label">重量</view>
+        <input class="input" type="digit" value="{{weightKg}}" data-field="weightKg" bindinput="onInput" placeholder="0" />
+        <view class="quick-adjust-row">
+          <view class="adjust-btn" bindtap="adjustValue" data-field="weightKg" data-delta="-2.5">-2.5</view>
+          <view class="adjust-btn" bindtap="adjustValue" data-field="weightKg" data-delta="2.5">+2.5</view>
+        </view>
       </view>
-    </view>
-    <view class="field-box">
-      <view class="field-label">休息</view>
-      <input class="input" type="number" value="{{currentRestSeconds}}" data-field="currentRestSeconds" bindinput="onInput" placeholder="{{currentExercise.restSeconds}}" />
-      <view class="quick-adjust-row">
-        <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="-15">-15秒</view>
-        <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="15">+15秒</view>
+      <view class="field-box">
+        <view class="field-label">次数</view>
+        <input class="input" type="number" value="{{reps}}" data-field="reps" bindinput="onInput" placeholder="{{currentExerciseMinReps}}" />
+        <view class="quick-adjust-row">
+          <view class="adjust-btn" bindtap="adjustValue" data-field="reps" data-delta="-1">-1</view>
+          <view class="adjust-btn" bindtap="adjustValue" data-field="reps" data-delta="1">+1</view>
+        </view>
       </view>
-    </view>
-  </view>
-
-  <view wx:if="{{lastWorkoutRecord}}" class="last-workout-info">
-    <text class="last-workout-label">上次训练：</text>
-    <text class="last-workout-value">{{lastWorkoutRecord.weightKg}} kg × {{lastWorkoutRecord.reps}} 次</text>
-  </view>
-
-
-  <view wx:if="{{isResting}}" class="card rest-card">
-    <view class="rest-time">{{restLeft}}s</view>
-    <view class="muted rest-label">组间休息</view>
-    <view class="rest-bars">
-      <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="rest-bar {{index < activeBarsCount ? 'on' : ''}}"></view>
-    </view>
-  </view>
-
-  <view class="action-row">
-    <button wx:if="{{isResting}}" class="primary-button done-button" style="grid-column: span 2;" bindtap="skipRest">跳过休息</button>
-    <block wx:else>
-      <button class="ghost-button quick-button" bindtap="useLastSet">沿用上一组</button>
-      <button class="primary-button done-button" bindtap="finishSet">完成本组</button>
-    </block>
-  </view>
-
-  <!-- 动作指南 -->
-  <view class="exercise-guide-panel card" wx:if="{{currentExercise.detail}}">
-    <view class="guide-title">动作指南</view>
-    
-    <view class="guide-meta-grid">
-      <view class="guide-meta-item">
-        <view class="guide-meta-label">目标肌群</view>
-        <view class="guide-meta-val">{{currentExercise.detail.primaryMusclesText}}</view>
-      </view>
-      <view class="guide-meta-item" wx:if="{{currentExercise.detail.secondaryMuscles && currentExercise.detail.secondaryMuscles.length > 0}}">
-        <view class="guide-meta-label">辅助肌群</view>
-        <view class="guide-meta-val">{{currentExercise.detail.secondaryMusclesText}}</view>
-      </view>
-      <view class="guide-meta-item" wx:if="{{currentExercise.detail.equipmentText}}">
-        <view class="guide-meta-label">所需器械</view>
-        <view class="guide-meta-val">{{currentExercise.detail.equipmentText}}</view>
+      <view class="field-box">
+        <view class="field-label">休息</view>
+        <input class="input" type="number" value="{{currentRestSeconds}}" data-field="currentRestSeconds" bindinput="onInput" placeholder="{{currentExercise.restSeconds}}" />
+        <view class="quick-adjust-row">
+          <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="-15">-15秒</view>
+          <view class="adjust-btn" bindtap="adjustValue" data-field="currentRestSeconds" data-delta="15">+15秒</view>
+        </view>
       </view>
     </view>
 
-    <!-- 规则 -->
-    <view class="guide-rules" wx:if="{{currentExercise.weightRule || currentExercise.progressionRule}}">
-      <view class="guide-rule-item" wx:if="{{currentExercise.weightRule}}">
-        <view class="guide-rule-label">重量规则</view>
-        <view class="guide-rule-content">{{currentExercise.weightRule}}</view>
-      </view>
-      <view class="guide-rule-item" wx:if="{{currentExercise.progressionRule}}">
-        <view class="guide-rule-label">递进规则</view>
-        <view class="guide-rule-content">{{currentExercise.progressionRule}}</view>
+    <view wx:if="{{lastWorkoutRecord}}" class="last-workout-info">
+      <text class="last-workout-label">上次训练：</text>
+      <text class="last-workout-value">{{lastWorkoutRecord.weightKg}} kg × {{lastWorkoutRecord.reps}} 次</text>
+    </view>
+
+    <view wx:if="{{isResting}}" class="card rest-card">
+      <view class="rest-time">{{restLeft}}s</view>
+      <view class="muted rest-label">组间休息</view>
+      <view class="rest-bars">
+        <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="rest-bar {{index < activeBarsCount ? 'on' : ''}}"></view>
       </view>
     </view>
 
-    <!-- 动作步骤 -->
-    <view class="guide-section" wx:if="{{currentExercise.detail.steps && currentExercise.detail.steps.length > 0}}">
-      <view class="guide-section-header">动作步骤</view>
-      <view wx:for="{{currentExercise.detail.steps}}" wx:key="*this" class="guide-step-row">
-        <view class="guide-step-index">{{index + 1}}</view>
-        <view class="guide-step-text">{{item}}</view>
-      </view>
+    <view class="action-row">
+      <button wx:if="{{isResting}}" class="primary-button done-button" style="grid-column: span 2;" bindtap="skipRest">跳过休息</button>
+      <block wx:else>
+        <button class="ghost-button quick-button" bindtap="useLastSet">沿用上一组</button>
+        <button class="primary-button done-button" bindtap="finishSet">完成本组</button>
+      </block>
     </view>
 
-    <!-- 常见错误 -->
-    <view class="guide-section" wx:if="{{currentExercise.detail.mistakes && currentExercise.detail.mistakes.length > 0}}">
-      <view class="guide-section-header">常见错误</view>
-      <view wx:for="{{currentExercise.detail.mistakes}}" wx:key="*this" class="guide-mistake-row">
-        <view class="guide-mistake-dot"></view>
-        <view class="guide-mistake-text">{{item}}</view>
+    <!-- 动作指南 -->
+    <view class="exercise-guide-panel card" wx:if="{{currentExercise.detail}}">
+      <view class="guide-title">动作指南</view>
+      
+      <view class="guide-meta-grid">
+        <view class="guide-meta-item">
+          <view class="guide-meta-label">目标肌群</view>
+          <view class="guide-meta-val">{{currentExercise.detail.primaryMusclesText}}</view>
+        </view>
+        <view class="guide-meta-item" wx:if="{{currentExercise.detail.secondaryMuscles && currentExercise.detail.secondaryMuscles.length > 0}}">
+          <view class="guide-meta-label">辅助肌群</view>
+          <view class="guide-meta-val">{{currentExercise.detail.secondaryMusclesText}}</view>
+        </view>
+        <view class="guide-meta-item" wx:if="{{currentExercise.detail.equipmentText}}">
+          <view class="guide-meta-label">所需器械</view>
+          <view class="guide-meta-val">{{currentExercise.detail.equipmentText}}</view>
+        </view>
+      </view>
+
+      <!-- 规则 -->
+      <view class="guide-rules" wx:if="{{currentExercise.weightRule || currentExercise.progressionRule}}">
+        <view class="guide-rule-item" wx:if="{{currentExercise.weightRule}}">
+          <view class="guide-rule-label">重量规则</view>
+          <view class="guide-rule-content">{{currentExercise.weightRule}}</view>
+        </view>
+        <view class="guide-rule-item" wx:if="{{currentExercise.progressionRule}}">
+          <view class="guide-rule-label">递进规则</view>
+          <view class="guide-rule-content">{{currentExercise.progressionRule}}</view>
+        </view>
+      </view>
+
+      <!-- 动作步骤 -->
+      <view class="guide-section" wx:if="{{currentExercise.detail.steps && currentExercise.detail.steps.length > 0}}">
+        <view class="guide-section-header">动作步骤</view>
+        <view wx:for="{{currentExercise.detail.steps}}" wx:key="*this" class="guide-step-row">
+          <view class="guide-step-index">{{index + 1}}</view>
+          <view class="guide-step-text">{{item}}</view>
+        </view>
+      </view>
+
+      <!-- 常见错误 -->
+      <view class="guide-section" wx:if="{{currentExercise.detail.mistakes && currentExercise.detail.mistakes.length > 0}}">
+        <view class="guide-section-header">常见错误</view>
+        <view wx:for="{{currentExercise.detail.mistakes}}" wx:key="*this" class="guide-mistake-row">
+          <view class="guide-mistake-dot"></view>
+          <view class="guide-mistake-text">{{item}}</view>
+        </view>
       </view>
     </view>
-  </view>
+  </block>
 </view>

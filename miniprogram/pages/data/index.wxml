@@ -31,6 +31,44 @@
     </view>
   </view>
 
+  <!-- 本周训练洞察 -->
+  <view class="card block insight-card" wx:if="{{weeklyInsight}}">
+    <view class="section-title">本周训练</view>
+    <view class="week-progress-row">
+      <view>
+        <view class="week-progress-value">{{weeklyInsight.completedDays}} / {{weeklyInsight.targetDays}}</view>
+        <view class="week-progress-label">完成天数</view>
+      </view>
+      <view class="week-progress-percent">{{weeklyInsight.progressPercent}}%</view>
+    </view>
+    <view class="week-bar">
+      <view class="week-bar-fill" style="width: {{weeklyInsight.progressPercent}}%;"></view>
+    </view>
+    <view class="week-stat-grid">
+      <view class="week-stat-item">
+        <view class="week-stat-value">{{weeklyInsight.totalSets}}</view>
+        <view class="week-stat-label">累计组数</view>
+      </view>
+      <view class="week-stat-item">
+        <view class="week-stat-value">{{weeklyInsight.totalVolume}}</view>
+        <view class="week-stat-label">累计容量 KG</view>
+      </view>
+    </view>
+    <view class="insight-text">{{weeklyInsight.insightText}}</view>
+  </view>
+
+  <!-- 动作进步榜 -->
+  <view class="card block" wx:if="{{exerciseProgressList.length}}">
+    <view class="section-title">动作进步榜</view>
+    <view wx:for="{{exerciseProgressList}}" wx:key="exerciseId" class="progress-row">
+      <view class="progress-main">
+        <view class="progress-name">{{item.exerciseName}}</view>
+        <view class="progress-meta">本次 {{item.latestText}} · 上次 {{item.previousText}}</view>
+      </view>
+      <view class="progress-badge {{item.isUp ? 'up' : ''}} {{item.isDown ? 'down' : ''}}">{{item.trendText}}</view>
+    </view>
+  </view>
+
   <!-- 训练历史数据回溯 -->
   <block wx:if="{{latestSession}}">
     <view class="report-header block-margin">
@@ -42,8 +80,8 @@
 
     <view class="next-card" wx:if="{{nextExerciseName}}">
       <view class="next-label">下次建议</view>
-      <view class="next-title">{{nextExerciseName}} +2.5kg</view>
-      <view class="next-text">本组动作完成质量高，建议在下次训练中微调递进重量。</view>
+      <view class="next-title">{{nextExerciseName}}</view>
+      <view class="next-text">{{nextAdviceText}}</view>
     </view>
 
     <view class="card block" wx:if="{{muscleStimulation && muscleStimulation.length}}">
@@ -60,7 +98,13 @@
     </view>
 
     <view wx:for="{{latestSuggestions}}" wx:key="exerciseId" class="suggestion-card">
-      {{item.advice}}
+      <view class="suggestion-head">
+        <view class="suggestion-name">{{item.exerciseName}}</view>
+        <view class="suggestion-action {{item.action}}">{{item.actionLabel || '训练建议'}}</view>
+      </view>
+      <view wx:if="{{item.targetText}}" class="suggestion-target">下次目标：{{item.targetText}}</view>
+      <view wx:if="{{item.reason}}" class="suggestion-reason">依据：{{item.reason}}</view>
+      <view class="suggestion-advice">{{item.advice}}</view>
     </view>
   </block>
   <block wx:else>

@@ -7,6 +7,7 @@ const {
   getLastWorkoutRecord
 } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
+const { buildProgressionSuggestions } = require('../../utils/trainingInsight');
 
 Page({
   data: {
@@ -27,6 +28,7 @@ Page({
     activeBarsCount: 10,
     lastSetRecord: null,
     lastWorkoutRecord: null,
+    completionSummary: null,
     theme: 'power-yellow'
   },
 
@@ -167,6 +169,7 @@ Page({
       rpe: setRecord.rpe,
       restSeconds: setRecord.restSeconds,
       targetReps: current.reps,
+      plannedSets: current.sets,
       role: current.role,
       progressionRule: current.progressionRule
     });
@@ -251,13 +254,6 @@ Page({
     return match ? Number(match[0]) : 10;
   },
 
-  getRepRange(repsText) {
-    const matches = String(repsText || '').match(/\d+/g) || [];
-    const min = Number(matches[0] || 0);
-    const max = Number(matches[matches.length - 1] || min || 0);
-    return { min, max };
-  },
-
   useLastSet() {
     wx.vibrateShort({ type: 'medium' });
     const { currentExercise, lastSetRecord } = this.data;
@@ -320,7 +316,7 @@ Page({
 
   async finishWorkout(records) {
     const totalVolume = records.reduce((sum, item) => sum + item.weightKg * item.reps, 0);
-    const suggestions = this.buildProgressionSuggestions(records);
+    const suggestions = buildProgressionSuggestions(records);
     const session = {
       id: `session_${Date.now()}`,
       planName: this.data.plan.name,
@@ -337,42 +333,53 @@ Page({
     clearWorkoutDraft();
     const nextPlan = await advanceActivePlan(this.data.plan.days.length);
     const nextDayName = nextPlan ? this.data.plan.days[nextPlan.currentDayIndex].name : '';
-    wx.showModal({
-      title: '训练完成',
-      content: `完成 ${records.length} 组，总容量 ${totalVolume}kg。${nextDayName ? '\n下次训练：' + nextDayName : ''}${suggestions[0] ? '\n' + suggestions[0].advice : ''}`,
-      showCancel: false,
-      success: () => wx.switchTab({ url: '/pages/data/index' })
+    const summary = this.buildCompletionSummary(records, totalVolume, nextDayName, suggestions);
+    this.clearTimer();
+    this.setData({
+      isResting: false,
+      completionSummary: summary
     });
   },
 
-  buildProgressionSuggestions(records) {
-    const groups = {};
+  buildCompletionSummary(records, totalVolume, nextDayName, suggestions) {
+    const exerciseMap = {};
     records.forEach((record) => {
-      if (!groups[record.exerciseId]) {
-        groups[record.exerciseId] = [];
+      if (!exerciseMap[record.exerciseId]) {
+        exerciseMap[record.exerciseId] = {
+          exerciseId: record.exerciseId,
+          exerciseName: record.exerciseName,
+          sets: 0,
+          volume: 0,
+          bestWeight: 0,
+          bestReps: 0
+        };
       }
-      groups[record.exerciseId].push(record);
+      const item = exerciseMap[record.exerciseId];
+      item.sets += 1;
+      item.volume += record.weightKg * record.reps;
+      item.bestWeight = Math.max(item.bestWeight, Number(record.weightKg || 0));
+      item.bestReps = Math.max(item.bestReps, Number(record.reps || 0));
     });
 
-    return Object.keys(groups).map((exerciseId) => {
-      const exerciseRecords = groups[exerciseId];
-      const first = exerciseRecords[0];
-      const range = this.getRepRange(first.targetReps);
-      const allHitTopReps = range.max > 0 && exerciseRecords.every((item) => item.reps >= range.max);
-      const hasWeight = exerciseRecords.some((item) => item.weightKg > 0);
-      let advice = `${first.exerciseName}：下次维持重量，继续保证动作质量。`;
+    const exerciseStats = Object.keys(exerciseMap)
+      .map((key) => exerciseMap[key])
+      .sort((a, b) => b.volume - a.volume);
+    const highlight = exerciseStats[0] || null;
 
-      if (allHitTopReps && hasWeight) {
-        advice = `${first.exerciseName}：本次达到次数上限，下次可小幅加重。`;
-      } else if (!hasWeight) {
-        advice = `${first.exerciseName}：本次未记录重量，下次可记录重量方便递进。`;
-      }
+    // 完成页只展示高信号内容，避免训练结束后被明细列表淹没。
+    return {
+      planName: this.data.plan.name,
+      dayName: this.data.day.name,
+      setCount: records.length,
+      exerciseCount: exerciseStats.length,
+      totalVolume,
+      nextDayName,
+      highlight,
+      suggestions: suggestions.slice(0, 3)
+    };
+  },
 
-      return {
-        exerciseId,
-        exerciseName: first.exerciseName,
-        advice
-      };
-    });
+  goDataPage() {
+    wx.switchTab({ url: '/pages/data/index' });
   }
 });

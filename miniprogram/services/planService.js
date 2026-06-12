@@ -224,13 +224,8 @@ async function listCustomPlans() {
     const collection = getCollection('customPlans');
     if (!collection) return getCustomPlans().map((plan) => withPlanType(plan, 'custom'));
 
-    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
-    let cloudCustomPlansRaw = await listCloudQuery(() => collection
-      .where({ _openid: '{openid}' })
-      .orderBy('updated_at', 'desc'));
-    if (!cloudCustomPlansRaw.length) {
-      cloudCustomPlansRaw = await listCloudQuery(() => collection.orderBy('updated_at', 'desc'));
-    }
+    // 用户私有集合依赖云数据库权限按创建者自动隔离，禁止空结果后回退全量查询。
+    const cloudCustomPlansRaw = await listCloudQuery(() => collection.orderBy('updated_at', 'desc'));
     let cloudCustomPlans = cloudCustomPlansRaw.map((item) => ({
       id: item._id,
       planType: 'custom',
@@ -291,19 +286,12 @@ async function getActivePlanFromCloud() {
     const collection = getCollection('userPlans');
     if (!collection) return null;
 
-    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
-    let res = await collection
-      .where({ _openid: '{openid}', status: 'active' })
+    // 用户私有集合由权限规则隔离当前用户，只保留业务条件。
+    const res = await collection
+      .where({ status: 'active' })
       .orderBy('updated_at', 'desc')
       .limit(1)
       .get();
-    if (!res.data || !res.data.length) {
-      res = await collection
-        .where({ status: 'active' })
-        .orderBy('updated_at', 'desc')
-        .limit(1)
-        .get();
-    }
 
     if (res.data && res.data.length > 0) {
       const cloudRecord = res.data[0];
@@ -330,10 +318,8 @@ async function abandonCloudActivePlan(planId) {
     const collection = getCollection('userPlans');
     if (!collection) return;
 
-    let result = await collection.where({ _openid: '{openid}', status: 'active', plan_id: planId }).get();
-    if (!result.data || !result.data.length) {
-      result = await collection.where({ status: 'active', plan_id: planId }).get();
-    }
+    // 只更新当前用户权限可见的活跃计划，避免误改其他用户记录。
+    const result = await collection.where({ status: 'active', plan_id: planId }).get();
     for (const record of result.data || []) {
       await collection.doc(record._id).update({
         data: {
@@ -445,11 +431,8 @@ async function enablePlan(plan) {
     try {
       const collection = getCollection('userPlans');
       if (collection) {
-        // 1. 将该用户在云端所有活跃的计划状态修改为 abandoned (已放弃)
-        let activeRecords = await collection.where({ _openid: '{openid}', status: 'active' }).get();
-        if (!activeRecords.data || !activeRecords.data.length) {
-          activeRecords = await collection.where({ status: 'active' }).get();
-        }
+        // 1. 将当前用户权限可见的活跃计划状态修改为 abandoned (已放弃)
+        const activeRecords = await collection.where({ status: 'active' }).get();
         if (activeRecords.data && activeRecords.data.length > 0) {
           for (const record of activeRecords.data) {
             await collection.doc(record._id).update({
@@ -569,18 +552,12 @@ async function advanceActivePlan(totalDays) {
     try {
       const collection = getCollection('userPlans');
       if (collection) {
-        let res = await collection
-          .where({ _openid: '{openid}', status: 'active' })
+        // 只推进当前用户权限可见的活跃计划。
+        const res = await collection
+          .where({ status: 'active' })
           .orderBy('updated_at', 'desc')
           .limit(1)
           .get();
-        if (!res.data || !res.data.length) {
-          res = await collection
-            .where({ status: 'active' })
-            .orderBy('updated_at', 'desc')
-            .limit(1)
-            .get();
-        }
 
         if (res.data && res.data.length > 0) {
           await collection.doc(res.data[0]._id).update({
@@ -605,18 +582,12 @@ async function setActivePlanDay(dayIndex) {
     try {
       const collection = getCollection('userPlans');
       if (collection) {
-        let res = await collection
-          .where({ _openid: '{openid}', status: 'active' })
+        // 手动切换训练日时同样只更新当前用户权限可见的活跃计划。
+        const res = await collection
+          .where({ status: 'active' })
           .orderBy('updated_at', 'desc')
           .limit(1)
           .get();
-        if (!res.data || !res.data.length) {
-          res = await collection
-            .where({ status: 'active' })
-            .orderBy('updated_at', 'desc')
-            .limit(1)
-            .get();
-        }
 
         if (res.data && res.data.length > 0) {
           await collection.doc(res.data[0]._id).update({

@@ -21,11 +21,8 @@ async function getUserProfile() {
     const collection = getCollection('users');
     if (!collection) return null;
 
-    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
-    let res = await collection.where({ _openid: '{openid}' }).limit(1).get();
-    if (!res.data || !res.data.length) {
-      res = await collection.limit(1).get();
-    }
+    // 用户资料集合依赖云数据库权限按创建者自动隔离，不回退读取其他用户资料。
+    const res = await collection.limit(1).get();
     if (res.data && res.data.length > 0) {
       return res.data[0];
     }

@@ -117,15 +117,11 @@ async function getWorkoutHistory() {
 
   try {
     const collection = getCollection('workoutSessions');
-    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
-    let result = await collection
-      .where({ _openid: '{openid}' })
+    // 用户私有集合依赖云数据库权限按创建者自动隔离，禁止空结果后回退全量查询。
+    const result = await collection
       .orderBy('completed_at', 'desc')
       .limit(50)
       .get();
-    if (!result.data || !result.data.length) {
-      result = await collection.orderBy('completed_at', 'desc').limit(50).get();
-    }
     if (!result.data.length) return workoutStore.getWorkoutHistory();
     return result.data.map(fromCloudSession);
   } catch (error) {
@@ -159,13 +155,11 @@ async function getBodyWeights() {
   try {
     const collection = getCollection('bodyWeights');
     const pageSize = 20;
-    const readPages = async (useOpenid) => {
+    const readPages = async () => {
       const all = [];
       while (true) {
-        // 体重记录分页读取；兼容 _openid 占位符不可用的开发环境。
-        let query = collection;
-        if (useOpenid) query = query.where({ _openid: '{openid}' });
-        const result = await query
+        // 体重记录分页读取；用户隔离交给云数据库权限规则处理。
+        const result = await collection
           .orderBy('recorded_date', 'desc')
           .skip(all.length)
           .limit(pageSize)
@@ -176,10 +170,7 @@ async function getBodyWeights() {
       }
       return all;
     };
-    let all = await readPages(true);
-    if (!all.length) {
-      all = await readPages(false);
-    }
+    const all = await readPages();
     if (!all.length) return workoutStore.getBodyWeights();
     return all.map(fromCloudWeight);
   } catch (error) {
@@ -262,19 +253,12 @@ async function getLastWorkoutRecord(exerciseId) {
     const collection = getCollection('workoutSets');
     if (!collection) return null;
 
-    // 先按当前用户 _openid 查询，若 SDK 不支持占位符则回退到创建者权限查询。
-    let res = await collection
-      .where({ _openid: '{openid}', exercise_id: exerciseId })
+    // 只查询当前用户权限可见的该动作历史记录。
+    const res = await collection
+      .where({ exercise_id: exerciseId })
       .orderBy('created_at', 'desc')
       .limit(1)
       .get();
-    if (!res.data || !res.data.length) {
-      res = await collection
-        .where({ exercise_id: exerciseId })
-        .orderBy('created_at', 'desc')
-        .limit(1)
-        .get();
-    }
 
     if (res.data && res.data.length > 0) {
       const cloudSet = res.data[0];
