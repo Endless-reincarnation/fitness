@@ -18,11 +18,57 @@
 
     <view class="screen-header">
       <view class="eyebrow">TODAY PROGRAM</view>
-      <view class="hero-title">{{todayDay.name}}</view>
-      <view class="muted">{{activePlan.name}} · 第 {{activePlan.currentDayIndex + 1}} / {{totalDays}} 天 · 已完成 {{activePlan.completedSessions}} 次</view>
+      <view class="hero-title">{{heroStatusTitle}}</view>
+      <view class="muted">{{heroStatusText}}</view>
       <picker mode="selector" range="{{dayOptions}}" value="{{activePlan.currentDayIndex}}" bindchange="onDayChange">
         <view class="day-picker">切换训练日</view>
       </picker>
+    </view>
+
+    <view class="card schedule-card" wx:if="{{weeklySchedule.length}}">
+      <view class="schedule-title-row">
+        <view class="section-title compact-title">本周安排</view>
+        <view class="schedule-edit-btn" bindtap="toggleScheduleEditor">{{scheduleEditing ? '收起' : '调整'}}</view>
+      </view>
+      <view class="week-strip">
+        <view wx:for="{{weeklySchedule}}" wx:key="dateKey" class="week-cell {{item.type}} {{item.isToday ? 'today' : ''}} {{item.isCompleted ? 'done' : ''}}">
+          <view class="week-day">{{item.weekdayLabel}}</view>
+          <view class="week-label">{{item.label}}</view>
+        </view>
+      </view>
+      <view wx:if="{{scheduleEditing}}" class="schedule-editor">
+        <view wx:for="{{weeklySchedule}}" wx:key="dateKey" class="schedule-edit-row">
+          <view class="schedule-edit-day">周{{item.weekdayLabel}}</view>
+          <view class="schedule-type-group">
+            <view class="schedule-type {{item.type === 'training' ? 'active' : ''}}" data-weekday="{{item.weekday}}" data-type="training" bindtap="changeScheduleDay">训练</view>
+            <view class="schedule-type {{item.type === 'rest' ? 'active' : ''}}" data-weekday="{{item.weekday}}" data-type="rest" bindtap="changeScheduleDay">休息</view>
+            <view class="schedule-type {{item.type === 'flex' ? 'active' : ''}}" data-weekday="{{item.weekday}}" data-type="flex" bindtap="changeScheduleDay">灵活</view>
+          </view>
+        </view>
+        <view class="schedule-reset" bindtap="resetSchedule">恢复默认节奏</view>
+      </view>
+    </view>
+
+    <view class="card advice-card" wx:if="{{todayAdvice}}">
+      <view class="advice-meta-row">
+        <view class="advice-badge {{todayAdvice.type}}">{{todayAdvice.nutritionFocus.title}}</view>
+        <view class="advice-next-pill" wx:if="{{todayAdvice.nextDayName}}">下次：{{todayAdvice.nextDayName}}</view>
+      </view>
+      <view class="advice-reason">{{todayAdvice.reason}}</view>
+      <view class="nutrition-summary" bindtap="goNutrition">
+        <view class="nutrition-summary-head">
+          <view class="nutrition-label">饮食</view>
+          <view class="nutrition-link">查看详情 ></view>
+        </view>
+        <view class="nutrition-text">{{todayAdvice.nutritionFocus.text}}</view>
+        <view wx:if="{{nutritionPreviewItems.length}}" class="nutrition-mini-grid">
+          <view wx:for="{{nutritionPreviewItems}}" wx:key="label" class="nutrition-mini-item {{item.highlight ? 'highlight' : ''}}">
+            <view class="nutrition-mini-value">{{item.value}}</view>
+            <view class="nutrition-mini-unit">{{item.unit}}</view>
+            <view class="nutrition-mini-label">{{item.label}}</view>
+          </view>
+        </view>
+      </view>
     </view>
 
     <view class="lift-card">
@@ -33,8 +79,11 @@
 
     <view class="grid">
       <view class="card stat-card">
-        <view class="stat-label">完成进度</view>
-        <view class="stat-value">0 / {{todayDay.exercises.length}}</view>
+        <view class="stat-label">本周目标</view>
+        <view class="stat-value">{{weeklyProgressText}}</view>
+        <view class="progress-track">
+          <view class="progress-fill" style="width: {{weeklyProgressPercent}}%;"></view>
+        </view>
       </view>
       <view class="card stat-card">
         <view class="stat-label">下次训练</view>
@@ -54,7 +103,7 @@
       </view>
     </view>
     <view class="bottom-action-area">
-      <button class="primary-button start-button" bindtap="startWorkout">{{workoutDraft ? '重新开始今日训练' : '开始训练'}}</button>
+      <button class="primary-button start-button" bindtap="startWorkout">{{startButtonText}}</button>
     </view>
   </block>
 </view>

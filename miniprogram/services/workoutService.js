@@ -12,6 +12,9 @@ function toCloudSession(session) {
     set_count: session.setCount,
     total_volume: session.totalVolume,
     suggestions: session.suggestions || [],
+    entry_advice_type: session.entryAdviceType || 'training',
+    training_context_label: session.trainingContextLabel || '计划训练',
+    is_rest_day_training: Boolean(session.isRestDayTraining),
     status: 'completed',
     created_at: session.completedAt,
     updated_at: new Date().toISOString()
@@ -50,6 +53,9 @@ function fromCloudSession(record) {
     setCount: record.set_count,
     totalVolume: record.total_volume,
     suggestions: record.suggestions || [],
+    entryAdviceType: record.entry_advice_type || 'training',
+    trainingContextLabel: record.training_context_label || '计划训练',
+    isRestDayTraining: Boolean(record.is_rest_day_training),
     records: record.records || []
   };
 }

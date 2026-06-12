@@ -29,6 +29,7 @@ Page({
     lastSetRecord: null,
     lastWorkoutRecord: null,
     completionSummary: null,
+    entryAdviceType: 'training',
     theme: 'power-yellow'
   },
 
@@ -75,6 +76,10 @@ Page({
       query.resume === '1' &&
       draft.planId === activePlan.planId &&
       draft.dayId === dayView.id;
+    // 记录训练入口类型，后续复盘可区分计划内训练、灵活训练和休息日仍训练。
+    const entryAdviceType = canRestoreDraft
+      ? this.normalizeEntryAdvice(draft.entryAdviceType)
+      : this.normalizeEntryAdvice(query.entryAdvice);
     const currentExerciseIndex = canRestoreDraft ? draft.currentExerciseIndex : 0;
     const currentSetIndex = canRestoreDraft ? draft.currentSetIndex : 0;
     const currentExercise = dayView.exercises[currentExerciseIndex] || dayView.exercises[0];
@@ -91,7 +96,8 @@ Page({
       weightKg: canRestoreDraft ? draft.weightKg : '',
       reps: canRestoreDraft ? draft.reps : '',
       currentRestSeconds: canRestoreDraft ? draft.currentRestSeconds || currentExercise.restSeconds : currentExercise.restSeconds,
-      lastSetRecord: canRestoreDraft ? draft.lastSetRecord : null
+      lastSetRecord: canRestoreDraft ? draft.lastSetRecord : null,
+      entryAdviceType
     });
     this.saveDraft();
     this.loadLastRecord(currentExercise.exerciseId, !canRestoreDraft);
@@ -119,8 +125,19 @@ Page({
       weightKg: this.data.weightKg,
       reps: this.data.reps,
       currentRestSeconds: this.data.currentRestSeconds,
-      lastSetRecord: this.data.lastSetRecord
+      lastSetRecord: this.data.lastSetRecord,
+      entryAdviceType: this.data.entryAdviceType
     });
+  },
+
+  normalizeEntryAdvice(value) {
+    return ['training', 'rest', 'optional'].indexOf(value) !== -1 ? value : 'training';
+  },
+
+  getTrainingContextLabel(entryAdviceType) {
+    if (entryAdviceType === 'rest') return '休息日仍训练';
+    if (entryAdviceType === 'optional') return '灵活训练';
+    return '计划训练';
   },
 
   async loadLastRecord(exerciseId, shouldBackfill = true) {
@@ -326,6 +343,9 @@ Page({
       setCount: records.length,
       totalVolume,
       suggestions,
+      entryAdviceType: this.data.entryAdviceType,
+      trainingContextLabel: this.getTrainingContextLabel(this.data.entryAdviceType),
+      isRestDayTraining: this.data.entryAdviceType === 'rest',
       records
     };
 
@@ -370,6 +390,7 @@ Page({
     return {
       planName: this.data.plan.name,
       dayName: this.data.day.name,
+      trainingContextLabel: this.getTrainingContextLabel(this.data.entryAdviceType),
       setCount: records.length,
       exerciseCount: exerciseStats.length,
       totalVolume,

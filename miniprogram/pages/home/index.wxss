@@ -80,6 +80,285 @@
   margin: 16rpx 0 24rpx;
 }
 
+.schedule-card,
+.advice-card {
+  margin-bottom: 28rpx;
+  border-radius: 14rpx;
+}
+
+.schedule-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.compact-title {
+  font-size: 30rpx;
+}
+
+.schedule-edit-btn {
+  flex-shrink: 0;
+  padding: 8rpx 14rpx;
+  border: 2rpx solid var(--primary);
+  border-radius: 8rpx;
+  color: var(--primary);
+  background: var(--primary-fade-5);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10rpx;
+  margin-top: 22rpx;
+}
+
+.week-cell {
+  min-height: 104rpx;
+  padding: 12rpx 8rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.week-cell.training {
+  border-color: var(--primary-fade-34);
+}
+
+.week-cell.rest {
+  opacity: 0.72;
+}
+
+.week-cell.flex {
+  border-style: dashed;
+}
+
+.week-cell.today {
+  border-color: var(--primary);
+  background: var(--primary-fade-12);
+}
+
+.week-cell.done {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.week-day {
+  color: var(--muted);
+  font-size: 20rpx;
+  font-weight: 900;
+}
+
+.week-cell.done .week-day,
+.week-cell.done .week-label {
+  color: var(--button-text);
+}
+
+.week-label {
+  margin-top: 10rpx;
+  color: var(--text);
+  font-size: 20rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  word-break: break-all;
+}
+
+.schedule-editor {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid var(--border);
+}
+
+.schedule-edit-row {
+  display: grid;
+  grid-template-columns: 72rpx 1fr;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 14rpx;
+}
+
+.schedule-edit-day {
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.schedule-type-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10rpx;
+}
+
+.schedule-type {
+  height: 54rpx;
+  line-height: 54rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 8rpx;
+  background: var(--card-strong);
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+  text-align: center;
+}
+
+.schedule-type.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--button-text);
+}
+
+.schedule-reset {
+  margin-top: 18rpx;
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+  text-align: center;
+}
+
+.advice-card {
+  padding: 26rpx;
+  border: 3rpx solid var(--primary);
+  background:
+    linear-gradient(135deg, var(--primary-fade-12), transparent 62%),
+    var(--card);
+}
+
+.advice-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.advice-badge {
+  flex-shrink: 0;
+  padding: 10rpx 14rpx;
+  border-radius: 8rpx;
+  border: 2rpx solid var(--border);
+  background: var(--card-strong);
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.advice-badge.training {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-fade-8);
+}
+
+.advice-badge.rest {
+  color: var(--muted);
+}
+
+.advice-badge.optional {
+  color: var(--primary-strong);
+  border-color: var(--primary-strong);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.advice-next-pill {
+  min-width: 0;
+  color: var(--primary);
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.advice-reason {
+  margin-top: 24rpx;
+  color: var(--text);
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.nutrition-summary {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid var(--border);
+}
+
+.nutrition-summary:active {
+  opacity: 0.78;
+}
+
+.nutrition-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.nutrition-label {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.nutrition-link {
+  color: var(--primary);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.nutrition-text {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.nutrition-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.nutrition-mini-item {
+  min-height: 96rpx;
+  padding: 14rpx 8rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.nutrition-mini-item.highlight {
+  border-color: var(--primary);
+}
+
+.nutrition-mini-value {
+  display: inline;
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.nutrition-mini-unit {
+  display: inline;
+  margin-left: 4rpx;
+  color: var(--primary);
+  font-size: 18rpx;
+  font-weight: 900;
+}
+
+.nutrition-mini-label {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
 .lift-card {
   margin-bottom: 28rpx;
   padding: 36rpx;
@@ -170,6 +449,20 @@
   color: var(--text);
   font-size: 44rpx;
   font-weight: 900;
+}
+
+.progress-track {
+  overflow: hidden;
+  height: 12rpx;
+  margin-top: 18rpx;
+  border-radius: 999rpx;
+  background: var(--border);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: var(--primary);
 }
 
 .stat-value.small {

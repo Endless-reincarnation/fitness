@@ -7,7 +7,10 @@
     "db": "node tools/db-debug.js",
     "db:count": "node tools/db-debug.js count",
     "db:reset-seed": "node tools/reset-cloud-seed.js",
-    "test:insight": "node tools/test-training-insight.js"
+    "test:insight": "node tools/test-training-insight.js",
+    "test:nutrition": "node tools/test-nutrition-insight.js",
+    "test:execution": "node tools/test-execution-insight.js",
+    "test:algorithms": "npm run test:insight && npm run test:nutrition && npm run test:execution"
   },
   "devDependencies": {
     "@cloudbase/node-sdk": "^2.9.1"

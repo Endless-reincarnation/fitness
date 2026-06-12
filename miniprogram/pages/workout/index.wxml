@@ -4,6 +4,7 @@
       <view class="eyebrow">SESSION REPORT</view>
       <view class="completion-title">训练完成</view>
       <view class="completion-subtitle">{{completionSummary.dayName}} · {{completionSummary.planName}}</view>
+      <view class="completion-context">{{completionSummary.trainingContextLabel}}</view>
     </view>
 
     <view class="completion-score card">

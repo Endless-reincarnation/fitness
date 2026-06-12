@@ -1,0 +1,57 @@
+<view class="page nutrition-page theme-{{theme}}">
+  <view wx:if="{{!activePlan}}" class="card empty-card">
+    <view class="eyebrow">NUTRITION</view>
+    <view class="page-title">还没有启用计划</view>
+    <view class="muted empty-text">启用训练计划后，这里会根据目标、体重和今日安排给出饮食参考。</view>
+  </view>
+
+  <block wx:elif="{{nutrition}}">
+    <view class="screen-header">
+      <view class="eyebrow">NUTRITION</view>
+      <view class="page-title">今日饮食</view>
+      <view class="muted">{{plan.name}} · {{todayAdvice.nutritionFocus.title}}</view>
+    </view>
+
+    <view class="card focus-card">
+      <view class="focus-label">今日重点</view>
+      <view class="focus-text">{{todayAdvice.nutritionFocus.text}}</view>
+      <view wx:if="{{nutrition.isCustomizedByWeight}}" class="weight-note">已按 {{nutrition.userWeight}}kg 估算</view>
+    </view>
+
+    <view class="day-type-switch">
+      <view wx:for="{{dayTypeOptions}}" wx:key="type" class="day-type-item {{item.active ? 'active' : ''}}" data-type="{{item.type}}" bindtap="changeDayType">{{item.label}}</view>
+    </view>
+
+    <view class="adjust-note">{{displayedNutrition.adjustmentText}}</view>
+
+    <view class="macro-grid">
+      <view wx:for="{{macroItems}}" wx:key="label" class="card macro-card {{item.highlight ? 'highlight' : ''}}">
+        <view class="macro-value">{{item.value}}</view>
+        <view class="macro-unit">{{item.unit}}</view>
+        <view class="macro-label">{{item.label}}</view>
+      </view>
+    </view>
+
+    <view class="card food-card">
+      <view class="section-title compact-title">食物换算</view>
+      <view wx:for="{{foodExamples}}" wx:key="label" class="food-row">
+        <view class="food-label">{{item.label}}</view>
+        <view class="food-text">{{item.text}}</view>
+      </view>
+    </view>
+
+    <view class="card next-card">
+      <view class="section-title compact-title">后续会加入</view>
+      <view class="next-row">每日摄入记录</view>
+      <view class="next-row">常吃食物和快捷估算</view>
+      <view class="next-row">饮食目标达成趋势</view>
+    </view>
+  </block>
+
+  <view wx:else class="card empty-card">
+    <view class="eyebrow">NUTRITION</view>
+    <view class="page-title">暂无饮食估算</view>
+    <view class="muted empty-text">当前计划还没有营养建议，可以先在“我的”里补充体重，后续会自动生成更贴近你的估算。</view>
+    <button class="primary-button profile-button" bindtap="goProfile">去完善资料</button>
+  </view>
+</view>

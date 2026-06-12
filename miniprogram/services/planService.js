@@ -2,6 +2,7 @@ const { plans } = require('../data/mock');
 const workoutStore = require('../utils/workout');
 const { getCollection, isCloudEnabled } = require('./cloudService');
 const { getExerciseById } = require('./exerciseService');
+const { buildNutritionEstimate } = require('../utils/nutritionInsight');
 
 const getActivePlan = () => workoutStore.getActivePlan();
 const clearActivePlan = () => workoutStore.clearActivePlan();
@@ -395,19 +396,14 @@ async function buildPlanView(plan) {
       
       if (currentWeight) {
         const weight = Number(currentWeight);
-        const isBulking = plan.goal && plan.goal.some(g => g.includes('增肌') || g.includes('增重'));
-        
-        const protein = Math.round(weight * (isBulking ? 2.0 : 1.6));
-        const dailyCalories = Math.round(weight * (isBulking ? 38 : 28));
-        const fat = Math.round(weight * 0.9);
-        const carbs = Math.round((dailyCalories - protein * 4 - fat * 9) / 4);
+        const estimate = buildNutritionEstimate({ goal: plan.goal, weightKg: weight });
         
         nutrition = {
           ...nutrition,
-          dailyCalories,
-          protein,
-          carbs,
-          fat,
+          dailyCalories: estimate.dailyCalories,
+          protein: estimate.protein,
+          carbs: estimate.carbs,
+          fat: estimate.fat,
           isCustomizedByWeight: true,
           userWeight: weight
         };

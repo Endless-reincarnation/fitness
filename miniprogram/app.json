@@ -9,6 +9,7 @@
     "pages/exercises/index",
     "pages/exercise-detail/index",
     "pages/workout/index",
+    "pages/nutrition/index",
     "pages/data/index",
     "pages/profile/index"
   ],

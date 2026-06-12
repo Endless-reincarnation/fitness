@@ -3,6 +3,7 @@ const AI_PROVIDER = 'hunyuan-v3';
 const AI_MODEL = 'hy3-preview';
 const { exercises: localExercises } = require('../data/mock');
 const { listExercises } = require('./exerciseService');
+const { buildNutritionEstimate, mergeNutritionFallback, normalizeBodyWeight } = require('../utils/nutritionInsight');
 
 const defaultRule = {
   role: 'assistance',
@@ -100,23 +101,8 @@ function buildLocalMockDraft(form) {
     }))
   }));
 
-  const weight = normalizeNumber(form.profile && form.profile.current_weight_kg, 70, 30, 200);
-  const protein = Math.round(weight * (goal === '增肌' ? 2.0 : 1.6));
-  const dailyCalories = Math.round(weight * (goal === '增肌' ? 38 : 28));
-  const fat = Math.round(weight * 0.9);
-  const carbs = Math.round((dailyCalories - protein * 4 - fat * 9) / 4);
-
-  const nutrition = {
-    dailyCalories,
-    protein,
-    carbs,
-    fat,
-    tips: [
-      `建议每日补充热量约 ${dailyCalories} 大卡，其中蛋白质目标为 ${protein} 克以支持肌肉恢复与生长。`,
-      goal === '增肌' ? '建议练后 30 分钟内补充碳水化合物加乳清蛋白，保证体内正能量平衡。' : '建议适当控制高油脂外卖，每餐保证有绿叶蔬菜和足量的优质蛋白质。',
-      '每天饮水至少 2-3 升，保证训练时体液平衡，促进代谢与体能恢复。'
-    ]
-  };
+  const weight = normalizeBodyWeight(form.profile && form.profile.current_weight_kg, 70);
+  const nutrition = buildNutritionEstimate({ goal, weightKg: weight });
 
   // MVP 阶段只生成可编辑草稿，后续真实模型接入后仍沿用同一数据结构。
   return {
@@ -232,32 +218,11 @@ function normalizeAiDraft(rawDraft, form, candidates) {
     throw new Error('模型返回的训练日为空');
   }
 
-  // Parse and normalize nutrition recommendation
   const rawNutrition = rawDraft.nutrition || {};
-  const nutrition = {
-    dailyCalories: Number(rawNutrition.dailyCalories || rawNutrition.daily_calories || 0),
-    protein: Number(rawNutrition.protein || 0),
-    carbs: Number(rawNutrition.carbs || 0),
-    fat: Number(rawNutrition.fat || 0),
-    tips: Array.isArray(rawNutrition.tips) ? rawNutrition.tips : []
-  };
-
-  // Fallback formula in case AI returns 0 or invalid nutrition values
-  if (!nutrition.dailyCalories || !nutrition.protein) {
-    const goal = form.goal || '增肌';
-    const weight = normalizeNumber(form.profile && form.profile.current_weight_kg, 70, 30, 200);
-    nutrition.protein = nutrition.protein || Math.round(weight * (goal === '增肌' ? 2.0 : 1.6));
-    nutrition.dailyCalories = nutrition.dailyCalories || Math.round(weight * (goal === '增肌' ? 38 : 28));
-    nutrition.fat = nutrition.fat || Math.round(weight * 0.9);
-    nutrition.carbs = nutrition.carbs || Math.round((nutrition.dailyCalories - nutrition.protein * 4 - nutrition.fat * 9) / 4);
-    if (!nutrition.tips.length) {
-      nutrition.tips = [
-        `建议每日补充热量约 ${nutrition.dailyCalories} 大卡，其中蛋白质目标为 ${nutrition.protein} 克。`,
-        goal === '增肌' ? '建议练后30分钟内补充碳水加乳清蛋白，保证正能量平衡。' : '建议适当控制高油脂外卖，每餐保证有绿叶蔬菜和足量蛋白质。',
-        '每天饮水至少 2-3 升，保证训练时体液平衡与代谢畅通。'
-      ];
-    }
-  }
+  const nutrition = mergeNutritionFallback(rawNutrition, {
+    goal: form.goal || '增肌',
+    weightKg: form.profile && form.profile.current_weight_kg
+  });
 
   return {
     id: `ai_draft_${Date.now()}`,

@@ -25,7 +25,7 @@ function makeRecord(overrides) {
 }
 
 function makeCurrentWeekDate(offsetDays = 0) {
-  const now = new Date();
+  const now = new Date('2026-06-10T12:00:00.000Z');
   const day = now.getDay();
   const mondayOffset = day === 0 ? 6 : day - 1;
   const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayOffset + offsetDays, 12, 0, 0);
@@ -74,7 +74,7 @@ function testWeeklyInsight() {
     { completedAt: makeCurrentWeekDate(0), setCount: 6, totalVolume: 1200 },
     { completedAt: makeCurrentWeekDate(2), setCount: 8, totalVolume: 1600 }
   ];
-  const insight = buildWeeklyInsight(history, 4);
+  const insight = buildWeeklyInsight(history, 4, '2026-06-10T12:00:00.000Z');
   assert.strictEqual(insight.completedDays, 2);
   assert.strictEqual(insight.progressPercent, 50);
   assert.strictEqual(insight.totalSets, 14);

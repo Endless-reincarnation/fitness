@@ -116,8 +116,8 @@ function buildProgressionSuggestions(records) {
   });
 }
 
-function buildWeeklyInsight(history, targetDays = 4) {
-  const now = new Date();
+function buildWeeklyInsight(history, targetDays = 4, baseDate = new Date()) {
+  const now = new Date(baseDate);
   const day = now.getDay();
   const offset = day === 0 ? 6 : day - 1;
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
