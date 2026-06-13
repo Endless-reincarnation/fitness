@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}}" style="{{customThemeStyle}}">
   <!-- 训练打卡日历 -->
   <view class="card block calendar-card">
     <view class="calendar-header">

@@ -1,4 +1,5 @@
 const { initCloud } = require('./services/cloudService');
+const { syncTabBarTheme } = require('./utils/theme');
 
 App({
   globalData: {
@@ -16,11 +17,6 @@ App({
       this.globalData.currentUser = currentUser;
     }
     this.globalData.theme = theme;
-    wx.setTabBarStyle({
-      color: theme === 'tech-green' ? '#8793A1' : '#9A927D',
-      selectedColor: theme === 'tech-green' ? '#20F0A0' : '#FFD23F',
-      backgroundColor: theme === 'tech-green' ? '#11161B' : '#11110F',
-      borderStyle: 'black'
-    });
+    syncTabBarTheme(theme);
   }
 });

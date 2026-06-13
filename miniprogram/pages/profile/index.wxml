@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}}" style="{{customThemeStyle}}">
   <!-- 用户名片区域 (点击可弹窗编辑资料) -->
   <view class="card profile-card" bindtap="openEditModal">
     <image wx:if="{{userProfile && userProfile.avatar_url}}" class="avatar-img" src="{{userProfile.avatar_url}}" mode="aspectFill"></image>
@@ -58,7 +58,18 @@
         <view>{{item.label}}</view>
       </view>
     </view>
+    <view class="custom-theme-panel">
+      <view class="muted custom-theme-title">自定义主色</view>
+      <view class="custom-color-row">
+        <view wx:for="{{customThemeColors}}" wx:key="value" class="custom-color-option {{theme === 'custom' && customPrimaryColor === item.value ? 'active' : ''}}" data-color="{{item.value}}" bindtap="switchCustomThemeColor">
+          <view class="custom-color-dot" style="background: {{item.value}};"></view>
+          <view>{{item.label}}</view>
+        </view>
+      </view>
+    </view>
   </view>
+
+  <reminder-settings theme="{{theme}}" custom-primary-color="{{customPrimaryColor}}" />
 
   <!-- ==================== 个人资料编辑 Modal ==================== -->
   <view class="modal-backdrop {{showEditModal ? 'show' : ''}}" bindtap="closeEditModal">

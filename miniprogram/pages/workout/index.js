@@ -8,6 +8,14 @@ const {
 } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 const { buildProgressionSuggestions } = require('../../utils/trainingInsight');
+const { getReminderSettings } = require('../../utils/reminderSettings');
+const {
+  createReminderAudio,
+  destroyReminderAudio,
+  playReminderAudio,
+  playReminderFallbackVibration,
+  vibrateReminder
+} = require('../../utils/reminderPlayer');
 
 Page({
   data: {
@@ -34,13 +42,21 @@ Page({
   },
 
   timer: null,
+  reminderAudio: null,
+  restEndsAt: 0,
+  restCountdownNotified: null,
 
   onLoad(query) {
+    this.initReminderAudio();
     this.loadWorkout(query || {});
   },
 
   onShow() {
     applyTheme(this);
+    this.syncRestTimer();
+    if (this.data.isResting && this.restEndsAt && !this.timer) {
+      this.timer = setInterval(() => this.syncRestTimer(), 1000);
+    }
     wx.setKeepScreenOn({
       keepScreenOn: true,
       success: () => console.log('屏幕常亮已开启'),
@@ -49,11 +65,13 @@ Page({
   },
 
   onHide() {
+    this.clearTimer();
     wx.setKeepScreenOn({ keepScreenOn: false });
   },
 
   onUnload() {
     this.clearTimer();
+    this.destroyReminderAudio();
     wx.setKeepScreenOn({ keepScreenOn: false });
   },
 
@@ -83,6 +101,14 @@ Page({
     const currentExerciseIndex = canRestoreDraft ? draft.currentExerciseIndex : 0;
     const currentSetIndex = canRestoreDraft ? draft.currentSetIndex : 0;
     const currentExercise = dayView.exercises[currentExerciseIndex] || dayView.exercises[0];
+    const draftRestEndsAt = canRestoreDraft ? Number(draft.restEndsAt || 0) : 0;
+    const draftRestTotal = canRestoreDraft ? Number(draft.restTotal || currentExercise.restSeconds || 120) : 0;
+    const draftRestLeft = draftRestEndsAt ? Math.ceil((draftRestEndsAt - Date.now()) / 1000) : 0;
+    // 恢复训练草稿时按真实结束时间计算休息剩余秒数，避免页面退出后计时丢失。
+    const shouldRestoreRest = Boolean(canRestoreDraft && draft.isResting && draftRestEndsAt && draftRestLeft > 0);
+    const restoredActiveBarsCount = shouldRestoreRest
+      ? Math.max(0, Math.min(10, Math.ceil((draftRestLeft / draftRestTotal) * 10)))
+      : 10;
 
     this.setData({
       plan,
@@ -97,8 +123,19 @@ Page({
       reps: canRestoreDraft ? draft.reps : '',
       currentRestSeconds: canRestoreDraft ? draft.currentRestSeconds || currentExercise.restSeconds : currentExercise.restSeconds,
       lastSetRecord: canRestoreDraft ? draft.lastSetRecord : null,
-      entryAdviceType
+      entryAdviceType,
+      isResting: shouldRestoreRest,
+      restLeft: shouldRestoreRest ? draftRestLeft : 0,
+      restTotal: shouldRestoreRest ? draftRestTotal : 0,
+      activeBarsCount: restoredActiveBarsCount
     });
+    this.restEndsAt = shouldRestoreRest ? draftRestEndsAt : 0;
+    this.restCountdownNotified = shouldRestoreRest ? draft.restCountdownNotified || {} : null;
+    if (shouldRestoreRest) {
+      this.clearTimer();
+      this.timer = setInterval(() => this.syncRestTimer(), 1000);
+      this.syncRestTimer();
+    }
     this.saveDraft();
     this.loadLastRecord(currentExercise.exerciseId, !canRestoreDraft);
   },
@@ -125,6 +162,10 @@ Page({
       weightKg: this.data.weightKg,
       reps: this.data.reps,
       currentRestSeconds: this.data.currentRestSeconds,
+      isResting: this.data.isResting,
+      restTotal: this.data.restTotal,
+      restEndsAt: this.restEndsAt,
+      restCountdownNotified: this.restCountdownNotified,
       lastSetRecord: this.data.lastSetRecord,
       entryAdviceType: this.data.entryAdviceType
     });
@@ -295,33 +336,100 @@ Page({
 
   startRest(seconds) {
     this.clearTimer();
-    const restTotal = seconds || 120;
+    const restTotal = Number(seconds || 120);
+    this.restEndsAt = Date.now() + restTotal * 1000;
+    this.restCountdownNotified = {};
     this.setData({
       isResting: true,
-      restLeft: seconds,
+      restLeft: restTotal,
       restTotal,
       activeBarsCount: 10
     });
-    this.timer = setInterval(() => {
-      const next = this.data.restLeft - 1;
-      if (next <= 0) {
-        this.clearTimer();
-        this.setData({ isResting: false, restLeft: 0, activeBarsCount: 0 });
-        wx.vibrateLong(); // 休息结束，触发长震动提醒
-      } else {
-        const activeBarsCount = Math.ceil((next / restTotal) * 10);
-        this.setData({
-          restLeft: next,
-          activeBarsCount
-        });
+    this.saveDraft();
+    this.timer = setInterval(() => this.syncRestTimer(), 1000);
+  },
+
+  syncRestTimer() {
+    if (!this.data.isResting || !this.restEndsAt) return;
+
+    // 小程序切后台后计时器可能暂停，按结束时间戳校准剩余时间。
+    const restTotal = Number(this.data.restTotal || 120);
+    const next = Math.ceil((this.restEndsAt - Date.now()) / 1000);
+    if (next <= 0) {
+      this.restEndsAt = 0;
+      this.restCountdownNotified = null;
+      this.clearTimer();
+      this.setData({ isResting: false, restLeft: 0, activeBarsCount: 0 });
+      this.saveDraft();
+      this.playRestFinishReminder();
+      return;
+    }
+
+    const activeBarsCount = Math.ceil((next / restTotal) * 10);
+    this.playRestCountdownReminder(next);
+    this.setData({
+      restLeft: next,
+      activeBarsCount
+    });
+  },
+
+  playRestCountdownReminder(secondsLeft) {
+    if (secondsLeft > 3 || secondsLeft < 1) return;
+
+    const reminderSettings = getReminderSettings();
+    if (!reminderSettings.vibrationEnabled || !reminderSettings.countdownEnabled) return;
+
+    if (!this.restCountdownNotified) {
+      this.restCountdownNotified = {};
+    }
+
+    if (this.restCountdownNotified[secondsLeft]) return;
+
+    // 进入最后 3 秒时轻短震一次，帮助用户提前准备下一组。
+    this.restCountdownNotified[secondsLeft] = true;
+    wx.vibrateShort({ type: 'light' });
+  },
+
+  initReminderAudio() {
+    if (this.reminderAudio) return;
+    this.reminderAudio = createReminderAudio({
+      onError: (err) => {
+      console.warn('休息结束铃声播放失败', err);
+        playReminderFallbackVibration(getReminderSettings());
       }
-    }, 1000);
+    });
+  },
+
+  playRestFinishReminder() {
+    const reminderSettings = getReminderSettings();
+    if (reminderSettings.vibrationEnabled) {
+      vibrateReminder(reminderSettings);
+    }
+    wx.showToast({ title: '休息结束', icon: 'none' });
+
+    if (!reminderSettings.soundEnabled) return;
+
+    if (!this.reminderAudio) {
+      this.initReminderAudio();
+    }
+
+    if (!this.reminderAudio) return;
+
+    playReminderAudio(this.reminderAudio, reminderSettings, {
+      onError: (err) => {
+        console.warn('触发休息结束铃声失败', err);
+        playReminderFallbackVibration(reminderSettings);
+      }
+    });
   },
 
   skipRest() {
     wx.vibrateShort({ type: 'medium' });
+    this.restEndsAt = 0;
+    this.restCountdownNotified = null;
     this.clearTimer();
     this.setData({ isResting: false, restLeft: 0, activeBarsCount: 0 });
+    this.saveDraft();
   },
 
   clearTimer() {
@@ -329,6 +437,12 @@ Page({
       clearInterval(this.timer);
       this.timer = null;
     }
+  },
+
+  destroyReminderAudio() {
+    if (!this.reminderAudio) return;
+    destroyReminderAudio(this.reminderAudio);
+    this.reminderAudio = null;
   },
 
   async finishWorkout(records) {
@@ -354,6 +468,8 @@ Page({
     const nextPlan = await advanceActivePlan(this.data.plan.days.length);
     const nextDayName = nextPlan ? this.data.plan.days[nextPlan.currentDayIndex].name : '';
     const summary = this.buildCompletionSummary(records, totalVolume, nextDayName, suggestions);
+    this.restEndsAt = 0;
+    this.restCountdownNotified = null;
     this.clearTimer();
     this.setData({
       isResting: false,

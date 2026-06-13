@@ -1,0 +1,34 @@
+<view class="card block">
+  <view class="section-title">训练提醒</view>
+  <view class="setting-row">
+    <view>
+      <view class="setting-title">休息结束铃声</view>
+      <view class="muted setting-desc">计时到点时播放提示音</view>
+    </view>
+    <switch checked="{{reminderSettings.soundEnabled}}" data-field="soundEnabled" bindchange="toggleReminderSetting" color="{{reminderSwitchColor}}" />
+  </view>
+  <view class="setting-row">
+    <view>
+      <view class="setting-title">休息结束震动</view>
+      <view class="muted setting-desc">计时到点时触发长震动</view>
+    </view>
+    <switch checked="{{reminderSettings.vibrationEnabled}}" data-field="vibrationEnabled" bindchange="toggleReminderSetting" color="{{reminderSwitchColor}}" />
+  </view>
+  <view class="setting-row">
+    <view>
+      <view class="setting-title">提前 3 秒提示</view>
+      <view class="muted setting-desc">最后 3 秒每秒轻短震一次</view>
+    </view>
+    <switch checked="{{reminderSettings.countdownEnabled}}" data-field="countdownEnabled" bindchange="toggleReminderSetting" color="{{reminderSwitchColor}}" />
+  </view>
+  <view class="setting-column">
+    <view class="setting-title">提醒强度</view>
+    <view class="muted setting-desc">控制到点铃声次数和兜底震动次数</view>
+    <view class="intensity-row">
+      <view wx:for="{{reminderIntensityOptions}}" wx:key="value" class="intensity-option {{reminderSettings.intensity === item.value ? 'active' : ''}}" data-intensity="{{item.value}}" bindtap="switchReminderIntensity">
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+  <button class="reminder-test-button" bindtap="testReminder">测试提醒</button>
+</view>

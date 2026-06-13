@@ -3,6 +3,7 @@ const { getActivePlanDetail } = require('../../services/planService');
 const { saveFeedbackMessage } = require('../../services/feedbackService');
 const { getUserProfile, isAdminProfile, saveUserProfile, uploadAvatar } = require('../../services/userService');
 const { applyTheme, syncTabBarTheme } = require('../../utils/theme');
+const { CUSTOM_THEME_COLORS, getCustomPrimaryColor, saveCustomPrimaryColor } = require('../../utils/customTheme');
 
 Page({
   data: {
@@ -12,8 +13,11 @@ Page({
     theme: 'power-yellow',
     themeOptions: [
       { value: 'power-yellow', label: '黑黄力量' },
-      { value: 'tech-green', label: '黑绿科技' }
+      { value: 'tech-green', label: '黑绿科技' },
+      { value: 'death-pink', label: '死亡芭比粉' }
     ],
+    customThemeColors: CUSTOM_THEME_COLORS,
+    customPrimaryColor: getCustomPrimaryColor(),
 
     // 用户登录资料状态
     userProfile: null,
@@ -271,7 +275,18 @@ Page({
     wx.setStorageSync('theme', theme);
     app.globalData.theme = theme;
     syncTabBarTheme(theme);
-    this.setData({ theme });
+    applyTheme(this);
+  },
+
+  switchCustomThemeColor(event) {
+    const { color } = event.currentTarget.dataset;
+    const customPrimaryColor = saveCustomPrimaryColor(color);
+    const app = getApp();
+
+    wx.setStorageSync('theme', 'custom');
+    app.globalData.theme = 'custom';
+    this.setData({ customPrimaryColor });
+    applyTheme(this);
   },
 
   openExercises() {

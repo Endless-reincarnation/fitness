@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}}" style="{{customThemeStyle}}">
   <view class="card header-card">
     <view class="eyebrow">CLOUD CHECK</view>
     <view class="title">云数据诊断</view>

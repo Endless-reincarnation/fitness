@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}}" style="{{customThemeStyle}}">
   <view class="page-header">
     <view class="eyebrow">AI PROGRAM</view>
     <view class="page-title">AI 生成计划</view>

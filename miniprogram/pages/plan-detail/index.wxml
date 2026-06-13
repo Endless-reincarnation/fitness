@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}" wx:if="{{plan}}">
+<view class="page theme-{{theme}}" style="{{customThemeStyle}}" wx:if="{{plan}}">
   <view class="header">
     <view class="eyebrow">PROGRAM DETAIL</view>
     <view class="plan-title">{{plan.name}}</view>

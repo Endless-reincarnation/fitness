@@ -1,4 +1,4 @@
-<view class="page home-page theme-{{theme}}">
+<view class="page home-page theme-{{theme}}" style="{{customThemeStyle}}">
   <view wx:if="{{!activePlan}}" class="card block">
     <view class="eyebrow">TODAY PROGRAM</view>
     <view class="section-title">还没有启用计划</view>

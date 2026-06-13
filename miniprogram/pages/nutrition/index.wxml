@@ -1,4 +1,4 @@
-<view class="page nutrition-page theme-{{theme}}">
+<view class="page nutrition-page theme-{{theme}}" style="{{customThemeStyle}}">
   <view wx:if="{{!activePlan}}" class="card empty-card">
     <view class="eyebrow">NUTRITION</view>
     <view class="page-title">还没有启用计划</view>

@@ -1,3 +1,10 @@
+const {
+  buildCustomThemePalette,
+  buildCustomThemeStyle,
+  getCustomPrimaryColor,
+  getCustomThemeIconSuffix
+} = require('./customTheme');
+
 function getTheme() {
   const app = getApp();
   return wx.getStorageSync('theme') || app.globalData.theme || 'power-yellow';
@@ -17,6 +24,13 @@ const tabBarStyles = {
     backgroundColor: '#11161B',
     borderStyle: 'black',
     iconSuffix: '-tech'
+  },
+  'death-pink': {
+    color: '#A88A99',
+    selectedColor: '#F05AA6',
+    backgroundColor: '#171016',
+    borderStyle: 'black',
+    iconSuffix: '-pink'
   }
 };
 
@@ -29,7 +43,17 @@ const tabBarItems = [
 
 function syncTabBarTheme(theme) {
   // 原生 tabBar 不支持 CSS 变量，需要通过 API 同步主题色。
-  const style = tabBarStyles[theme || getTheme()] || tabBarStyles['power-yellow'];
+  const currentTheme = theme || getTheme();
+  const customPalette = currentTheme === 'custom' ? buildCustomThemePalette(getCustomPrimaryColor()) : null;
+  const style = customPalette
+    ? {
+      color: customPalette.muted,
+      selectedColor: customPalette.primary,
+      backgroundColor: customPalette.surface,
+      borderStyle: 'black',
+      iconSuffix: getCustomThemeIconSuffix()
+    }
+    : tabBarStyles[currentTheme] || tabBarStyles['power-yellow'];
   wx.setTabBarStyle({
     color: style.color,
     selectedColor: style.selectedColor,
@@ -47,10 +71,20 @@ function syncTabBarTheme(theme) {
   });
 }
 
+function getThemePrimaryColor(theme) {
+  const currentTheme = theme || getTheme();
+  if (currentTheme === 'custom') {
+    return buildCustomThemePalette(getCustomPrimaryColor()).primary;
+  }
+  const style = tabBarStyles[currentTheme] || tabBarStyles['power-yellow'];
+  return style.selectedColor;
+}
+
 function applyTheme(page) {
   const theme = getTheme();
-  // 每个页面根节点使用 theme-* class 驱动主题变量。
-  page.setData({ theme });
+  const customThemeStyle = theme === 'custom' ? buildCustomThemeStyle(getCustomPrimaryColor()) : '';
+  // 每个页面根节点使用 theme-* class 驱动主题变量，自定义主题额外注入变量。
+  page.setData({ theme, customThemeStyle });
   syncTabBarTheme(theme);
   return theme;
 }
@@ -58,5 +92,6 @@ function applyTheme(page) {
 module.exports = {
   getTheme,
   applyTheme,
-  syncTabBarTheme
+  syncTabBarTheme,
+  getThemePrimaryColor
 };
