@@ -53,8 +53,24 @@
         <view class="week-stat-value">{{weeklyInsight.totalVolume}}</view>
         <view class="week-stat-label">累计容量 KG</view>
       </view>
+      <view class="week-stat-item">
+        <view class="week-stat-value">{{weeklyInsight.estimatedCalories || 0}}</view>
+        <view class="week-stat-label">预计消耗 千卡</view>
+      </view>
     </view>
     <view class="insight-text">{{weeklyInsight.insightText}}</view>
+  </view>
+
+  <view class="card block calorie-trend-card" wx:if="{{calorieTrend.length}}">
+    <view class="section-title">最近消耗趋势</view>
+    <view class="calorie-trend-bars">
+      <view wx:for="{{calorieTrend}}" wx:key="id" class="calorie-trend-item">
+        <view class="calorie-trend-value">{{item.calories}}</view>
+        <view class="calorie-trend-bar" style="height: {{item.height}}rpx;"></view>
+        <view class="calorie-trend-date">{{item.dateText}}</view>
+      </view>
+    </view>
+    <view class="calorie-trend-note">基于每次训练完成后的估算结果，仅供复盘参考</view>
   </view>
 
   <!-- 动作进步榜 -->
@@ -77,6 +93,22 @@
       <view class="muted">{{latestSession.planName}} · {{latestSession.dayName}}</view>
       <view class="muted-stats">{{latestSetCount}} 组 · 总容量 {{latestTotalVolume}} kg</view>
     </view>
+
+    <view class="session-summary-grid">
+      <view class="session-summary-item">
+        <view class="session-summary-value">{{latestDurationText}}</view>
+        <view class="session-summary-label">训练时长</view>
+      </view>
+      <view class="session-summary-item">
+        <view class="session-summary-value">{{latestCaloriesText}}</view>
+        <view class="session-summary-label">预计消耗 千卡</view>
+      </view>
+      <view class="session-summary-item">
+        <view class="session-summary-value">{{latestDensityLabel || '--'}}</view>
+        <view class="session-summary-label">训练密度</view>
+      </view>
+    </view>
+    <view wx:if="{{latestCalorieHint}}" class="calorie-hint">{{latestCalorieHint}}</view>
 
     <view class="next-card" wx:if="{{nextExerciseName}}">
       <view class="next-label">下次建议</view>

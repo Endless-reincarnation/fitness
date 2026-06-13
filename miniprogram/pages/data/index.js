@@ -3,6 +3,7 @@ const { getUserProfile } = require('../../services/userService');
 const { listExercises } = require('../../services/exerciseService');
 const { getActivePlanDetail } = require('../../services/planService');
 const { applyTheme } = require('../../utils/theme');
+const { buildCalorieTrend, formatDuration } = require('../../utils/calorieEstimate');
 const { buildExerciseProgressList, buildWeeklyInsight } = require('../../utils/trainingInsight');
 
 Page({
@@ -13,10 +14,15 @@ Page({
     latestSession: null,
     latestSetCount: 0,
     latestTotalVolume: 0,
+    latestDurationText: '',
+    latestCaloriesText: '--',
+    latestDensityLabel: '',
+    latestCalorieHint: '',
     nextExerciseName: '',
     nextAdviceText: '',
     latestSuggestions: [],
     weeklyInsight: null,
+    calorieTrend: [],
     exerciseProgressList: [],
     theme: 'power-yellow',
 
@@ -162,6 +168,7 @@ Page({
     const calendarGrid = this.generateCalendar(currentYear, currentMonth, history, selectedDateStr, this.data.calendarMode);
     const displaySuggestions = displaySession && displaySession.suggestions ? displaySession.suggestions : [];
     const weeklyInsight = buildWeeklyInsight(history, weeklyTargetDays);
+    const calorieTrend = buildCalorieTrend(history);
     const exerciseProgressList = buildExerciseProgressList(history);
 
     // 计算肌群刺激得分百分比
@@ -216,10 +223,15 @@ Page({
       latestSession: displaySession,
       latestSetCount: displaySession ? displaySession.setCount : 0,
       latestTotalVolume: displaySession ? displaySession.totalVolume : 0,
+      latestDurationText: displaySession && displaySession.durationSeconds ? formatDuration(displaySession.durationSeconds) : '--',
+      latestCaloriesText: displaySession && displaySession.estimatedCalories ? String(displaySession.estimatedCalories) : '--',
+      latestDensityLabel: displaySession ? displaySession.densityLabel || '' : '',
+      latestCalorieHint: displaySession ? displaySession.calorieHint || '' : '',
       nextExerciseName: displaySession && displaySuggestions[0] ? displaySuggestions[0].exerciseName : '',
       nextAdviceText: displaySession && displaySuggestions[0] ? displaySuggestions[0].advice : '',
       latestSuggestions: displaySuggestions,
       weeklyInsight,
+      calorieTrend,
       exerciseProgressList,
       muscleStimulation,
       heightCm,

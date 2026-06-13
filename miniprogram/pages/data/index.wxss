@@ -124,7 +124,7 @@
 
 .week-stat-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16rpx;
   margin-top: 22rpx;
 }
@@ -156,6 +156,98 @@
   font-size: 26rpx;
   font-weight: 800;
   line-height: 1.6;
+}
+
+.session-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14rpx;
+  margin: 24rpx 0 18rpx;
+}
+
+.session-summary-item {
+  min-width: 0;
+  padding: 18rpx 14rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 10rpx;
+  background: var(--card-strong);
+}
+
+.session-summary-value {
+  color: var(--text);
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.15;
+  word-break: break-all;
+}
+
+.session-summary-label {
+  margin-top: 10rpx;
+  color: var(--muted);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.calorie-hint {
+  margin-bottom: 22rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.calorie-trend-card {
+  overflow: hidden;
+}
+
+.calorie-trend-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 14rpx;
+  height: 210rpx;
+  margin-top: 28rpx;
+}
+
+.calorie-trend-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.calorie-trend-value {
+  margin-bottom: 8rpx;
+  color: var(--primary);
+  font-size: 20rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.calorie-trend-bar {
+  width: 100%;
+  border-radius: 8rpx 8rpx 0 0;
+  background: var(--primary);
+  opacity: 0.9;
+}
+
+.calorie-trend-date {
+  margin-top: 10rpx;
+  color: var(--muted);
+  font-size: 18rpx;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.calorie-trend-note {
+  margin-top: 18rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.45;
 }
 
 .progress-row {

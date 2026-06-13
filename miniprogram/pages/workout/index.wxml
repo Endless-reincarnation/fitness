@@ -22,6 +22,25 @@
           <view class="score-item-value">{{completionSummary.exerciseCount}}</view>
           <view class="score-item-label">训练动作</view>
         </view>
+        <view class="score-item">
+          <view class="score-item-value score-item-text">{{completionSummary.durationText}}</view>
+          <view class="score-item-label">训练时长</view>
+        </view>
+        <view class="score-item">
+          <view wx:if="{{completionSummary.estimatedCalories}}" class="score-item-value">{{completionSummary.estimatedCalories}}</view>
+          <view wx:else class="score-item-value score-item-empty">--</view>
+          <view class="score-item-label">预计消耗 千卡</view>
+        </view>
+      </view>
+      <view class="calorie-note">
+        <text class="density-badge">密度 {{completionSummary.densityLabel}}</text>
+        <text>{{completionSummary.calorieHint}}</text>
+      </view>
+      <view wx:if="{{completionSummary.canFillBodyWeight}}" class="completion-weight-row">
+        <input class="completion-weight-input" type="digit" value="{{completionWeightKg}}" bindinput="onCompletionWeightInput" placeholder="补录体重 kg" />
+        <button class="completion-weight-button" bindtap="saveCompletionWeight" disabled="{{isSavingCompletionWeight}}">
+          {{isSavingCompletionWeight ? '保存中' : '更新估算'}}
+        </button>
       </view>
     </view>
 

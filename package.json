@@ -10,7 +10,8 @@
     "test:insight": "node tools/test-training-insight.js",
     "test:nutrition": "node tools/test-nutrition-insight.js",
     "test:execution": "node tools/test-execution-insight.js",
-    "test:algorithms": "npm run test:insight && npm run test:nutrition && npm run test:execution"
+    "test:calorie": "node tools/test-calorie-estimate.js",
+    "test:algorithms": "npm run test:insight && npm run test:nutrition && npm run test:execution && npm run test:calorie"
   },
   "devDependencies": {
     "@cloudbase/node-sdk": "^2.9.1"

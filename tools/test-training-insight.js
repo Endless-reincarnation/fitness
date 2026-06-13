@@ -71,14 +71,16 @@ function testMathHelpers() {
 
 function testWeeklyInsight() {
   const history = [
-    { completedAt: makeCurrentWeekDate(0), setCount: 6, totalVolume: 1200 },
-    { completedAt: makeCurrentWeekDate(2), setCount: 8, totalVolume: 1600 }
+    { completedAt: makeCurrentWeekDate(-7), setCount: 5, totalVolume: 1000, estimatedCalories: 999 },
+    { completedAt: makeCurrentWeekDate(0), setCount: 6, totalVolume: 1200, estimatedCalories: 220 },
+    { completedAt: makeCurrentWeekDate(2), setCount: 8, totalVolume: 1600, estimatedCalories: 260 }
   ];
   const insight = buildWeeklyInsight(history, 4, '2026-06-10T12:00:00.000Z');
   assert.strictEqual(insight.completedDays, 2);
   assert.strictEqual(insight.progressPercent, 50);
   assert.strictEqual(insight.totalSets, 14);
   assert.strictEqual(insight.totalVolume, 2800);
+  assert.strictEqual(insight.estimatedCalories, 480);
 }
 
 function testExerciseProgressAndPerformance() {

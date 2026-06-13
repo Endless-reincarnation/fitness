@@ -130,6 +130,7 @@ function buildWeeklyInsight(history, targetDays = 4, baseDate = new Date()) {
   });
   const totalSets = weekSessions.reduce((sum, session) => sum + Number(session.setCount || 0), 0);
   const totalVolume = weekSessions.reduce((sum, session) => sum + Number(session.totalVolume || 0), 0);
+  const estimatedCalories = weekSessions.reduce((sum, session) => sum + Number(session.estimatedCalories || 0), 0);
   const activeDays = {};
   weekSessions.forEach((session) => {
     const d = new Date(session.completedAt);
@@ -152,6 +153,7 @@ function buildWeeklyInsight(history, targetDays = 4, baseDate = new Date()) {
     progressPercent: Math.min(100, Math.round((completedDays / targetDays) * 100)),
     totalSets,
     totalVolume,
+    estimatedCalories,
     insightText
   };
 }

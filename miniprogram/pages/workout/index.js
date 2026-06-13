@@ -1,13 +1,16 @@
 const { buildDayView, getActivePlanDetail, advanceActivePlan } = require('../../services/planService');
 const {
   clearWorkoutDraft,
+  getBodyWeights,
   getWorkoutDraft,
+  saveBodyWeight,
   saveWorkoutDraft,
   saveWorkoutSession,
   getLastWorkoutRecord
 } = require('../../services/workoutService');
 const { applyTheme } = require('../../utils/theme');
 const { buildProgressionSuggestions } = require('../../utils/trainingInsight');
+const { buildWorkoutEstimate, getLatestBodyWeightKg } = require('../../utils/calorieEstimate');
 const { getReminderSettings } = require('../../utils/reminderSettings');
 const {
   createReminderAudio,
@@ -37,6 +40,10 @@ Page({
     lastSetRecord: null,
     lastWorkoutRecord: null,
     completionSummary: null,
+    completionWeightKg: '',
+    completedSession: null,
+    isSavingCompletionWeight: false,
+    sessionStartedAt: 0,
     entryAdviceType: 'training',
     theme: 'power-yellow'
   },
@@ -101,6 +108,7 @@ Page({
     const currentExerciseIndex = canRestoreDraft ? draft.currentExerciseIndex : 0;
     const currentSetIndex = canRestoreDraft ? draft.currentSetIndex : 0;
     const currentExercise = dayView.exercises[currentExerciseIndex] || dayView.exercises[0];
+    const sessionStartedAt = canRestoreDraft ? Number(draft.startedAt || Date.now()) : Date.now();
     const draftRestEndsAt = canRestoreDraft ? Number(draft.restEndsAt || 0) : 0;
     const draftRestTotal = canRestoreDraft ? Number(draft.restTotal || currentExercise.restSeconds || 120) : 0;
     const draftRestLeft = draftRestEndsAt ? Math.ceil((draftRestEndsAt - Date.now()) / 1000) : 0;
@@ -123,6 +131,7 @@ Page({
       reps: canRestoreDraft ? draft.reps : '',
       currentRestSeconds: canRestoreDraft ? draft.currentRestSeconds || currentExercise.restSeconds : currentExercise.restSeconds,
       lastSetRecord: canRestoreDraft ? draft.lastSetRecord : null,
+      sessionStartedAt,
       entryAdviceType,
       isResting: shouldRestoreRest,
       restLeft: shouldRestoreRest ? draftRestLeft : 0,
@@ -155,6 +164,7 @@ Page({
       planName: this.data.plan.name,
       dayId: this.data.day.id,
       dayName: this.data.day.name,
+      startedAt: this.data.sessionStartedAt || Date.now(),
       currentExerciseIndex: this.data.currentExerciseIndex,
       currentSetIndex: this.data.currentSetIndex,
       currentExerciseName: this.data.currentExercise.detail.name,
@@ -446,6 +456,15 @@ Page({
   },
 
   async finishWorkout(records) {
+    const endedAt = Date.now();
+    const bodyWeights = await getBodyWeights();
+    const bodyWeightKg = getLatestBodyWeightKg(bodyWeights);
+    const workoutEstimate = buildWorkoutEstimate({
+      startedAt: this.data.sessionStartedAt,
+      endedAt,
+      completedSetCount: records.length,
+      bodyWeightKg
+    });
     const totalVolume = records.reduce((sum, item) => sum + item.weightKg * item.reps, 0);
     const suggestions = buildProgressionSuggestions(records);
     const session = {
@@ -453,9 +472,22 @@ Page({
       planName: this.data.plan.name,
       dayName: this.data.day.name,
       planDayIndex: this.data.plan.days.findIndex((item) => item.id === this.data.day.id),
-      completedAt: new Date().toISOString(),
+      startedAt: new Date(endedAt - workoutEstimate.durationSeconds * 1000).toISOString(),
+      endedAt: new Date(endedAt).toISOString(),
+      completedAt: new Date(endedAt).toISOString(),
+      durationSeconds: workoutEstimate.durationSeconds,
       setCount: records.length,
+      completedSetCount: workoutEstimate.completedSetCount,
       totalVolume,
+      bodyWeightKg: workoutEstimate.bodyWeightKg,
+      densityLevel: workoutEstimate.densityLevel,
+      densityLabel: workoutEstimate.densityLabel,
+      densityFactor: workoutEstimate.densityFactor,
+      setsPerMinute: workoutEstimate.setsPerMinute,
+      estimatedCalories: workoutEstimate.estimatedCalories,
+      calorieHint: workoutEstimate.calorieHint,
+      calorieFormulaVersion: workoutEstimate.calorieFormulaVersion,
+      durationCapped: workoutEstimate.durationCapped,
       suggestions,
       entryAdviceType: this.data.entryAdviceType,
       trainingContextLabel: this.getTrainingContextLabel(this.data.entryAdviceType),
@@ -467,17 +499,104 @@ Page({
     clearWorkoutDraft();
     const nextPlan = await advanceActivePlan(this.data.plan.days.length);
     const nextDayName = nextPlan ? this.data.plan.days[nextPlan.currentDayIndex].name : '';
-    const summary = this.buildCompletionSummary(records, totalVolume, nextDayName, suggestions);
+    const summary = this.buildCompletionSummary(records, totalVolume, nextDayName, suggestions, workoutEstimate);
     this.restEndsAt = 0;
     this.restCountdownNotified = null;
     this.clearTimer();
     this.setData({
       isResting: false,
-      completionSummary: summary
+      completionSummary: summary,
+      completedSession: session
     });
   },
 
-  buildCompletionSummary(records, totalVolume, nextDayName, suggestions) {
+  onCompletionWeightInput(event) {
+    this.setData({ completionWeightKg: event.detail.value });
+  },
+
+  async saveCompletionWeight() {
+    const bodyWeightKg = Number(this.data.completionWeightKg);
+    if (!bodyWeightKg) {
+      wx.showToast({ title: '请输入体重', icon: 'none' });
+      return;
+    }
+
+    if (bodyWeightKg < 20 || bodyWeightKg > 300) {
+      wx.showModal({
+        title: '确认体重',
+        content: '这个体重数值较异常，确认保存并更新本次消耗估算吗？',
+        success: (res) => {
+          if (res.confirm) this.updateCompletionWeightEstimate(bodyWeightKg);
+        }
+      });
+      return;
+    }
+
+    await this.updateCompletionWeightEstimate(bodyWeightKg);
+  },
+
+  async updateCompletionWeightEstimate(bodyWeightKg) {
+    const session = this.data.completedSession;
+    if (!session) return;
+
+    this.setData({ isSavingCompletionWeight: true });
+    try {
+      const completedDate = new Date(session.completedAt || Date.now()).toISOString().slice(0, 10);
+      await saveBodyWeight({
+        id: `weight_${completedDate}`,
+        date: completedDate,
+        weightKg: bodyWeightKg,
+        source: 'workout_completion'
+      });
+
+      const workoutEstimate = buildWorkoutEstimate({
+        startedAt: session.startedAt,
+        endedAt: session.endedAt || session.completedAt,
+        completedSetCount: session.records.length,
+        bodyWeightKg
+      });
+      const updatedSession = this.applyWorkoutEstimateToSession(session, workoutEstimate);
+      const summary = this.buildCompletionSummary(
+        updatedSession.records,
+        updatedSession.totalVolume,
+        this.data.completionSummary.nextDayName,
+        updatedSession.suggestions,
+        workoutEstimate
+      );
+
+      await saveWorkoutSession(updatedSession);
+      this.setData({
+        completionWeightKg: '',
+        completionSummary: summary,
+        completedSession: updatedSession
+      });
+      wx.showToast({ title: '已更新消耗估算', icon: 'success' });
+    } catch (error) {
+      console.error('更新训练消耗估算失败', error);
+      wx.showToast({ title: '更新失败，请稍后重试', icon: 'none' });
+    } finally {
+      this.setData({ isSavingCompletionWeight: false });
+    }
+  },
+
+  applyWorkoutEstimateToSession(session, workoutEstimate) {
+    return {
+      ...session,
+      durationSeconds: workoutEstimate.durationSeconds,
+      completedSetCount: workoutEstimate.completedSetCount,
+      bodyWeightKg: workoutEstimate.bodyWeightKg,
+      densityLevel: workoutEstimate.densityLevel,
+      densityLabel: workoutEstimate.densityLabel,
+      densityFactor: workoutEstimate.densityFactor,
+      setsPerMinute: workoutEstimate.setsPerMinute,
+      estimatedCalories: workoutEstimate.estimatedCalories,
+      calorieHint: workoutEstimate.calorieHint,
+      calorieFormulaVersion: workoutEstimate.calorieFormulaVersion,
+      durationCapped: workoutEstimate.durationCapped
+    };
+  },
+
+  buildCompletionSummary(records, totalVolume, nextDayName, suggestions, workoutEstimate) {
     const exerciseMap = {};
     records.forEach((record) => {
       if (!exerciseMap[record.exerciseId]) {
@@ -508,6 +627,11 @@ Page({
       dayName: this.data.day.name,
       trainingContextLabel: this.getTrainingContextLabel(this.data.entryAdviceType),
       setCount: records.length,
+      durationText: workoutEstimate.durationText,
+      densityLabel: workoutEstimate.densityLabel,
+      canFillBodyWeight: !workoutEstimate.bodyWeightKg,
+      estimatedCalories: workoutEstimate.estimatedCalories,
+      calorieHint: workoutEstimate.calorieHint,
       exerciseCount: exerciseStats.length,
       totalVolume,
       nextDayName,

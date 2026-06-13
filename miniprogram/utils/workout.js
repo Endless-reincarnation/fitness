@@ -102,7 +102,12 @@ function clearWorkoutDraft() {
 
 function saveWorkoutSession(session) {
   const history = getWorkoutHistory();
-  history.unshift(session);
+  const existingIndex = history.findIndex((item) => item.id === session.id);
+  if (existingIndex >= 0) {
+    history[existingIndex] = session;
+  } else {
+    history.unshift(session);
+  }
   wx.setStorageSync('workoutHistory', history);
 }
 
